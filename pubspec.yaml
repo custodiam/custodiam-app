@@ -17,7 +17,7 @@ dependencies:
   http: ^1.2.0
 
   # Auth
-  flutter_appauth: ^11.0.0
+  oauth2: ^2.0.3
   flutter_secure_storage: ^10.0.0
 
   # Serialización
