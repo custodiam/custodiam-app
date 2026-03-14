@@ -1,4 +1,4 @@
-package es.custodiam.custodiam
+package es.custodiam.app
 
 import io.flutter.embedding.android.FlutterActivity
 

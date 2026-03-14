@@ -1,0 +1,26 @@
+# Configuración de firma para Android release builds
+# Copiar este archivo como key.properties y rellenar con tus valores
+# NUNCA commitear key.properties al repositorio
+
+# Ruta al keystore (relativa a android/app/)
+storeFile=../../keystores/custodiam-upload.jks
+
+# Contraseña del keystore
+storePassword=TU_CONTRASEÑA_KEYSTORE
+
+# Alias de la clave dentro del keystore
+keyAlias=custodiam-upload
+
+# Contraseña de la clave
+keyPassword=TU_CONTRASEÑA_KEY
+
+# Para generar el keystore:
+# keytool -genkeypair \
+#   -v \
+#   -storetype PKCS12 \
+#   -keystore custodiam-upload.jks \
+#   -alias custodiam-upload \
+#   -keyalg RSA \
+#   -keysize 2048 \
+#   -validity 10000 \
+#   -dname "CN=Rodrigo Mulero, O=Custodiam, C=ES"

@@ -45,5 +45,20 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Custom URL Scheme: SOLO para OAuth callback (Keycloak login/logout) -->
+	<!-- Para emails y notificaciones se usarán Universal Links (HTTPS) — ver EN-08-20 -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>es.custodiam.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>es.custodiam</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

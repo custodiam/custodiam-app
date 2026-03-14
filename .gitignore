@@ -55,3 +55,8 @@ coverage/
 # Claude Code
 .claude/
 CLAUDE.md
+
+# Signing
+key.properties
+*.jks
+*.keystore
