@@ -5,12 +5,13 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Cargar key.properties para firma de release (si existe)
-val keystorePropertiesFile = rootProject.file("app/../key.properties")
+// Cargar key.properties para firma (si existe)
+val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = java.util.Properties()
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
+val hasKeystore = keystorePropertiesFile.exists()
 
 android {
     namespace = "es.custodiam.app"
@@ -28,7 +29,13 @@ android {
 
     // Signing configs
     signingConfigs {
-        if (keystorePropertiesFile.exists()) {
+        if (hasKeystore) {
+            getByName("debug") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
             create("release") {
                 storeFile = file(keystoreProperties.getProperty("storeFile"))
                 storePassword = keystoreProperties.getProperty("storePassword")
@@ -49,7 +56,7 @@ android {
     buildTypes {
         release {
             // Usa signing de release si key.properties existe, debug como fallback
-            signingConfig = if (keystorePropertiesFile.exists()) {
+            signingConfig = if (hasKeystore) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")
