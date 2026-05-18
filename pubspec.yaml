@@ -19,9 +19,11 @@ dependencies:
   # State management (ADR-012)
   flutter_riverpod: ^2.6.0
 
-  # Auth
+  # Auth (OIDC con Keycloak — EN-01-02)
   oauth2: ^2.0.3
   flutter_secure_storage: ^10.0.0
+  url_launcher: ^6.3.1
+  app_links: ^6.3.3
 
   # Serialización
   json_annotation: ^4.9.0
