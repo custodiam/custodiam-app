@@ -15,9 +15,19 @@ void main() {
       expect(EnvConfig.keycloakBaseUrl, 'http://localhost:8080');
     });
 
+    test('keycloakRealm defaults to "custodiam"', () {
+      expect(EnvConfig.keycloakRealm, 'custodiam');
+    });
+
+    test('keycloakClientId defaults to "custodiam-app"', () {
+      expect(EnvConfig.keycloakClientId, 'custodiam-app');
+    });
+
     test('defaults are non-empty and use http scheme', () {
       expect(EnvConfig.apiBaseUrl, isNotEmpty);
       expect(EnvConfig.keycloakBaseUrl, isNotEmpty);
+      expect(EnvConfig.keycloakRealm, isNotEmpty);
+      expect(EnvConfig.keycloakClientId, isNotEmpty);
       expect(EnvConfig.apiBaseUrl, startsWith('http'));
       expect(EnvConfig.keycloakBaseUrl, startsWith('http'));
     });
