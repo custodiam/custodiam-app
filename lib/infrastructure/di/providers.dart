@@ -8,9 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_service.dart';
 import '../auth/keycloak_auth_service.dart';
 import '../auth/token_store.dart';
+import '../network/api_client.dart';
 
 final tokenStoreProvider = Provider<TokenStore>((ref) => TokenStore());
 
 final authServiceProvider = Provider<AuthService>((ref) {
   return KeycloakAuthService(tokenStore: ref.watch(tokenStoreProvider));
+});
+
+final apiClientProvider = Provider<ApiClient>((ref) {
+  return ApiClient(authService: ref.watch(authServiceProvider));
 });

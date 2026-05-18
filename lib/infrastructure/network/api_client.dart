@@ -1,46 +1,45 @@
 // Centralised HTTP client for the FastAPI backend.
 //
-// Reads its base URL from EnvConfig so it can be parameterised at
-// build time with --dart-define. The token getter/setter is kept
-// minimal for the bootstrap; the token-refresh integration with
-// AuthService lands in EN-01-02 (see guide 25 §5).
-//
-// See guide 26 §2 (Data layer) and §8 (EnvConfig).
+// Reads its base URL from EnvConfig and asks AuthService for a valid
+// access token before every request (refreshing automatically when
+// needed). Errors stay as ApiException at this layer; data-layer
+// repositories convert them to Failure when crossing into domain
+// (guide 26 §2).
 
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
 import '../../core/config/env_config.dart';
+import '../auth/auth_service.dart';
+import '../error/result.dart';
 
 class ApiClient {
   final String baseUrl;
   final http.Client _client;
-  String? _accessToken;
+  final AuthService _authService;
 
   ApiClient({
+    required AuthService authService,
     String? baseUrl,
     http.Client? client,
-  })  : baseUrl = baseUrl ?? EnvConfig.apiBaseUrl,
+  })  : _authService = authService,
+        baseUrl = baseUrl ?? EnvConfig.apiBaseUrl,
         _client = client ?? http.Client();
 
-  void setToken(String token) {
-    _accessToken = token;
+  Future<Map<String, String>> _headers() async {
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    final result = await _authService.getValidAccessToken();
+    if (result case Success(:final value)) {
+      headers['Authorization'] = 'Bearer $value';
+    }
+    return headers;
   }
-
-  void clearToken() {
-    _accessToken = null;
-  }
-
-  Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
-      };
 
   Future<Map<String, dynamic>> get(String path) async {
     final response = await _client.get(
       Uri.parse('$baseUrl$path'),
-      headers: _headers,
+      headers: await _headers(),
     );
     return _handleResponse(response);
   }
@@ -51,7 +50,7 @@ class ApiClient {
   ) async {
     final response = await _client.post(
       Uri.parse('$baseUrl$path'),
-      headers: _headers,
+      headers: await _headers(),
       body: jsonEncode(body),
     );
     return _handleResponse(response);
