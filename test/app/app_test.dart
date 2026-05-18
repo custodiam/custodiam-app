@@ -17,8 +17,9 @@ void main() {
   });
 
   testWidgets('pumpRiverpod helper renders a trivial child', (tester) async {
-    // Smoke test for the shared helper.
-    await pumpRiverpod(tester, const Scaffold(body: Text('ok')));
+    // Smoke test for the shared helper. It now wraps the child in
+    // Scaffold(body: ...) automatically, so a bare Text is enough.
+    await pumpRiverpod(tester, const Text('ok'));
     expect(find.text('ok'), findsOneWidget);
   });
 }
