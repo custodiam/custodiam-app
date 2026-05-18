@@ -40,6 +40,7 @@ void main() {
           onPressed: () => pressed++,
           isLoading: true,
         ),
+        settle: false,
       );
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -64,12 +65,14 @@ void main() {
     testWidgets('expanded variant stretches to parent width', (tester) async {
       await pumpRiverpod(
         tester,
-        SizedBox(
-          width: 400,
-          child: AppPrimaryButton(
-            label: 'Guardar',
-            onPressed: () {},
-            expanded: true,
+        Center(
+          child: SizedBox(
+            width: 400,
+            child: AppPrimaryButton(
+              label: 'Guardar',
+              onPressed: () {},
+              expanded: true,
+            ),
           ),
         ),
       );

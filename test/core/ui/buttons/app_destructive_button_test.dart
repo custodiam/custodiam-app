@@ -71,12 +71,14 @@ void main() {
     testWidgets('expanded variant stretches to parent width', (tester) async {
       await pumpRiverpod(
         tester,
-        SizedBox(
-          width: 360,
-          child: AppDestructiveButton(
-            label: 'Eliminar',
-            onPressed: () {},
-            expanded: true,
+        Center(
+          child: SizedBox(
+            width: 360,
+            child: AppDestructiveButton(
+              label: 'Eliminar',
+              onPressed: () {},
+              expanded: true,
+            ),
           ),
         ),
       );

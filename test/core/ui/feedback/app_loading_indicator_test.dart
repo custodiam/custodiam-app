@@ -7,7 +7,11 @@ import '../../../test_utils/test_app.dart';
 void main() {
   group('AppLoadingIndicator', () {
     testWidgets('renders spinner without message', (tester) async {
-      await pumpRiverpod(tester, const AppLoadingIndicator());
+      await pumpRiverpod(
+        tester,
+        const AppLoadingIndicator(),
+        settle: false,
+      );
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.byType(Text), findsNothing);
@@ -17,6 +21,7 @@ void main() {
       await pumpRiverpod(
         tester,
         const AppLoadingIndicator(message: 'Cargando voluntarios...'),
+        settle: false,
       );
 
       expect(find.text('Cargando voluntarios...'), findsOneWidget);
@@ -26,6 +31,7 @@ void main() {
       await pumpRiverpod(
         tester,
         const AppLoadingIndicator.fullScreen(message: 'Cargando...'),
+        settle: false,
       );
 
       expect(

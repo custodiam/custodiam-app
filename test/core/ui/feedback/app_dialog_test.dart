@@ -7,17 +7,26 @@ import '../../../test_utils/test_app.dart';
 
 void main() {
   group('AppDialog', () {
-    testWidgets('renders title, content and actions', (tester) async {
+    testWidgets('renders title, content and actions via show', (tester) async {
+      late BuildContext capturedContext;
+
       await pumpRiverpod(
         tester,
-        AppDialog(
-          title: 'Aviso',
-          content: const Text('Hay un problema'),
-          actions: [
-            AppTextButton(label: 'OK', onPressed: () {}),
-          ],
-        ),
+        Builder(builder: (context) {
+          capturedContext = context;
+          return const SizedBox.shrink();
+        }),
       );
+
+      AppDialog.show<void>(
+        capturedContext,
+        title: 'Aviso',
+        content: const Text('Hay un problema'),
+        actions: [
+          AppTextButton(label: 'OK', onPressed: () {}),
+        ],
+      );
+      await tester.pumpAndSettle();
 
       expect(find.text('Aviso'), findsOneWidget);
       expect(find.text('Hay un problema'), findsOneWidget);

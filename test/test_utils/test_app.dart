@@ -18,7 +18,10 @@ Future<void> pumpRiverpod(
   Widget child, {
   List<Override> overrides = const [],
   ThemeMode themeMode = ThemeMode.light,
+  bool settle = true,
+  bool wrapInScaffold = true,
 }) async {
+  final Widget host = wrapInScaffold ? Scaffold(body: child) : child;
   await tester.pumpWidget(
     ProviderScope(
       overrides: overrides,
@@ -26,9 +29,13 @@ Future<void> pumpRiverpod(
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),
         themeMode: themeMode,
-        home: child,
+        home: host,
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
 }
