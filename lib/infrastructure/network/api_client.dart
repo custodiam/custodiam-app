@@ -1,18 +1,28 @@
-// lib/core/api/api_client.dart
+// Centralised HTTP client for the FastAPI backend.
+//
+// Reads its base URL from EnvConfig so it can be parameterised at
+// build time with --dart-define. The token getter/setter is kept
+// minimal for the bootstrap; the token-refresh integration with
+// AuthService lands in EN-01-02 (see guide 25 §5).
+//
+// See guide 26 §2 (Data layer) and §8 (EnvConfig).
+
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
-/// Cliente HTTP centralizado.
-/// Gestiona tokens JWT, errores y base URL.
+import '../../core/config/env_config.dart';
+
 class ApiClient {
   final String baseUrl;
   final http.Client _client;
   String? _accessToken;
 
   ApiClient({
-    required this.baseUrl,
+    String? baseUrl,
     http.Client? client,
-  }) : _client = client ?? http.Client();
+  })  : baseUrl = baseUrl ?? EnvConfig.apiBaseUrl,
+        _client = client ?? http.Client();
 
   void setToken(String token) {
     _accessToken = token;
@@ -51,7 +61,6 @@ class ApiClient {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
-    // TODO: Manejo detallado de 401 (refresh token), 403, 500, etc.
     throw ApiException(
       statusCode: response.statusCode,
       message: response.body,
