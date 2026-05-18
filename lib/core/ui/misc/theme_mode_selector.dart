@@ -1,6 +1,10 @@
 // Settings selector for ThemeMode (system / light / dark). The wiring
 // to the preferences feature lands later with EN-08-25; this component
 // only renders the radio group. See guide 27 §5.14.
+//
+// Uses the RadioGroup ancestor API introduced in Flutter 3.32 — the
+// per-tile groupValue/onChanged parameters were deprecated in that
+// release.
 
 import 'package:flutter/material.dart';
 
@@ -14,35 +18,31 @@ class ThemeModeSelector extends StatelessWidget {
     required this.onChanged,
   });
 
-  void _handle(ThemeMode? value) {
-    if (value != null) onChanged(value);
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        RadioListTile<ThemeMode>(
-          title: const Text('Sistema (automático)'),
-          subtitle: const Text('Sigue el ajuste del dispositivo'),
-          value: ThemeMode.system,
-          groupValue: selected,
-          onChanged: _handle,
-        ),
-        RadioListTile<ThemeMode>(
-          title: const Text('Claro'),
-          value: ThemeMode.light,
-          groupValue: selected,
-          onChanged: _handle,
-        ),
-        RadioListTile<ThemeMode>(
-          title: const Text('Oscuro'),
-          value: ThemeMode.dark,
-          groupValue: selected,
-          onChanged: _handle,
-        ),
-      ],
+    return RadioGroup<ThemeMode>(
+      groupValue: selected,
+      onChanged: (value) {
+        if (value != null) onChanged(value);
+      },
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          RadioListTile<ThemeMode>(
+            title: Text('Sistema (automático)'),
+            subtitle: Text('Sigue el ajuste del dispositivo'),
+            value: ThemeMode.system,
+          ),
+          RadioListTile<ThemeMode>(
+            title: Text('Claro'),
+            value: ThemeMode.light,
+          ),
+          RadioListTile<ThemeMode>(
+            title: Text('Oscuro'),
+            value: ThemeMode.dark,
+          ),
+        ],
+      ),
     );
   }
 }

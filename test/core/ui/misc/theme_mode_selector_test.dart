@@ -39,7 +39,8 @@ void main() {
       expect(captured, ThemeMode.light);
     });
 
-    testWidgets('reflects currently selected mode', (tester) async {
+    testWidgets('reflects currently selected mode via RadioGroup',
+        (tester) async {
       await pumpRiverpod(
         tester,
         ThemeModeSelector(
@@ -48,12 +49,10 @@ void main() {
         ),
       );
 
-      final tiles = tester
-          .widgetList<RadioListTile<ThemeMode>>(
-            find.byType(RadioListTile<ThemeMode>),
-          )
-          .toList();
-      expect(tiles.every((t) => t.groupValue == ThemeMode.dark), isTrue);
+      final group = tester.widget<RadioGroup<ThemeMode>>(
+        find.byType(RadioGroup<ThemeMode>),
+      );
+      expect(group.groupValue, ThemeMode.dark);
     });
   });
 }
