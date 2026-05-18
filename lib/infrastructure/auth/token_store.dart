@@ -11,10 +11,7 @@ class TokenStore {
   final FlutterSecureStorage _storage;
 
   TokenStore({FlutterSecureStorage? storage})
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            );
+      : _storage = storage ?? const FlutterSecureStorage();
 
   Future<void> save(String credentialsJson) =>
       _storage.write(key: _credentialsKey, value: credentialsJson);
