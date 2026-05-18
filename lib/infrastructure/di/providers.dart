@@ -6,6 +6,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_service.dart';
-import '../auth/dummy_auth_service.dart';
+import '../auth/keycloak_auth_service.dart';
+import '../auth/token_store.dart';
 
-final authServiceProvider = Provider<AuthService>((ref) => DummyAuthService());
+final tokenStoreProvider = Provider<TokenStore>((ref) => TokenStore());
+
+final authServiceProvider = Provider<AuthService>((ref) {
+  return KeycloakAuthService(tokenStore: ref.watch(tokenStoreProvider));
+});
