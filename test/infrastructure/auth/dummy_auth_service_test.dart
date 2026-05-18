@@ -1,4 +1,6 @@
 import 'package:custodiam/infrastructure/auth/dummy_auth_service.dart';
+import 'package:custodiam/infrastructure/error/failure.dart';
+import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -28,6 +30,27 @@ void main() {
 
       expect(service.isInitialised, isTrue);
       expect(service.isAuthenticated, isFalse);
+    });
+
+    test('accessToken is always null', () {
+      expect(DummyAuthService().accessToken, isNull);
+    });
+
+    test('login returns Fail with sessionExpired', () async {
+      final result = await DummyAuthService().login();
+      expect(result, isA<Fail<void>>());
+      result as Fail<void>;
+      expect(result.failure, isA<AuthFailure>());
+    });
+
+    test('logout returns Success', () async {
+      final result = await DummyAuthService().logout();
+      expect(result, isA<Success<void>>());
+    });
+
+    test('getValidAccessToken returns Fail with sessionExpired', () async {
+      final result = await DummyAuthService().getValidAccessToken();
+      expect(result, isA<Fail<String>>());
     });
   });
 }
