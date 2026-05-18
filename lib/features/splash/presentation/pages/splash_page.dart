@@ -1,0 +1,52 @@
+// SplashPage is the app's initial route. It renders the brand colour
+// + shield while AppStartupUseCase runs and then navigates to /home
+// or /login based on session state. Per guide 26 §7.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../domain/usecases/decide_startup_destination.dart';
+import '../viewmodels/app_startup_provider.dart';
+
+class SplashPage extends ConsumerStatefulWidget {
+  const SplashPage({super.key});
+
+  @override
+  ConsumerState<SplashPage> createState() => _SplashPageState();
+}
+
+class _SplashPageState extends ConsumerState<SplashPage> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_bootstrap);
+  }
+
+  Future<void> _bootstrap() async {
+    final destination = await ref.read(appStartupProvider.future);
+    if (!mounted) return;
+
+    switch (destination) {
+      case StartupDestination.home:
+        context.go('/home');
+      case StartupDestination.login:
+        context.go('/login');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.colorScheme.primary,
+      body: Center(
+        child: Icon(
+          Icons.shield,
+          size: 96,
+          color: theme.colorScheme.onPrimary,
+        ),
+      ),
+    );
+  }
+}
