@@ -1,30 +1,54 @@
-// lib/app/router.dart
-import 'package:go_router/go_router.dart';
+// App-wide GoRouter configuration. SplashPage owns '/' and decides
+// where to send the user (see guide 26 §7); '/home' and '/login' are
+// placeholders until the corresponding features land (EN-01-02 for
+// login, the dashboard work for home).
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../features/splash/presentation/pages/splash_page.dart';
 
 final router = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(
       path: '/',
-      name: 'home',
-      builder: (context, state) => const HomePage(),
+      name: 'splash',
+      builder: (_, __) => const SplashPage(),
     ),
-    // Se añadirán rutas según se desarrollen features:
-    // /login, /servicios, /voluntarios, /inventario, /perfil
+    GoRoute(
+      path: '/login',
+      name: 'login',
+      builder: (_, __) => const _LoginPagePlaceholder(),
+    ),
+    GoRoute(
+      path: '/home',
+      name: 'home',
+      builder: (_, __) => const _HomePagePlaceholder(),
+    ),
   ],
 );
 
-/// Pantalla placeholder — se reemplazará con el dashboard real
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class _LoginPagePlaceholder extends StatelessWidget {
+  const _LoginPagePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Text('Login (TBD — EN-01-02)'),
+      ),
+    );
+  }
+}
+
+class _HomePagePlaceholder extends StatelessWidget {
+  const _HomePagePlaceholder();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Custodiam'),
-      ),
+      appBar: AppBar(title: const Text('Custodiam')),
       body: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
