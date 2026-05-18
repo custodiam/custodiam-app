@@ -16,6 +16,9 @@ dependencies:
   # HTTP (paquete oficial Dart - decisión ADR en 03_ARQUITECTURA)
   http: ^1.2.0
 
+  # State management (ADR-012)
+  flutter_riverpod: ^2.6.0
+
   # Auth
   oauth2: ^2.0.3
   flutter_secure_storage: ^10.0.0
