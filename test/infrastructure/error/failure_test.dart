@@ -18,6 +18,22 @@ void main() {
       const f = AuthFailure.refreshFailed();
       expect(f.message, 'No se pudo refrescar la sesión');
     });
+
+    test('userCancelled has expected message', () {
+      const f = AuthFailure.userCancelled();
+      expect(f, isA<AuthFailure>());
+      expect(f.message, 'Inicio de sesión cancelado');
+    });
+
+    test('browserError has expected message', () {
+      const f = AuthFailure.browserError();
+      expect(f.message, 'No se pudo abrir el navegador');
+    });
+
+    test('networkError has expected message', () {
+      const f = AuthFailure.networkError();
+      expect(f.message, 'Error de red durante la autenticación');
+    });
   });
 
   group('NetworkFailure', () {

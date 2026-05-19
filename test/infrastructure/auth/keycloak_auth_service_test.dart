@@ -1,0 +1,153 @@
+// Pure-Dart tests for KeycloakAuthService.
+//
+// Surface that requires platform channels (launchUrl, app_links
+// uriLinkStream) lives outside this file and is exercised by
+// integration_test/. Here we cover the JSON restore path,
+// token-availability getters and dispose safety using a mocktail
+// TokenStore + a fake AppLinks.
+
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:app_links/app_links.dart';
+import 'package:custodiam/infrastructure/auth/keycloak_auth_service.dart';
+import 'package:custodiam/infrastructure/auth/token_store.dart';
+import 'package:custodiam/infrastructure/error/failure.dart';
+import 'package:custodiam/infrastructure/error/result.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _MockTokenStore extends Mock implements TokenStore {}
+
+class _FakeAppLinks implements AppLinks {
+  final _controller = StreamController<Uri>.broadcast();
+
+  @override
+  Stream<Uri> get uriLinkStream => _controller.stream;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      super.noSuchMethod(invocation);
+}
+
+String _credentialsJson({
+  required Duration expiresIn,
+  String accessToken = 'access-token',
+  String? refreshToken,
+  List<String> scopes = const ['openid'],
+}) {
+  final expiration = DateTime.now().add(expiresIn).millisecondsSinceEpoch;
+  final tokens = <String, dynamic>{
+    'accessToken': accessToken,
+    'tokenEndpoint':
+        'http://localhost:8080/realms/custodiam/protocol/openid-connect/token',
+    'scopes': scopes,
+    'expiration': expiration,
+  };
+  if (refreshToken != null) {
+    tokens['refreshToken'] = refreshToken;
+  }
+  return jsonEncode(tokens);
+}
+
+void main() {
+  late _MockTokenStore tokenStore;
+  late KeycloakAuthService service;
+
+  setUp(() {
+    tokenStore = _MockTokenStore();
+    service = KeycloakAuthService(
+      tokenStore: tokenStore,
+      appLinks: _FakeAppLinks(),
+    );
+
+    when(() => tokenStore.read()).thenAnswer((_) async => null);
+    when(() => tokenStore.save(any())).thenAnswer((_) async {});
+    when(() => tokenStore.clear()).thenAnswer((_) async {});
+  });
+
+  group('default state', () {
+    test('isAuthenticated is false before init', () {
+      expect(service.isAuthenticated, isFalse);
+    });
+
+    test('accessToken is null before init', () {
+      expect(service.accessToken, isNull);
+    });
+  });
+
+  group('init', () {
+    test('does nothing when storage is empty', () async {
+      await service.init();
+
+      expect(service.isAuthenticated, isFalse);
+      expect(service.accessToken, isNull);
+      verifyNever(() => tokenStore.clear());
+    });
+
+    test('restores a non-expired session into memory', () async {
+      when(() => tokenStore.read()).thenAnswer((_) async => _credentialsJson(
+            expiresIn: const Duration(hours: 1),
+            accessToken: 'fresh',
+            refreshToken: 'refresh-1',
+          ));
+
+      await service.init();
+
+      expect(service.isAuthenticated, isTrue);
+      expect(service.accessToken, 'fresh');
+    });
+
+    test('clears storage when stored JSON is corrupt', () async {
+      when(() => tokenStore.read())
+          .thenAnswer((_) async => 'not really a json');
+
+      await service.init();
+
+      expect(service.isAuthenticated, isFalse);
+      verify(() => tokenStore.clear()).called(1);
+    });
+
+    test('clears storage when credentials are expired without refresh',
+        () async {
+      when(() => tokenStore.read()).thenAnswer((_) async => _credentialsJson(
+            expiresIn: const Duration(hours: -2),
+          ));
+
+      await service.init();
+
+      expect(service.isAuthenticated, isFalse);
+      verify(() => tokenStore.clear()).called(1);
+    });
+  });
+
+  group('getValidAccessToken', () {
+    test('returns Fail.sessionExpired when no session', () async {
+      final result = await service.getValidAccessToken();
+      expect(result, isA<Fail<String>>());
+      result as Fail<String>;
+      expect(result.failure, isA<AuthFailure>());
+    });
+
+    test('returns Success(token) when credentials are still valid',
+        () async {
+      when(() => tokenStore.read()).thenAnswer((_) async => _credentialsJson(
+            expiresIn: const Duration(hours: 1),
+            accessToken: 'fresh',
+            refreshToken: 'refresh-1',
+          ));
+      await service.init();
+
+      final result = await service.getValidAccessToken();
+      expect(result, isA<Success<String>>());
+      result as Success<String>;
+      expect(result.value, 'fresh');
+    });
+  });
+
+  group('dispose', () {
+    test('can be called even when never initialised', () {
+      expect(service.dispose, returnsNormally);
+    });
+  });
+}
