@@ -1,0 +1,37 @@
+{
+  // Helper tasks invoked as preLaunchTask by launch.json. They run
+  // silently (no panel focus stolen) and never block on user input.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // Forward the host's Docker stack to the connected device, so
+      // the device's localhost:8080 (Keycloak) and localhost:8000
+      // (FastAPI) reach the containers running on the developer
+      // machine. Runs every time the local debug profile starts.
+      "label": "adb-reverse-up",
+      "type": "shell",
+      "command": "adb reverse tcp:8080 tcp:8080 && adb reverse tcp:8000 tcp:8000",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      // Drop every reverse forward so the device uses real DNS
+      // resolution. Required when switching to the tunnel profile so
+      // that auth.custodiam.es / api.custodiam.es are not shadowed by
+      // a stale localhost forward left over from a previous session.
+      "label": "adb-reverse-down",
+      "type": "shell",
+      "command": "adb reverse --remove-all",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "clear": true
+      }
+    }
+  ]
+}
