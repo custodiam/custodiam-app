@@ -2,6 +2,8 @@ import 'package:custodiam/core/ui/theme/app_theme.dart';
 import 'package:custodiam/features/splash/presentation/pages/splash_page.dart';
 import 'package:custodiam/infrastructure/auth/auth_service.dart';
 import 'package:custodiam/infrastructure/di/providers.dart';
+import 'package:custodiam/infrastructure/error/failure.dart';
+import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,6 +20,21 @@ class _FakeAuthService implements AuthService {
 
   @override
   bool get isAuthenticated => _authenticated;
+
+  @override
+  String? get accessToken => _authenticated ? 'fake-token' : null;
+
+  @override
+  Future<Result<void>> login() async => const Success(null);
+
+  @override
+  Future<Result<void>> logout() async => const Success(null);
+
+  @override
+  Future<Result<String>> getValidAccessToken() async {
+    if (!_authenticated) return const Fail(AuthFailure.sessionExpired());
+    return const Success('fake-token');
+  }
 }
 
 GoRouter _testRouter() => GoRouter(

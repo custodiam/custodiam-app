@@ -17,6 +17,9 @@ sealed class AuthFailure extends Failure {
   const factory AuthFailure.invalidCredentials() = _InvalidCredentials;
   const factory AuthFailure.sessionExpired() = _SessionExpired;
   const factory AuthFailure.refreshFailed() = _RefreshFailed;
+  const factory AuthFailure.userCancelled() = _UserCancelled;
+  const factory AuthFailure.browserError() = _BrowserError;
+  const factory AuthFailure.networkError() = _AuthNetworkError;
 }
 
 final class _InvalidCredentials extends AuthFailure {
@@ -29,6 +32,18 @@ final class _SessionExpired extends AuthFailure {
 
 final class _RefreshFailed extends AuthFailure {
   const _RefreshFailed() : super('No se pudo refrescar la sesión');
+}
+
+final class _UserCancelled extends AuthFailure {
+  const _UserCancelled() : super('Inicio de sesión cancelado');
+}
+
+final class _BrowserError extends AuthFailure {
+  const _BrowserError() : super('No se pudo abrir el navegador');
+}
+
+final class _AuthNetworkError extends AuthFailure {
+  const _AuthNetworkError() : super('Error de red durante la autenticación');
 }
 
 // ── Network ──────────────────────────────────────────────────────────

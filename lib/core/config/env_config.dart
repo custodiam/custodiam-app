@@ -24,4 +24,16 @@ class EnvConfig {
     'KEYCLOAK_BASE_URL',
     defaultValue: 'http://localhost:8080',
   );
+
+  /// Keycloak realm.
+  static const String keycloakRealm = String.fromEnvironment(
+    'KEYCLOAK_REALM',
+    defaultValue: 'custodiam',
+  );
+
+  /// Keycloak client ID (Flutter public client with PKCE S256).
+  static const String keycloakClientId = String.fromEnvironment(
+    'KEYCLOAK_CLIENT_ID',
+    defaultValue: 'custodiam-app',
+  );
 }
