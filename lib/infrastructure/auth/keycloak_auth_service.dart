@@ -8,6 +8,7 @@ import 'dart:developer' as dev;
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -21,6 +22,7 @@ import 'token_store.dart';
 class KeycloakAuthService implements AuthService {
   final TokenStore _tokenStore;
   final AppLinks _appLinks;
+  final http.Client _httpClient;
 
   oauth2.Client? _client;
   oauth2.AuthorizationCodeGrant? _pendingGrant;
@@ -30,8 +32,10 @@ class KeycloakAuthService implements AuthService {
   KeycloakAuthService({
     required TokenStore tokenStore,
     AppLinks? appLinks,
+    http.Client? httpClient,
   })  : _tokenStore = tokenStore,
-        _appLinks = appLinks ?? AppLinks();
+        _appLinks = appLinks ?? AppLinks(),
+        _httpClient = httpClient ?? http.Client();
 
   @override
   bool get isAuthenticated =>
@@ -163,30 +167,57 @@ class KeycloakAuthService implements AuthService {
 
   @override
   Future<Result<void>> logout() async {
-    await _clear();
+    final refreshToken = _client?.credentials.refreshToken;
 
-    final logoutUrl = KeycloakConfig.endSessionEndpoint.replace(
-      queryParameters: {
-        'client_id': EnvConfig.keycloakClientId,
-        'post_logout_redirect_uri':
-            KeycloakConfig.postLogoutRedirectUri.toString(),
-      },
-    );
-
-    try {
-      await launchUrl(logoutUrl, mode: LaunchMode.externalApplication);
-      dev.log('Logout completed', name: 'Auth');
+    // Without a live session there is nothing to invalidate. Clear any
+    // stale local state defensively and report success.
+    if (_client == null || refreshToken == null) {
+      await _clear();
       return const Success(null);
+    }
+
+    http.Response response;
+    try {
+      response = await _httpClient.post(
+        KeycloakConfig.endSessionEndpoint,
+        headers: const {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'client_id': EnvConfig.keycloakClientId,
+          'refresh_token': refreshToken,
+        },
+      );
     } catch (e, stack) {
-      // Local state is already cleared even if the browser fails.
+      // The session may or may not be invalidated server-side; from the
+      // app's perspective we discard the credentials regardless so the
+      // user is not left in a half-authenticated state.
       dev.log(
-        'Could not open Keycloak for SSO logout: $e',
+        'Network error during backchannel logout: $e',
         name: 'Auth',
         error: e,
         stackTrace: stack,
       );
-      return const Fail(AuthFailure.browserError());
+      await _clear();
+      return const Fail(AuthFailure.networkError());
     }
+
+    // Keycloak's RP-initiated logout returns 204 No Content on success.
+    // Any 2xx means the SSO session was invalidated; we then clear local
+    // state. 4xx/5xx means the token or request was rejected — local
+    // state still goes, but we surface the error so the UI can show
+    // something other than "logged out cleanly".
+    await _clear();
+    final ok = response.statusCode >= 200 && response.statusCode < 300;
+    if (ok) {
+      dev.log('Logout completed (backchannel)', name: 'Auth');
+      return const Success(null);
+    }
+    dev.log(
+      'Backchannel logout returned ${response.statusCode}',
+      name: 'Auth',
+    );
+    return Fail(AuthFailure.serverError(response.statusCode));
   }
 
   @override
@@ -246,5 +277,6 @@ class KeycloakAuthService implements AuthService {
 
   void dispose() {
     _linkSubscription?.cancel();
+    _httpClient.close();
   }
 }
