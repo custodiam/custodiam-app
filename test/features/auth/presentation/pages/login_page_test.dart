@@ -61,7 +61,7 @@ void main() {
     );
 
     testWidgets(
-      'AppSnackbar with danger variant appears when AuthService fails',
+      'shows the typed network-error snackbar when login fails by network',
       (tester) async {
         when(() => auth.login())
             .thenAnswer((_) async => const Fail(AuthFailure.networkError()));
@@ -80,9 +80,63 @@ void main() {
 
         expect(find.byType(SnackBar), findsOneWidget);
         expect(
-          find.text('Error de red durante la autenticación'),
+          find.textContaining('Error de red durante la autenticación'),
           findsOneWidget,
         );
+      },
+    );
+
+    testWidgets(
+      'shows an info snackbar with cancellation copy when user cancels',
+      (tester) async {
+        when(() => auth.login())
+            .thenAnswer((_) async => const Fail(AuthFailure.userCancelled()));
+
+        await pumpRiverpod(
+          tester,
+          const LoginPage(),
+          wrapInScaffold: false,
+          overrides: [
+            authServiceForViewModelProvider.overrideWithValue(auth),
+          ],
+        );
+
+        await tester.tap(find.text('Iniciar sesión'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(
+          find.textContaining('Has cancelado el inicio de sesión'),
+          findsOneWidget,
+        );
+        // Cancellation is not an error — the info icon distinguishes it
+        // from the danger variants visually.
+        expect(find.byIcon(Icons.info_outline), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'shows a danger snackbar carrying the status code on server error',
+      (tester) async {
+        when(() => auth.login()).thenAnswer(
+          (_) async => const Fail(AuthFailure.serverError(503)),
+        );
+
+        await pumpRiverpod(
+          tester,
+          const LoginPage(),
+          wrapInScaffold: false,
+          overrides: [
+            authServiceForViewModelProvider.overrideWithValue(auth),
+          ],
+        );
+
+        await tester.tap(find.text('Iniciar sesión'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(find.textContaining('(503)'), findsOneWidget);
+        expect(find.byIcon(Icons.error_outline), findsOneWidget);
       },
     );
   });

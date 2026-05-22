@@ -17,9 +17,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/ui/feedback/app_snackbar.dart';
+import '../core/ui/feedback/app_confirm_dialog.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/viewmodels/auth_view_model.dart';
+import '../features/auth/presentation/widgets/auth_failure_feedback.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
 import '../infrastructure/auth/keycloak_auth_service.dart';
 import '../infrastructure/di/providers.dart';
@@ -41,7 +42,7 @@ final router = GoRouter(
     GoRoute(
       path: '/home',
       name: 'home',
-      builder: (_, __) => const _HomePagePlaceholder(),
+      builder: (_, __) => const HomePagePlaceholder(),
     ),
     if (kIsWeb)
       GoRoute(
@@ -52,8 +53,12 @@ final router = GoRouter(
   ],
 );
 
-class _HomePagePlaceholder extends ConsumerWidget {
-  const _HomePagePlaceholder();
+/// Stand-in for the dashboard until the real home feature lands.
+/// Public so widget tests can mount the logout flow without spinning
+/// up the full router. Will be replaced when the home feature is built
+/// (Sprint 4+).
+class HomePagePlaceholder extends ConsumerWidget {
+  const HomePagePlaceholder({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -63,11 +68,7 @@ class _HomePagePlaceholder extends ConsumerWidget {
       next.whenOrNull(
         error: (error, _) {
           if (error is AuthFailure) {
-            AppSnackbar.show(
-              context,
-              message: error.message ?? 'Error al cerrar sesión',
-              variant: AppSnackbarVariant.danger,
-            );
+            showAuthFailure(context, error);
           }
         },
         data: (_) {
@@ -95,8 +96,20 @@ class _HomePagePlaceholder extends ConsumerWidget {
                 : const Icon(Icons.logout),
             onPressed: authState.isLoading
                 ? null
-                : () =>
-                    ref.read(authViewModelProvider.notifier).logout(),
+                : () async {
+                    final confirmed = await AppConfirmDialog.show(
+                      context,
+                      title: 'Cerrar sesión',
+                      message:
+                          '¿Seguro que quieres cerrar sesión? Tendrás que '
+                          'volver a iniciar sesión para acceder.',
+                      confirmLabel: 'Cerrar sesión',
+                      isDestructive: true,
+                    );
+                    if (!confirmed) return;
+                    if (!context.mounted) return;
+                    ref.read(authViewModelProvider.notifier).logout();
+                  },
           ),
         ],
       ),
