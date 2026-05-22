@@ -28,6 +28,7 @@ import '../core/ui/feedback/app_confirm_dialog.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../features/auth/presentation/widgets/auth_failure_feedback.dart';
+import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
 import '../infrastructure/auth/keycloak_auth_service.dart';
 import '../infrastructure/di/providers.dart';
@@ -62,6 +63,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/home',
         name: 'home',
         builder: (_, __) => const HomePagePlaceholder(),
+      ),
+      GoRoute(
+        path: '/settings',
+        name: 'settings',
+        builder: (_, __) => const SettingsPage(),
       ),
       if (kIsWeb)
         GoRoute(
@@ -101,6 +107,11 @@ class HomePagePlaceholder extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Custodiam'),
         actions: [
+          IconButton(
+            tooltip: 'Ajustes',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.go('/settings'),
+          ),
           IconButton(
             tooltip: 'Cerrar sesión',
             icon: authState.isLoading
