@@ -12,10 +12,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
-import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../viewmodels/auth_view_model.dart';
+import '../widgets/auth_failure_feedback.dart';
 
 class LoginPage extends ConsumerWidget {
   const LoginPage({super.key});
@@ -28,11 +28,7 @@ class LoginPage extends ConsumerWidget {
       next.whenOrNull(
         error: (error, _) {
           if (error is AuthFailure) {
-            AppSnackbar.show(
-              context,
-              message: error.message ?? 'Error al iniciar sesión',
-              variant: AppSnackbarVariant.danger,
-            );
+            showAuthFailure(context, error);
           }
         },
         data: (_) {
