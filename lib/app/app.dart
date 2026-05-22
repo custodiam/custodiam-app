@@ -20,7 +20,7 @@ class CustodiamApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
-      routerConfig: router,
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }
