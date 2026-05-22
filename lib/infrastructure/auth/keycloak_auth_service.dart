@@ -7,7 +7,7 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:app_links/app_links.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:url_launcher/url_launcher.dart';
@@ -23,6 +23,8 @@ class KeycloakAuthService implements AuthService {
   final TokenStore _tokenStore;
   final AppLinks _appLinks;
   final http.Client _httpClient;
+  final ValueNotifier<bool> _authNotifier = ValueNotifier(false);
+  bool _expiredFlagPending = false;
 
   oauth2.Client? _client;
   oauth2.AuthorizationCodeGrant? _pendingGrant;
@@ -45,6 +47,16 @@ class KeycloakAuthService implements AuthService {
   String? get accessToken => _client?.credentials.accessToken;
 
   @override
+  Listenable get authStateListenable => _authNotifier;
+
+  @override
+  bool consumeExpiredFlag() {
+    if (!_expiredFlagPending) return false;
+    _expiredFlagPending = false;
+    return true;
+  }
+
+  @override
   Future<void> init() async {
     await _restore();
     if (!kIsWeb) {
@@ -60,6 +72,9 @@ class KeycloakAuthService implements AuthService {
       final credentials = oauth2.Credentials.fromJson(json);
 
       if (credentials.isExpired && credentials.refreshToken == null) {
+        // No way to refresh and the access token is dead — the session
+        // is effectively expired even before init finishes.
+        _expiredFlagPending = true;
         await _clear();
         return;
       }
@@ -68,10 +83,15 @@ class KeycloakAuthService implements AuthService {
         credentials,
         identifier: EnvConfig.keycloakClientId,
       );
+      _publishAuthState();
 
       if (credentials.isExpired) {
         final refreshed = await _refresh();
         if (refreshed is Fail) {
+          // _refresh already cleared and flagged on its catch path, but
+          // re-state the intent for any future failure modes that may
+          // skip that branch.
+          _expiredFlagPending = true;
           await _clear();
         }
       }
@@ -167,6 +187,10 @@ class KeycloakAuthService implements AuthService {
 
   @override
   Future<Result<void>> logout() async {
+    // Deliberate sign-out: never surface the "sesión expirada" banner
+    // even if a previous restore had set the flag.
+    _expiredFlagPending = false;
+
     final refreshToken = _client?.credentials.refreshToken;
 
     // Without a live session there is nothing to invalidate. Clear any
@@ -239,6 +263,7 @@ class KeycloakAuthService implements AuthService {
   Future<Result<void>> _refresh() async {
     final refreshToken = _client?.credentials.refreshToken;
     if (refreshToken == null) {
+      _expiredFlagPending = true;
       await _clear();
       return const Fail(AuthFailure.sessionExpired());
     }
@@ -260,6 +285,8 @@ class KeycloakAuthService implements AuthService {
         error: e,
         stackTrace: stack,
       );
+      // Refresh failure during a live session => expired, surface it.
+      _expiredFlagPending = true;
       await _clear();
       return const Fail(AuthFailure.refreshFailed());
     }
@@ -268,15 +295,26 @@ class KeycloakAuthService implements AuthService {
   Future<void> _save() async {
     if (_client == null) return;
     await _tokenStore.save(_client!.credentials.toJson());
+    _publishAuthState();
   }
 
   Future<void> _clear() async {
     _client = null;
     await _tokenStore.clear();
+    _publishAuthState();
+  }
+
+  /// Push the current isAuthenticated value into the ValueNotifier so
+  /// the GoRouter's refreshListenable (and any other observer) reacts.
+  /// Re-publishing the same value is a no-op for ValueNotifier, so it
+  /// is safe to call defensively at the end of any state change.
+  void _publishAuthState() {
+    _authNotifier.value = isAuthenticated;
   }
 
   void dispose() {
     _linkSubscription?.cancel();
     _httpClient.close();
+    _authNotifier.dispose();
   }
 }

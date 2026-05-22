@@ -12,6 +12,8 @@ import 'package:custodiam/infrastructure/error/result.dart';
 import '../test_utils/test_app.dart';
 
 class _InMemoryAuthService implements AuthService {
+  final ValueNotifier<bool> _authNotifier = ValueNotifier(false);
+
   @override
   Future<void> init() async {}
 
@@ -20,6 +22,12 @@ class _InMemoryAuthService implements AuthService {
 
   @override
   String? get accessToken => null;
+
+  @override
+  Listenable get authStateListenable => _authNotifier;
+
+  @override
+  bool consumeExpiredFlag() => false;
 
   @override
   Future<Result<void>> login() async => const Success(null);

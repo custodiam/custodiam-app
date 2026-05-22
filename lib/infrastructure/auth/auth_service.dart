@@ -1,13 +1,12 @@
 // Auth service contract consumed by SplashPage's startup use case and
 // any feature that needs to know whether there is a live session or
-// drive login / logout. Implementations live alongside this file:
-//
-//   - DummyAuthService:  bootstrap-time placeholder, always reports
-//                        the session as missing
-//   - KeycloakAuthService: real OIDC client wired to Keycloak
+// drive login / logout. The only production implementation is
+// KeycloakAuthService — a real OIDC client wired to Keycloak.
 //
 // All operations that can fail return Result<T>; nothing throws
 // cross-layer (guide 26 §4).
+
+import 'package:flutter/foundation.dart' show Listenable;
 
 import '../error/result.dart';
 
@@ -22,6 +21,21 @@ abstract class AuthService {
   /// Current access token. May be expired — use [getValidAccessToken]
   /// when the caller needs a guaranteed-valid token.
   String? get accessToken;
+
+  /// Notifies when the authentication state flips between authenticated
+  /// and unauthenticated (login, logout, restore, refresh failure that
+  /// clears the local session). Wired as `refreshListenable` on the
+  /// GoRouter so a protected route auto-redirects to `/login` when the
+  /// refresh token expires mid-session.
+  Listenable get authStateListenable;
+
+  /// Single-shot flag: returns true exactly once after the most recent
+  /// clearing of the session was caused by an expired refresh token
+  /// (NOT by an explicit logout). LoginPage consumes it on mount to
+  /// decide whether to surface a "sesión expirada" snackbar; once
+  /// consumed it returns false until the next expiration. Used so the
+  /// banner does not appear after a deliberate sign-out.
+  bool consumeExpiredFlag();
 
   /// Kick off the Authorization Code + PKCE flow. Resolves with
   /// Success once the session is established; Fail carries the

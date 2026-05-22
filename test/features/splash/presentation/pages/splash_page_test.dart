@@ -11,9 +11,11 @@ import 'package:go_router/go_router.dart';
 
 class _FakeAuthService implements AuthService {
   _FakeAuthService({required bool authenticated})
-      : _authenticated = authenticated;
+      : _authenticated = authenticated,
+        _authNotifier = ValueNotifier(authenticated);
 
   final bool _authenticated;
+  final ValueNotifier<bool> _authNotifier;
 
   @override
   Future<void> init() async {}
@@ -23,6 +25,12 @@ class _FakeAuthService implements AuthService {
 
   @override
   String? get accessToken => _authenticated ? 'fake-token' : null;
+
+  @override
+  Listenable get authStateListenable => _authNotifier;
+
+  @override
+  bool consumeExpiredFlag() => false;
 
   @override
   Future<Result<void>> login() async => const Success(null);
