@@ -11,6 +11,13 @@
 // immediately after launching the browser; the redirect lands here and
 // _CallbackHandler completes the authorization-code exchange before
 // pushing the user to /home (or back to /login on failure).
+//
+// US-01-03: the GoRouter is wrapped in a Riverpod Provider so it can
+// observe AuthService.authStateListenable and run a redirect every
+// time the auth state flips. When a refresh-token expires mid-session,
+// the protected routes auto-bounce to /login. LoginPage then reads
+// AuthService.consumeExpiredFlag() to decide whether to show the
+// "sesión expirada" banner.
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -26,32 +33,45 @@ import '../infrastructure/auth/keycloak_auth_service.dart';
 import '../infrastructure/di/providers.dart';
 import '../infrastructure/error/failure.dart';
 
-final router = GoRouter(
-  initialLocation: '/',
-  routes: [
-    GoRoute(
-      path: '/',
-      name: 'splash',
-      builder: (_, __) => const SplashPage(),
-    ),
-    GoRoute(
-      path: '/login',
-      name: 'login',
-      builder: (_, __) => const LoginPage(),
-    ),
-    GoRoute(
-      path: '/home',
-      name: 'home',
-      builder: (_, __) => const HomePagePlaceholder(),
-    ),
-    if (kIsWeb)
+final routerProvider = Provider<GoRouter>((ref) {
+  final authService = ref.watch(authServiceProvider);
+
+  return GoRouter(
+    initialLocation: '/',
+    refreshListenable: authService.authStateListenable,
+    redirect: (context, state) {
+      final loc = state.matchedLocation;
+      final isProtected = loc != '/' && loc != '/login' && loc != '/callback';
+      if (!authService.isAuthenticated && isProtected) {
+        return '/login';
+      }
+      return null;
+    },
+    routes: [
       GoRoute(
-        path: '/callback',
-        name: 'callback',
-        builder: (_, state) => _CallbackHandler(callbackUri: state.uri),
+        path: '/',
+        name: 'splash',
+        builder: (_, __) => const SplashPage(),
       ),
-  ],
-);
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        builder: (_, __) => const LoginPage(),
+      ),
+      GoRoute(
+        path: '/home',
+        name: 'home',
+        builder: (_, __) => const HomePagePlaceholder(),
+      ),
+      if (kIsWeb)
+        GoRoute(
+          path: '/callback',
+          name: 'callback',
+          builder: (_, state) => _CallbackHandler(callbackUri: state.uri),
+        ),
+    ],
+  );
+});
 
 /// Stand-in for the dashboard until the real home feature lands.
 /// Public so widget tests can mount the logout flow without spinning
@@ -71,15 +91,11 @@ class HomePagePlaceholder extends ConsumerWidget {
             showAuthFailure(context, error);
           }
         },
-        data: (_) {
-          // After logout the AuthService has cleared the session, so the
-          // home page is no longer valid for this user. Bounce to /login.
-          if (prev is AsyncLoading) {
-            context.go('/login');
-          }
-        },
       );
     });
+    // Note: success-path navigation to /login is handled by the
+    // router's redirect (US-01-03). AuthService publishes the auth
+    // flip; refreshListenable picks it up and bounces protected routes.
 
     return Scaffold(
       appBar: AppBar(

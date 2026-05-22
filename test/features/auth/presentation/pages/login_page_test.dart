@@ -1,6 +1,7 @@
 import 'package:custodiam/features/auth/presentation/pages/login_page.dart';
 import 'package:custodiam/features/auth/presentation/viewmodels/auth_di.dart';
 import 'package:custodiam/infrastructure/auth/auth_service.dart';
+import 'package:custodiam/infrastructure/di/providers.dart';
 import 'package:custodiam/infrastructure/error/failure.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter/material.dart';
@@ -137,6 +138,58 @@ void main() {
         expect(find.byType(SnackBar), findsOneWidget);
         expect(find.textContaining('(503)'), findsOneWidget);
         expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'shows the "sesión expirada" snackbar when AuthService.consumeExpiredFlag '
+      'returns true on mount (US-01-03)',
+      (tester) async {
+        final expiredAuth = _MockAuthService();
+        when(() => expiredAuth.consumeExpiredFlag()).thenReturn(true);
+        when(() => expiredAuth.authStateListenable)
+            .thenReturn(ValueNotifier(false));
+
+        await pumpRiverpod(
+          tester,
+          const LoginPage(),
+          wrapInScaffold: false,
+          overrides: [
+            authServiceForViewModelProvider.overrideWithValue(auth),
+            authServiceProvider.overrideWithValue(expiredAuth),
+          ],
+        );
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(
+          find.textContaining('Tu sesión ha expirado'),
+          findsOneWidget,
+        );
+        // Warning variant uses the warning_amber_outlined icon.
+        expect(find.byIcon(Icons.warning_amber_outlined), findsOneWidget);
+        verify(() => expiredAuth.consumeExpiredFlag()).called(1);
+      },
+    );
+
+    testWidgets(
+      'does NOT show the expired snackbar when consumeExpiredFlag returns false',
+      (tester) async {
+        final freshAuth = _MockAuthService();
+        when(() => freshAuth.consumeExpiredFlag()).thenReturn(false);
+        when(() => freshAuth.authStateListenable)
+            .thenReturn(ValueNotifier(false));
+
+        await pumpRiverpod(
+          tester,
+          const LoginPage(),
+          wrapInScaffold: false,
+          overrides: [
+            authServiceForViewModelProvider.overrideWithValue(auth),
+            authServiceProvider.overrideWithValue(freshAuth),
+          ],
+        );
+
+        expect(find.byType(SnackBar), findsNothing);
       },
     );
   });

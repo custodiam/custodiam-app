@@ -98,7 +98,7 @@ void main() {
     );
 
     testWidgets(
-      'confirming the dialog calls AuthService.logout and routes to /login',
+      'confirming the dialog calls AuthService.logout exactly once',
       (tester) async {
         await _pumpHome(tester, auth: auth);
 
@@ -113,7 +113,9 @@ void main() {
         await tester.pumpAndSettle();
 
         verify(() => auth.logout()).called(1);
-        expect(find.text('LOGIN_SCREEN'), findsOneWidget);
+        // The post-logout bounce to /login is owned by the
+        // routerProvider's redirect (US-01-03); it's covered in a
+        // dedicated test, not here.
       },
     );
 
