@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Universal Links verificados (EN-08-20). El sistema iOS valida -->
+	<!-- al instalar la app que https://app.custodiam.es sirve un fichero -->
+	<!-- /.well-known/apple-app-site-association firmado y con el Team ID -->
+	<!-- + Bundle ID correctos. Sin ese fichero los links HTTPS abren -->
+	<!-- Safari en lugar de la app. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:app.custodiam.es</string>
+	</array>
+</dict>
+</plist>
