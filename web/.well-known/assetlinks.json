@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "es.custodiam.app",
+      "sha256_cert_fingerprints": [
+        "97:53:CD:0B:7F:58:33:55:11:62:75:9F:9D:B8:87:5A:9D:DB:C3:A9:77:7C:E2:BA:81:44:C0:0C:1C:6F:84:13",
+        "50:77:8E:2D:91:F6:70:D5:DC:0F:5D:39:87:5C:EA:F4:66:F1:71:BB:19:B7:BD:F4:2B:27:FC:69:24:28:16:98"
+      ]
+    }
+  }
+]
