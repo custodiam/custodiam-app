@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "585400881584",
+    "project_id": "custodiam",
+    "storage_bucket": "custodiam.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:585400881584:android:bd74e81889f76fd2f08675",
+        "android_client_info": {
+          "package_name": "es.custodiam.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBw2DfGsfG9trg7iPGNDe6LqaNHCJDnPR8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
