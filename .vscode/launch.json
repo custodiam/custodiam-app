@@ -1,0 +1,41 @@
+{
+  // Debug launchers for the Flutter app. Pick one in VS Code's
+  // "Run and Debug" dropdown.
+  //
+  // Local profile uses the Docker stack running on the developer
+  // machine; tunnel profile hits the public Cloudflare Tunnel. The
+  // adb-reverse pre-launch tasks ensure the device localhost
+  // forwarding matches the chosen profile (added on local, removed
+  // on tunnel so leftover forwards do not interfere with real DNS).
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Local Docker stack on the developer machine. adb reverse
+      // makes the device's localhost:8080 (Keycloak) and
+      // localhost:8000 (FastAPI) resolve to the host machine, so
+      // the in-browser Keycloak login at localhost:8080 works
+      // through the USB cable. EnvConfig defaults (localhost URLs)
+      // take effect.
+      "name": "Flutter (Local + adb reverse)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "preLaunchTask": "adb-reverse-up"
+    },
+    {
+      // Public Cloudflare Tunnel. Clears any leftover adb reverse so
+      // the device uses real DNS, then injects the public URLs via
+      // --dart-define so EnvConfig points at the tunnelled services
+      // (auth.custodiam.es and api.custodiam.es).
+      "name": "Flutter (Tunnel — *.custodiam.es)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "preLaunchTask": "adb-reverse-down",
+      "toolArgs": [
+        "--dart-define=API_BASE_URL=https://api.custodiam.es/api/v1",
+        "--dart-define=KEYCLOAK_BASE_URL=https://auth.custodiam.es"
+      ]
+    }
+  ]
+}

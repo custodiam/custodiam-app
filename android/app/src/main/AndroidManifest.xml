@@ -2,7 +2,8 @@
     <application
         android:label="custodiam"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:forceDarkAllowed="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -24,6 +25,36 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- Deep link: OAuth callback (Keycloak login) -->
+            <!-- ⚠️ Custom scheme SOLO para OAuth. Para emails y notificaciones -->
+            <!-- se usarán App Links verificados (HTTPS) — ver EN-08-20 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="es.custodiam" android:host="callback" />
+            </intent-filter>
+
+            <!-- Deep link: OAuth logout (Keycloak) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="es.custodiam" android:host="logout" />
+            </intent-filter>
+
+            <!-- App Links HTTPS verificados (EN-08-20). -->
+            <!-- autoVerify=true exige que /.well-known/assetlinks.json del -->
+            <!-- dominio app.custodiam.es declare este package_name + el SHA-256 -->
+            <!-- de la signing key (Play App Signing). Sin ese archivo Android -->
+            <!-- mostrará el chooser de apps en lugar de abrir directamente. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="app.custodiam.es" />
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
@@ -40,6 +71,11 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Para url_launcher: abrir navegador OAuth -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>

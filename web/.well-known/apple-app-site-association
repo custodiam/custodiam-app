@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["3WF4S4G8T2.es.custodiam.app"],
+        "paths": [
+          "/servicio/*",
+          "/emergencia/*",
+          "/reset-password",
+          "/verify-email"
+        ]
+      }
+    ]
+  }
+}
