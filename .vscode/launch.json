@@ -2,39 +2,46 @@
   // Debug launchers for the Flutter app. Pick one in VS Code's
   // "Run and Debug" dropdown.
   //
-  // Local profile uses the Docker stack running on the developer
-  // machine; tunnel profile hits the public Cloudflare Tunnel. The
-  // adb-reverse pre-launch tasks ensure the device localhost
-  // forwarding matches the chosen profile (added on local, removed
-  // on tunnel so leftover forwards do not interfere with real DNS).
+  // Both configs consume the env-specific JSON files in custodiam-app/config/
+  // via --dart-define-from-file (Flutter 3.7+). The same files are used by
+  // `just dev` / `just prod` (see justfile) and by the CI when building the
+  // web image (see Dockerfile). Single source of truth for env URLs.
+  //
+  // The adb-reverse pre-launch tasks ensure the device localhost forwarding
+  // matches the chosen profile (added on dev, removed on prod so leftover
+  // forwards do not interfere with real DNS).
+  //
+  // For release builds against prod, use `just prod` from the terminal —
+  // F5 launches in debug mode so breakpoints work; --release strips them.
   "version": "0.2.0",
   "configurations": [
     {
-      // Local Docker stack on the developer machine. adb reverse
-      // makes the device's localhost:8080 (Keycloak) and
-      // localhost:8000 (FastAPI) resolve to the host machine, so
-      // the in-browser Keycloak login at localhost:8080 works
-      // through the USB cable. EnvConfig defaults (localhost URLs)
-      // take effect.
-      "name": "Flutter (Local + adb reverse)",
+      // Local Docker stack on the developer machine. adb reverse makes
+      // the device's localhost:8080 (Keycloak) and localhost:8000
+      // (FastAPI) resolve to the host machine, so the in-browser
+      // Keycloak login at localhost:8080 works through the USB cable.
+      // EnvConfig values come from config/dev.json.
+      "name": "Flutter — Dev (Docker local + adb reverse)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
-      "preLaunchTask": "adb-reverse-up"
+      "preLaunchTask": "adb-reverse-up",
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json"
+      ]
     },
     {
-      // Public Cloudflare Tunnel. Clears any leftover adb reverse so
-      // the device uses real DNS, then injects the public URLs via
-      // --dart-define so EnvConfig points at the tunnelled services
-      // (auth.custodiam.es and api.custodiam.es).
-      "name": "Flutter (Tunnel — *.custodiam.es)",
+      // Public cloud stack (Cloudflare Tunnel + Keycloak hardened).
+      // Clears any leftover adb reverse so the device uses real DNS,
+      // then injects the public URLs via config/prod.json so EnvConfig
+      // points at auth.custodiam.es and api.custodiam.es.
+      "name": "Flutter — Prod (cloud público)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "preLaunchTask": "adb-reverse-down",
       "toolArgs": [
-        "--dart-define=API_BASE_URL=https://api.custodiam.es/api/v1",
-        "--dart-define=KEYCLOAK_BASE_URL=https://auth.custodiam.es"
+        "--dart-define-from-file=config/prod.json"
       ]
     }
   ]
