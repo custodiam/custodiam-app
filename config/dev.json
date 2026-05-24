@@ -1,0 +1,4 @@
+{
+  "API_BASE_URL": "http://localhost:8000/api/v1",
+  "KEYCLOAK_BASE_URL": "http://localhost:8080"
+}
