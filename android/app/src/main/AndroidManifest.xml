@@ -1,9 +1,21 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Network access for release builds (debug/profile inherit from their
+         own manifest fragments; main applies to release). Without this the
+         app cannot resolve hostnames in release: tokens, API calls, push,
+         etc. fail with "Failed host lookup". -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:label="custodiam"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:forceDarkAllowed="false">
+        android:forceDarkAllowed="false"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        tools:replace="android:allowBackup">
         <activity
             android:name=".MainActivity"
             android:exported="true"
