@@ -1,7 +1,11 @@
-// OIDC AuthService backed by oauth2.AuthorizationCodeGrant against
-// Keycloak. Handles PKCE automatically (no client secret), persists
-// credentials via TokenStore and exposes mobile / web flows behind
-// the same Result<T>-returning surface. See guide 25 §6.
+// OIDC AuthService for Android and iOS, backed by
+// oauth2.AuthorizationCodeGrant against Keycloak. Handles PKCE
+// automatically (no client secret), persists credentials via
+// TokenStore and captures the OAuth callback via deep link.
+//
+// The web counterpart lives in keycloak_web_auth_service.dart; the
+// providers.dart factory selects one or the other by kIsWeb. See
+// guide 25 §6.A and ADR-023.
 
 import 'dart:async';
 import 'dart:developer' as dev;
@@ -21,7 +25,7 @@ import 'jwt_claims.dart';
 import 'keycloak_config.dart';
 import 'token_store.dart';
 
-class KeycloakAuthService implements AuthService {
+class KeycloakMobileAuthService implements AuthService {
   final TokenStore _tokenStore;
   final AppLinks _appLinks;
   final http.Client _httpClient;
@@ -40,7 +44,7 @@ class KeycloakAuthService implements AuthService {
   String? _memoizedToken;
   CurrentUser? _memoizedUser;
 
-  KeycloakAuthService({
+  KeycloakMobileAuthService({
     required TokenStore tokenStore,
     AppLinks? appLinks,
     http.Client? httpClient,

@@ -1,7 +1,8 @@
 // Auth service contract consumed by SplashPage's startup use case and
 // any feature that needs to know whether there is a live session or
-// drive login / logout. The only production implementation is
-// KeycloakAuthService — a real OIDC client wired to Keycloak.
+// drive login / logout. Production implementations are
+// KeycloakMobileAuthService (Android + iOS) and KeycloakWebAuthService
+// (PWA), selected by kIsWeb in providers.dart — see ADR-023.
 //
 // All operations that can fail return Result<T>; nothing throws
 // cross-layer (guide 26 §4).
