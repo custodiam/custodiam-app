@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:custodiam/app/app.dart';
 import 'package:custodiam/features/splash/presentation/pages/splash_page.dart';
 import 'package:custodiam/infrastructure/auth/auth_service.dart';
+import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/di/providers.dart';
 import 'package:custodiam/infrastructure/error/failure.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
@@ -22,6 +23,9 @@ class _InMemoryAuthService implements AuthService {
 
   @override
   String? get accessToken => null;
+
+  @override
+  CurrentUser? get currentUser => null;
 
   @override
   Listenable get authStateListenable => _authNotifier;

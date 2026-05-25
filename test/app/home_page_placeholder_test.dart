@@ -9,6 +9,7 @@ import 'package:custodiam/core/ui/buttons/app_destructive_button.dart';
 import 'package:custodiam/core/ui/theme/app_theme.dart';
 import 'package:custodiam/features/auth/presentation/viewmodels/auth_di.dart';
 import 'package:custodiam/infrastructure/auth/auth_service.dart';
+import 'package:custodiam/infrastructure/di/providers.dart';
 import 'package:custodiam/infrastructure/error/failure.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,11 @@ Future<void> _pumpHome(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        // AppPermissionGate reads the global provider; the auth view
+        // model reads the feature-local wrapper. Override both with
+        // the same mock so currentUser, isAuthenticated and logout
+        // come from a single source of truth in tests.
+        authServiceProvider.overrideWithValue(auth),
         authServiceForViewModelProvider.overrideWithValue(auth),
       ],
       child: MaterialApp.router(
@@ -58,6 +64,10 @@ void main() {
     setUp(() {
       auth = _MockAuthService();
       when(() => auth.logout()).thenAnswer((_) async => const Success(null));
+      // The home reads currentUser to greet the user; the gate reads it
+      // to decide visibility. Default to "no session" so existing
+      // logout-flow tests do not depend on permission state.
+      when(() => auth.currentUser).thenReturn(null);
     });
 
     testWidgets(

@@ -9,6 +9,7 @@
 import 'package:flutter/foundation.dart' show Listenable;
 
 import '../error/result.dart';
+import 'current_user.dart';
 
 abstract class AuthService {
   /// Restore persisted session and prepare listeners. Called from
@@ -21,6 +22,15 @@ abstract class AuthService {
   /// Current access token. May be expired — use [getValidAccessToken]
   /// when the caller needs a guaranteed-valid token.
   String? get accessToken;
+
+  /// Snapshot of the authenticated user decoded from the current access
+  /// token, or null if there is no session. Cheap to call: implementations
+  /// memoize the parse against the active token.
+  ///
+  /// Consumers reading this from a widget should still wrap themselves in
+  /// a ConsumerWidget that depends on a Riverpod provider observing
+  /// [authStateListenable], so the UI rebuilds on login / logout.
+  CurrentUser? get currentUser;
 
   /// Notifies when the authentication state flips between authenticated
   /// and unauthenticated (login, logout, restore, refresh failure that

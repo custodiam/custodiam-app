@@ -16,6 +16,8 @@ import '../../core/config/env_config.dart';
 import '../error/failure.dart';
 import '../error/result.dart';
 import 'auth_service.dart';
+import 'current_user.dart';
+import 'jwt_claims.dart';
 import 'keycloak_config.dart';
 import 'token_store.dart';
 
@@ -31,6 +33,13 @@ class KeycloakAuthService implements AuthService {
   StreamSubscription<Uri>? _linkSubscription;
   Completer<Uri>? _callbackCompleter;
 
+  // Memoization: parse the JWT only when the access token changes.
+  // Parsing is base64 + JSON of a ~1 KB blob, so it is cheap, but
+  // currentUser is read from every ConsumerWidget that gates on
+  // permissions — avoiding the repeated parse keeps UI builds snappy.
+  String? _memoizedToken;
+  CurrentUser? _memoizedUser;
+
   KeycloakAuthService({
     required TokenStore tokenStore,
     AppLinks? appLinks,
@@ -45,6 +54,21 @@ class KeycloakAuthService implements AuthService {
 
   @override
   String? get accessToken => _client?.credentials.accessToken;
+
+  @override
+  CurrentUser? get currentUser {
+    final token = accessToken;
+    if (token == null) {
+      _memoizedToken = null;
+      _memoizedUser = null;
+      return null;
+    }
+    if (token != _memoizedToken) {
+      _memoizedToken = token;
+      _memoizedUser = currentUserFromToken(token);
+    }
+    return _memoizedUser;
+  }
 
   @override
   Listenable get authStateListenable => _authNotifier;

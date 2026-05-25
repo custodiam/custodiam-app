@@ -1,6 +1,7 @@
 import 'package:custodiam/core/ui/theme/app_theme.dart';
 import 'package:custodiam/features/splash/presentation/pages/splash_page.dart';
 import 'package:custodiam/infrastructure/auth/auth_service.dart';
+import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/di/providers.dart';
 import 'package:custodiam/infrastructure/error/failure.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
@@ -25,6 +26,11 @@ class _FakeAuthService implements AuthService {
 
   @override
   String? get accessToken => _authenticated ? 'fake-token' : null;
+
+  @override
+  CurrentUser? get currentUser => _authenticated
+      ? const CurrentUser(sub: 'fake-sub', email: 'fake@custodiam.es')
+      : null;
 
   @override
   Listenable get authStateListenable => _authNotifier;

@@ -7,6 +7,7 @@
 import 'package:custodiam/app/router.dart';
 import 'package:custodiam/core/ui/theme/app_theme.dart';
 import 'package:custodiam/infrastructure/auth/auth_service.dart';
+import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/di/providers.dart';
 import 'package:custodiam/infrastructure/error/failure.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
@@ -40,6 +41,10 @@ class _ToggleAuthService implements AuthService {
 
   @override
   String? get accessToken => _authenticated ? 'tk' : null;
+
+  @override
+  CurrentUser? get currentUser =>
+      _authenticated ? const CurrentUser(sub: 'tk-sub', email: 't@b.com') : null;
 
   @override
   Listenable get authStateListenable => _notifier;
