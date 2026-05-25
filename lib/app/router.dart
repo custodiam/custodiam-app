@@ -24,13 +24,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/ui/auth/app_permission_gate.dart';
 import '../core/ui/feedback/app_confirm_dialog.dart';
+import '../core/ui/feedback/app_snackbar.dart';
 import '../features/auth/presentation/pages/login_page.dart';
+import '../features/auth/presentation/viewmodels/auth_di.dart';
 import '../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../features/auth/presentation/widgets/auth_failure_feedback.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
 import '../infrastructure/auth/keycloak_auth_service.dart';
+import '../infrastructure/auth/permissions.dart';
 import '../infrastructure/di/providers.dart';
 import '../infrastructure/error/failure.dart';
 
@@ -103,10 +107,33 @@ class HomePagePlaceholder extends ConsumerWidget {
     // router's redirect (US-01-03). AuthService publishes the auth
     // flip; refreshListenable picks it up and bounces protected routes.
 
+    // Read currentUser from the feature-local wrapper so tests can
+    // override the auth source by overriding a single provider.
+    final user = ref.watch(authServiceForViewModelProvider).currentUser;
+    final greeting = user?.fullName.isNotEmpty == true
+        ? 'Hola, ${user!.fullName}'
+        : 'Hola';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Custodiam'),
         actions: [
+          // Demo de UI condicional (US-01-04): el botón de "Voluntarios"
+          // solo aparece para quien tiene voluntarios.listar — ver
+          // matriz en docs/trabajo/backlog/RBAC_v0.1.0.md.
+          AppPermissionGate(
+            permission: Permission.voluntariosListar,
+            child: IconButton(
+              key: const ValueKey('home_voluntarios_button'),
+              tooltip: 'Voluntarios',
+              icon: const Icon(Icons.people_outline),
+              onPressed: () => AppSnackbar.show(
+                context,
+                message: 'Módulo de voluntarios — pendiente (Sprint 4)',
+                variant: AppSnackbarVariant.info,
+              ),
+            ),
+          ),
           IconButton(
             tooltip: 'Ajustes',
             icon: const Icon(Icons.settings_outlined),
@@ -140,20 +167,62 @@ class HomePagePlaceholder extends ConsumerWidget {
           ),
         ],
       ),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.shield, size: 64),
-            SizedBox(height: 16),
-            Text(
+            const Icon(Icons.shield, size: 64),
+            const SizedBox(height: 16),
+            const Text(
               'Custodiam',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
-            Text('Protección Civil — MVP en desarrollo'),
+            const SizedBox(height: 8),
+            Text(greeting),
+            const SizedBox(height: 8),
+            const Text('Protección Civil — MVP en desarrollo'),
+            const SizedBox(height: 24),
+            // Banner solo visible para mandos altos / coordinador.
+            const AppPermissionGate.anyOf(
+              anyOf: [
+                Permission.serviciosCrearEmergencia,
+                Permission.serviciosConvocar,
+              ],
+              child: _ComandoOperativoBanner(),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ComandoOperativoBanner extends StatelessWidget {
+  const _ComandoOperativoBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      key: const ValueKey('home_comando_banner'),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.notifications_active_outlined, color: scheme.onPrimaryContainer),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              'Tienes capacidad de mando operativo activa.',
+              style: TextStyle(color: scheme.onPrimaryContainer),
+            ),
+          ),
+        ],
       ),
     );
   }

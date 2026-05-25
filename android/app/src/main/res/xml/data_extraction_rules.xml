@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Reglas de extracción de datos (Android 12+, API 31+).
+  Reemplaza android:fullBackupContent / android:allowBackup en SDKs modernos.
+
+  Deny-all explícito para todas las rutas: ni cloud-backup (Google Drive
+  Auto-Backup) ni device-to-device transfer (al cambiar de móvil)
+  preservan datos de la app. Esto evita el bug clásico de
+  flutter_secure_storage: las claves AES viven en Android Keystore atadas
+  al UID de la app, pero EncryptedSharedPreferences en /data/data
+  puede ser respaldado/restaurado independientemente. Al reinstalar
+  con UID distinto, las preferences cifradas existen pero no se pueden
+  descifrar — el plugin lanza una excepción al primer read/write y la
+  app reporta un error genérico.
+
+  La app es offline-friendly: la persistencia útil (tokens OIDC, theme)
+  se reconstruye al primer arranque (login + setting). No hay valor en
+  respaldar credenciales que el usuario reintroducirá en 30 segundos.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>
