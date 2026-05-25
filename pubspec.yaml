@@ -4,7 +4,9 @@ publish_to: 'none'
 version: 0.1.0+1
 
 environment:
-  sdk: ^3.6.0
+  # SP-08 (spike Patrol): subido de ^3.6.0 a ^3.8.0 — requisito de patrol 4.x.
+  # Si el spike concluye NO-GO esta línea vuelve a ^3.6.0.
+  sdk: ^3.8.0
 
 dependencies:
   flutter:
@@ -60,6 +62,12 @@ dev_dependencies:
   mocktail: ^1.0.4
   json_serializable: ^6.8.0
   build_runner: ^2.4.0
+
+  # SP-08 (spike Patrol como reemplazo de integration_test): testing E2E
+  # unificado para mobile + web. Si el spike concluye NO-GO estas dos
+  # líneas se eliminan.
+  patrol: ^4.6.0
+  patrol_finders: ^3.4.0
 
 flutter:
   uses-material-design: true
