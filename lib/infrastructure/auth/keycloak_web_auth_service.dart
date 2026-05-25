@@ -74,11 +74,11 @@ class KeycloakWebAuthService implements AuthService {
 
   KeycloakWebAuthService({
     required TokenStore tokenStore,
-    SessionStorageGateway? sessionStorage,
+    required SessionStorageGateway sessionStorage,
     http.Client? httpClient,
     WebUrlLauncher? launcher,
   })  : _tokenStore = tokenStore,
-        _sessionStorage = sessionStorage ?? const WebSessionStorageGateway(),
+        _sessionStorage = sessionStorage,
         _httpClient = httpClient ?? http.Client(),
         _launcher = launcher ?? _defaultLauncher;
 

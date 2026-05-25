@@ -18,13 +18,22 @@ import '../auth/keycloak_mobile_auth_service.dart';
 import '../auth/keycloak_web_auth_service.dart';
 import '../auth/token_store.dart';
 import '../network/api_client.dart';
+// Conditional import: on web targets we get the real
+// WebSessionStorageGateway backed by package:web; on VM (unit tests)
+// and mobile we get a stub that compiles but is never reached at
+// runtime because the kIsWeb guard below blocks the only callsite.
+import '../auth/web_session_storage_gateway_stub.dart'
+    if (dart.library.js_interop) '../auth/web_session_storage_gateway.dart';
 
 final tokenStoreProvider = Provider<TokenStore>((ref) => TokenStore());
 
 final authServiceProvider = Provider<AuthService>((ref) {
   final tokenStore = ref.watch(tokenStoreProvider);
   if (kIsWeb) {
-    return KeycloakWebAuthService(tokenStore: tokenStore);
+    return KeycloakWebAuthService(
+      tokenStore: tokenStore,
+      sessionStorage: const WebSessionStorageGateway(),
+    );
   }
   return KeycloakMobileAuthService(tokenStore: tokenStore);
 });

@@ -6,12 +6,16 @@
 // Three operations are exposed: read, write, remove. Failure modes
 // (sessionStorage disabled, private mode quotas, security errors) all
 // surface as exceptions; callers translate them into the appropriate
-// AuthFailure. Existence checks should go through readAvailable() so
-// the caller can decide what to do without catching.
+// AuthFailure. Existence checks should go through isAvailable() so the
+// caller can decide what to do without catching.
+//
+// Important: this file MUST NOT import package:web. That package is
+// web-only and breaks Dart VM compilation, which is what hosts the
+// unit-test suite. The real WebSessionStorageGateway lives in
+// web_session_storage_gateway.dart and is loaded conditionally from
+// providers.dart via `if (dart.library.js_interop)`.
 //
 // See guide 25 v0.4.0 §6.B and §12.A, ADR-023.
-
-import 'package:web/web.dart' as web;
 
 /// Contract used by KeycloakWebAuthService.
 abstract class SessionStorageGateway {
@@ -27,36 +31,6 @@ abstract class SessionStorageGateway {
 
   /// Removes the entry under [key]. No-op if missing.
   void remove(String key);
-}
-
-/// Default production implementation backed by package:web. Only safe
-/// to instantiate when kIsWeb is true; on mobile builds the constructor
-/// compiles but the underlying calls fail at runtime (the providers.dart
-/// factory guards this).
-class WebSessionStorageGateway implements SessionStorageGateway {
-  const WebSessionStorageGateway();
-
-  @override
-  bool isAvailable() {
-    const probeKey = '__custodiam_probe__';
-    try {
-      web.window.sessionStorage.setItem(probeKey, '1');
-      web.window.sessionStorage.removeItem(probeKey);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  @override
-  String? read(String key) => web.window.sessionStorage.getItem(key);
-
-  @override
-  void write(String key, String value) =>
-      web.window.sessionStorage.setItem(key, value);
-
-  @override
-  void remove(String key) => web.window.sessionStorage.removeItem(key);
 }
 
 /// In-memory implementation used by tests to drive the 4 DoD scenarios
