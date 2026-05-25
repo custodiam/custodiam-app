@@ -49,5 +49,10 @@ void showAuthFailure(BuildContext context, AuthFailure failure) {
         'El servidor de autenticación devolvió un error ($statusCode). '
             'Inténtalo de nuevo en unos minutos.',
       ),
+    SessionStorageUnavailable() => (
+        AppSnackbarVariant.warning,
+        'Tu navegador tiene el almacenamiento de sesión deshabilitado. '
+            'Habilítalo en la configuración del navegador para iniciar sesión.',
+      ),
   };
 }
