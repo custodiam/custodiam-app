@@ -22,6 +22,8 @@ sealed class AuthFailure extends Failure {
   const factory AuthFailure.browserError() = BrowserError;
   const factory AuthFailure.networkError() = AuthNetworkError;
   const factory AuthFailure.serverError(int statusCode) = AuthServerError;
+  const factory AuthFailure.sessionStorageUnavailable() =
+      SessionStorageUnavailable;
 }
 
 final class InvalidCredentials extends AuthFailure {
@@ -51,6 +53,13 @@ final class AuthNetworkError extends AuthFailure {
 final class AuthServerError extends AuthFailure {
   final int statusCode;
   const AuthServerError(this.statusCode) : super('Error del servidor');
+}
+
+final class SessionStorageUnavailable extends AuthFailure {
+  const SessionStorageUnavailable()
+      : super('El navegador tiene el almacenamiento de sesión '
+            'deshabilitado. Habilítalo en la configuración del navegador '
+            'para iniciar sesión.');
 }
 
 // ── Network ──────────────────────────────────────────────────────────

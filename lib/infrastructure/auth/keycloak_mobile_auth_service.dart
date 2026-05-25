@@ -11,7 +11,7 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:app_links/app_links.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show Listenable, ValueNotifier;
 import 'package:http/http.dart' as http;
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:url_launcher/url_launcher.dart';
@@ -87,9 +87,7 @@ class KeycloakMobileAuthService implements AuthService {
   @override
   Future<void> init() async {
     await _restore();
-    if (!kIsWeb) {
-      _setupDeepLinkListener();
-    }
+    _setupDeepLinkListener();
   }
 
   Future<void> _restore() async {
@@ -156,13 +154,6 @@ class KeycloakMobileAuthService implements AuthService {
     );
 
     try {
-      if (kIsWeb) {
-        final opened =
-            await launchUrl(authUrl, webOnlyWindowName: '_self');
-        if (!opened) return const Fail(AuthFailure.browserError());
-        return const Success(null);
-      }
-
       _callbackCompleter = Completer<Uri>();
       final opened =
           await launchUrl(authUrl, mode: LaunchMode.externalApplication);
@@ -192,24 +183,6 @@ class KeycloakMobileAuthService implements AuthService {
         stackTrace: stack,
       );
       return const Fail(AuthFailure.networkError());
-    }
-  }
-
-  /// Process the OAuth callback on web. Called from the `/callback`
-  /// route handler in lib/app/router.dart.
-  Future<Result<void>> handleWebCallback(Uri callbackUri) async {
-    if (_pendingGrant == null) {
-      return const Fail(AuthFailure.refreshFailed());
-    }
-    try {
-      _client = await _pendingGrant!
-          .handleAuthorizationResponse(callbackUri.queryParameters);
-      _pendingGrant = null;
-      await _save();
-      return const Success(null);
-    } on oauth2.AuthorizationException catch (e) {
-      dev.log('Invalid callback: ${e.description}', name: 'Auth');
-      return const Fail(AuthFailure.invalidCredentials());
     }
   }
 

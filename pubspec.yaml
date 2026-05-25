@@ -25,6 +25,9 @@ dependencies:
   url_launcher: ^6.3.1
   app_links: ^6.3.3
 
+  # Web APIs binding (sessionStorage para code_verifier PKCE en SPA — EN-08-34 / ADR-023)
+  web: ^1.1.0
+
   # Preferencias locales (feature settings — EN-08-25)
   shared_preferences: ^2.5.4
 
