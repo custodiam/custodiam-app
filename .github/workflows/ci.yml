@@ -81,10 +81,12 @@ jobs:
         # --disable-dev-shm-usage avoids the small /dev/shm allocation
         # crashing the browser when there are many open pages.
         run: |
-          patrol test --verbose \
+          patrol test \
             --target patrol_test/web/ \
             --device chrome \
             --web-headless=true \
+            --web-locale=es-ES \
+            --web-timezone=Europe/Madrid \
             --web-browser-args='["--no-sandbox", "--disable-dev-shm-usage"]'
 
       - name: Upload Playwright report
