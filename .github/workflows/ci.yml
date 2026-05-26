@@ -4,7 +4,11 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main]
+    # Ampliado a `develop` para que el job `patrol-web` (EN-08-35) proteja
+    # las PRs antes del merge a `develop`, no solo las promociones a
+    # `main`. La PR de promoción `develop -> main` sigue cubierta porque
+    # `main` está en la lista.
+    branches: [main, develop]
 
 jobs:
   test:
