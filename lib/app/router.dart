@@ -56,22 +56,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         name: 'splash',
-        builder: (_, __) => const SplashPage(),
+        builder: (_, _) => const SplashPage(),
       ),
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (_, __) => const LoginPage(),
+        builder: (_, _) => const LoginPage(),
       ),
       GoRoute(
         path: '/home',
         name: 'home',
-        builder: (_, __) => const HomePagePlaceholder(),
+        builder: (_, _) => const HomePagePlaceholder(),
       ),
       GoRoute(
         path: '/settings',
         name: 'settings',
-        builder: (_, __) => const SettingsPage(),
+        builder: (_, _) => const SettingsPage(),
       ),
       if (kIsWeb)
         GoRoute(

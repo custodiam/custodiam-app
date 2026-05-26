@@ -1,11 +1,21 @@
-// Mock-server-backed tests for KeycloakMobileAuthService — guía 22 §5.
+// Mock-server-backed tests for KeycloakMobileAuthService — guía 36 §5.
+//
+// Lives under `patrol_test/auth/` (not `test/`) by convention: this is
+// the only test in the project that requires a running external service
+// (the mock OIDC server). Pure unit + widget tests stay in `test/`.
+// The body uses plain `flutter_test` (no `patrolTest`) because there is
+// no UI to drive — it exercises the auth service against a live HTTP
+// endpoint, not a browser. EN-08-35 moved it from
+// `test/infrastructure/auth/` so the directory split mirrors how it is
+// run (manual + integration vs. ubiquitous `flutter test`).
 //
 // Run requirements:
 //   1. docker compose --profile test up -d mock-oidc   (custodiam-infra)
-//   2. MOCK_OIDC_URL=http://localhost:8888 flutter test test/infrastructure/auth/
+//   2. MOCK_OIDC_URL=http://localhost:8888 \
+//      flutter test patrol_test/auth/
 //
 // Without MOCK_OIDC_URL set, every test in this file is skipped so a
-// plain `flutter test` keeps green.
+// plain `flutter test patrol_test/auth/` keeps green.
 //
 // Trick that keeps the production code untouched: `oauth2.Credentials`
 // serialises its `tokenEndpoint` inside the JSON blob persisted by

@@ -4,34 +4,104 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main]
+    # Ampliado a `develop` para que el job `patrol-web` (EN-08-35) proteja
+    # las PRs antes del merge a `develop`, no solo las promociones a
+    # `main`. La PR de promoción `develop -> main` sigue cubierta porque
+    # `main` está en la lista.
+    branches: [main, develop]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
-      
+
       - name: Install dependencies
         run: flutter pub get
-      
+
       - name: Analyze
         run: flutter analyze
-      
+
       - name: Test
         run: flutter test --coverage
-      
+
       - name: Build Web
         run: flutter build web
 
+  patrol-web:
+    # EN-08-35 / ADR-024: end-to-end web tests under real Chromium via
+    # Patrol + Playwright. Runs in parallel with `test`; both must
+    # pass before `build-docker` triggers on main.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Activate patrol_cli
+        run: dart pub global activate patrol_cli
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install Chromium system dependencies for Playwright
+        # `patrol_cli` 4.4 hardcodes `npx playwright install` (no --with-deps)
+        # inside its web_runner/, so the Chromium binary it downloads can't
+        # find the OS libraries it needs on a vanilla Ubuntu runner (libnss3,
+        # libxshmfence1, libgbm1, libxkbcommon-x11-0, libatspi2.0-0, ...).
+        # `playwright install-deps` only installs those .deb's via apt — no
+        # browser binary download — so we don't shadow what Patrol does next.
+        # See `web_test_backend.dart` lines 706-744 in patrol_cli-4.4.0 for
+        # the exact subprocess Patrol runs.
+        run: sudo npx --yes playwright@latest install-deps chromium
+
+      - name: Patrol doctor
+        run: patrol doctor
+
+      - name: Run Patrol web tests
+        # --web-browser-args expects a JSON array of strings (see
+        # patrol_cli/lib/src/runner/patrol_command.dart line 373). Passing
+        # a space-separated string makes Playwright's config.ts fail with
+        # `SyntaxError: No number after minus sign in JSON` and report
+        # `Total: 0` in 1 second without ever launching the browser.
+        # The flags themselves: --no-sandbox lets Chromium run without
+        # user namespaces (mandatory on GitHub-hosted Ubuntu runners),
+        # --disable-dev-shm-usage avoids the small /dev/shm allocation
+        # crashing the browser when there are many open pages.
+        run: |
+          patrol test \
+            --target patrol_test/web/ \
+            --device chrome \
+            --web-headless=true \
+            --web-locale=es-ES \
+            --web-timezone=Europe/Madrid \
+            --web-browser-args='["--no-sandbox", "--disable-dev-shm-usage"]'
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
   build-docker:
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, patrol-web]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
