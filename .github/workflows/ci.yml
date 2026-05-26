@@ -71,11 +71,13 @@ jobs:
         run: patrol doctor
 
       - name: Run Patrol web tests
+        # --verbose for now while EN-08-35 first run is being diagnosed
+        # in CI; will be removed once the path is stable.
         # --no-sandbox is the standard flag for Chromium running in
         # GitHub Actions Ubuntu runners. --disable-dev-shm-usage avoids
         # the small /dev/shm allocation crashing the browser.
         run: |
-          patrol test \
+          patrol test --verbose \
             --target patrol_test/web/ \
             --device chrome \
             --web-headless=true \
