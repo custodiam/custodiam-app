@@ -56,14 +56,16 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Install Playwright + Chromium with Linux system deps
-        # Patrol's web_runner ships package.json + playwright.config.ts but
-        # `patrol test` only runs `npm install` and `npx playwright install`
-        # WITHOUT --with-deps, so the headless Chromium fails silently on
-        # Ubuntu runners (missing libnss3, libxshmfence1, libgbm1, etc.).
-        # Pre-installing here with --with-deps puts the right .deb's on the
-        # system before `patrol test` invokes the browser.
-        run: npx --yes playwright@latest install --with-deps chromium
+      - name: Install Chromium system dependencies for Playwright
+        # `patrol_cli` 4.4 hardcodes `npx playwright install` (no --with-deps)
+        # inside its web_runner/, so the Chromium binary it downloads can't
+        # find the OS libraries it needs on a vanilla Ubuntu runner (libnss3,
+        # libxshmfence1, libgbm1, libxkbcommon-x11-0, libatspi2.0-0, ...).
+        # `playwright install-deps` only installs those .deb's via apt — no
+        # browser binary download — so we don't shadow what Patrol does next.
+        # See `web_test_backend.dart` lines 706-744 in patrol_cli-4.4.0 for
+        # the exact subprocess Patrol runs.
+        run: sudo npx --yes playwright@latest install-deps chromium
 
       - name: Patrol doctor
         run: patrol doctor
