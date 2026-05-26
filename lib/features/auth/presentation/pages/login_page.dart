@@ -1,9 +1,9 @@
 // Login page. Built exclusively with App* design-system components
 // (guía 27 §10 hard rule). On mobile the navigation to /home happens
-// here when login() returns Success, because KeycloakAuthService
-// already awaited the deep-link callback before returning. On web
-// the redirect goes through /callback, which is handled in
-// app/router.dart by the dedicated _CallbackHandler.
+// here when login() returns Success, because KeycloakMobileAuthService
+// already awaited the deep-link callback before returning. On web the
+// redirect goes through /callback, handled in app/router.dart by the
+// dedicated _CallbackHandler against KeycloakWebAuthService.
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';

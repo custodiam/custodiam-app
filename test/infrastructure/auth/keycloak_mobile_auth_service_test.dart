@@ -1,4 +1,4 @@
-// Pure-Dart tests for KeycloakAuthService.
+// Pure-Dart tests for KeycloakMobileAuthService.
 //
 // Surface that requires platform channels (launchUrl, app_links
 // uriLinkStream) lives outside this file and is exercised by
@@ -10,7 +10,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:app_links/app_links.dart';
-import 'package:custodiam/infrastructure/auth/keycloak_auth_service.dart';
+import 'package:custodiam/infrastructure/auth/keycloak_mobile_auth_service.dart';
 import 'package:custodiam/infrastructure/auth/token_store.dart';
 import 'package:custodiam/infrastructure/error/failure.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
@@ -62,12 +62,12 @@ void main() {
 
   late _MockTokenStore tokenStore;
   late _MockHttpClient httpClient;
-  late KeycloakAuthService service;
+  late KeycloakMobileAuthService service;
 
   setUp(() {
     tokenStore = _MockTokenStore();
     httpClient = _MockHttpClient();
-    service = KeycloakAuthService(
+    service = KeycloakMobileAuthService(
       tokenStore: tokenStore,
       appLinks: _FakeAppLinks(),
       httpClient: httpClient,
