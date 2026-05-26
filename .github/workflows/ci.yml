@@ -81,7 +81,7 @@ jobs:
         # --disable-dev-shm-usage avoids the small /dev/shm allocation
         # crashing the browser when there are many open pages.
         run: |
-          patrol test \
+          patrol test --verbose \
             --target patrol_test/web/ \
             --device chrome \
             --web-headless=true \
