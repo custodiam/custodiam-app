@@ -71,17 +71,21 @@ jobs:
         run: patrol doctor
 
       - name: Run Patrol web tests
-        # --verbose for now while EN-08-35 first run is being diagnosed
-        # in CI; will be removed once the path is stable.
-        # --no-sandbox is the standard flag for Chromium running in
-        # GitHub Actions Ubuntu runners. --disable-dev-shm-usage avoids
-        # the small /dev/shm allocation crashing the browser.
+        # --web-browser-args expects a JSON array of strings (see
+        # patrol_cli/lib/src/runner/patrol_command.dart line 373). Passing
+        # a space-separated string makes Playwright's config.ts fail with
+        # `SyntaxError: No number after minus sign in JSON` and report
+        # `Total: 0` in 1 second without ever launching the browser.
+        # The flags themselves: --no-sandbox lets Chromium run without
+        # user namespaces (mandatory on GitHub-hosted Ubuntu runners),
+        # --disable-dev-shm-usage avoids the small /dev/shm allocation
+        # crashing the browser when there are many open pages.
         run: |
-          patrol test --verbose \
+          patrol test \
             --target patrol_test/web/ \
             --device chrome \
             --web-headless=true \
-            --web-browser-args="--no-sandbox --disable-dev-shm-usage"
+            --web-browser-args='["--no-sandbox", "--disable-dev-shm-usage"]'
 
       - name: Upload Playwright report
         if: always()
