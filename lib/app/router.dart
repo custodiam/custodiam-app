@@ -7,7 +7,7 @@
 // private placeholder until the dashboard feature lands; it carries
 // the logout button so the auth flow can be exercised end-to-end.
 //
-// '/callback' only exists on web. KeycloakAuthService.login() returns
+// '/callback' only exists on web. KeycloakWebAuthService.login() returns
 // immediately after launching the browser; the redirect lands here and
 // _CallbackHandler completes the authorization-code exchange before
 // pushing the user to /home (or back to /login on failure).
@@ -33,7 +33,7 @@ import '../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../features/auth/presentation/widgets/auth_failure_feedback.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
-import '../infrastructure/auth/keycloak_auth_service.dart';
+import '../infrastructure/auth/keycloak_web_auth_service.dart';
 import '../infrastructure/auth/permissions.dart';
 import '../infrastructure/di/providers.dart';
 import '../infrastructure/error/failure.dart';
@@ -246,7 +246,11 @@ class _CallbackHandlerState extends ConsumerState<_CallbackHandler> {
 
   Future<void> _handleCallback() async {
     final authService = ref.read(authServiceProvider);
-    if (authService is KeycloakAuthService) {
+    // On web the provider always returns KeycloakWebAuthService; the
+    // `is` cast is defensive so a test that overrides the provider with
+    // a fake AuthService that does not implement handleWebCallback
+    // simply skips the exchange and falls through to the redirect.
+    if (authService is KeycloakWebAuthService) {
       await authService.handleWebCallback(widget.callbackUri);
     }
     if (!mounted) return;

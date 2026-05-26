@@ -1,4 +1,4 @@
-// Mock-server-backed tests for KeycloakAuthService — guía 22 §5.
+// Mock-server-backed tests for KeycloakMobileAuthService — guía 22 §5.
 //
 // Run requirements:
 //   1. docker compose --profile test up -d mock-oidc   (custodiam-infra)
@@ -11,14 +11,14 @@
 // serialises its `tokenEndpoint` inside the JSON blob persisted by
 // TokenStore. By seeding the store with a JSON that points to the
 // mock server, `_refresh()` hits the mock directly without any
-// override surface in KeycloakAuthService or KeycloakConfig.
+// override surface in KeycloakMobileAuthService or KeycloakConfig.
 
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:app_links/app_links.dart';
-import 'package:custodiam/infrastructure/auth/keycloak_auth_service.dart';
+import 'package:custodiam/infrastructure/auth/keycloak_mobile_auth_service.dart';
 import 'package:custodiam/infrastructure/auth/token_store.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -70,17 +70,17 @@ void main() {
       : null;
 
   group(
-    'KeycloakAuthService against mock OIDC server',
+    'KeycloakMobileAuthService against mock OIDC server',
     skip: skipReason,
     () {
       late _MockSecureStorage storage;
       late TokenStore tokenStore;
-      late KeycloakAuthService service;
+      late KeycloakMobileAuthService service;
 
       setUp(() {
         storage = _MockSecureStorage();
         tokenStore = TokenStore(storage: storage);
-        service = KeycloakAuthService(
+        service = KeycloakMobileAuthService(
           tokenStore: tokenStore,
           appLinks: _FakeAppLinks(),
         );
