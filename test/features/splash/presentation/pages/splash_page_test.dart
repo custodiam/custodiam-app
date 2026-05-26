@@ -54,15 +54,15 @@ class _FakeAuthService implements AuthService {
 GoRouter _testRouter() => GoRouter(
       initialLocation: '/',
       routes: [
-        GoRoute(path: '/', builder: (_, __) => const SplashPage()),
+        GoRoute(path: '/', builder: (_, _) => const SplashPage()),
         GoRoute(
           path: '/login',
-          builder: (_, __) =>
+          builder: (_, _) =>
               const Scaffold(body: Center(child: Text('LOGIN_PAGE'))),
         ),
         GoRoute(
           path: '/home',
-          builder: (_, __) =>
+          builder: (_, _) =>
               const Scaffold(body: Center(child: Text('HOME_PAGE'))),
         ),
       ],
