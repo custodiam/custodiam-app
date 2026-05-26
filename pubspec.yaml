@@ -28,6 +28,13 @@ dependencies:
   # Web APIs binding (sessionStorage para code_verifier PKCE en SPA — EN-08-34 / ADR-023)
   web: ^1.1.0
 
+  # Estrategia de URL en Flutter Web (PathUrlStrategy en lugar de la
+  # HashUrlStrategy por defecto, requisito para que GoRouter matchee
+  # /callback cuando Keycloak redirige — EN-08-34 capa 3). En plataformas
+  # no-web el paquete carga stubs no-op.
+  flutter_web_plugins:
+    sdk: flutter
+
   # Preferencias locales (feature settings — EN-08-25)
   shared_preferences: ^2.5.4
 
