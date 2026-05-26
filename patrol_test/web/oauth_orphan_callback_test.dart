@@ -16,17 +16,11 @@
 //   - The browser address bar must not retain `?code=foo` after the
 //     bounce (PathUrlStrategy + GoRouter clean redirect).
 //
-// Platform constraint:
-//
-//   The /callback route is registered inside `routerProvider` behind
-//   `if (kIsWeb)` (see lib/app/router.dart), because the mobile build
-//   captures the redirect through `app_links` and never hits a Flutter
-//   route for it. Running this test under `flutter test` (Dart VM,
-//   kIsWeb == false) therefore can't exercise the handler at all; the
-//   test is skipped in that mode. The real assertion happens under
-//   `patrol test --device chrome --web-headless=true` where kIsWeb is
-//   true and the WebSessionStorageGateway exercises real
-//   window.sessionStorage.
+// Platform: this test is web-only and is launched through `patrol test
+// --device chrome --web-headless=true` so kIsWeb is always true and the
+// `/callback` route is registered in routerProvider. Trying to load it
+// under `flutter test` (Dart VM) is not supported — patrolTest builds
+// a PlatformAutomator at load time which requires a target platform.
 
 import 'package:custodiam/app/app.dart';
 import 'package:custodiam/infrastructure/auth/auth_service.dart';
@@ -34,14 +28,13 @@ import 'package:custodiam/infrastructure/auth/keycloak_web_auth_service.dart';
 import 'package:custodiam/infrastructure/auth/session_storage_gateway.dart';
 import 'package:custodiam/infrastructure/auth/token_store.dart';
 import 'package:custodiam/infrastructure/di/providers.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:patrol_finders/patrol_finders.dart';
+import 'package:patrol/patrol.dart';
 
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
@@ -79,7 +72,7 @@ void main() {
     );
   });
 
-  patrolWidgetTest(
+  patrolTest(
     'landing on /callback with no persisted verifier redirects to /login',
     ($) async {
       await $.pumpWidget(
@@ -122,12 +115,5 @@ void main() {
         isNull,
       );
     },
-    // The /callback route is web-only (kIsWeb guard in the router).
-    // Under `flutter test` (kIsWeb == false) the route does not exist
-    // and GoRouter.go('/callback?code=...') is a no-op, so skip the
-    // test there. Under `patrol test --device chrome` (kIsWeb == true)
-    // the route exists and the handler runs against real
-    // window.sessionStorage.
-    skip: !kIsWeb,
   );
 }

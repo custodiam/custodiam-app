@@ -53,7 +53,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:patrol_finders/patrol_finders.dart';
+import 'package:patrol/patrol.dart';
 
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
@@ -96,7 +96,7 @@ void main() {
     );
   });
 
-  patrolWidgetTest(
+  patrolTest(
     'tapping "Iniciar sesión" persists the PKCE verifier and launches '
     'Keycloak with _self',
     ($) async {
