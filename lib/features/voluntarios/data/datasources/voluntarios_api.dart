@@ -50,4 +50,38 @@ class VoluntariosApi {
   Future<Map<String, dynamic>> create(Map<String, dynamic> body) {
     return _client.post('/voluntarios', body);
   }
+
+  /// GET /voluntarios/{id} — full profile of any voluntario.
+  Future<Map<String, dynamic>> getById(String id) {
+    return _client.get('/voluntarios/$id');
+  }
+
+  /// PATCH /voluntarios/{id} — admin update.
+  Future<Map<String, dynamic>> patchAdmin(
+    String id,
+    Map<String, dynamic> body,
+  ) {
+    return _client.patch('/voluntarios/$id', body);
+  }
+
+  /// GET /voluntarios/{id}/roles — active role assignments.
+  Future<ApiResponse<List<dynamic>>> listRolesAsignados(String voluntarioId) {
+    return _client.getList('/voluntarios/$voluntarioId/roles');
+  }
+
+  /// POST /voluntarios/{id}/roles — assign a role.
+  Future<Map<String, dynamic>> asignarRol(
+    String voluntarioId,
+    String rolId,
+  ) {
+    return _client.post('/voluntarios/$voluntarioId/roles', {'rol_id': rolId});
+  }
+
+  /// DELETE /voluntarios/{id}/roles/{rol_id} — close an assignment.
+  Future<Map<String, dynamic>> quitarRol(
+    String voluntarioId,
+    String rolId,
+  ) {
+    return _client.delete('/voluntarios/$voluntarioId/roles/$rolId');
+  }
 }

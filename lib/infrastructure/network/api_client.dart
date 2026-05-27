@@ -77,6 +77,14 @@ class ApiClient {
     return _handleResponse(response);
   }
 
+  Future<Map<String, dynamic>> delete(String path) async {
+    final response = await _client.delete(
+      _uri(path),
+      headers: await _headers(),
+    );
+    return _handleResponse(response);
+  }
+
   /// GET returning a JSON array body plus the raw response headers so
   /// callers can read paging hints (e.g. `X-Total-Count`) without an
   /// extra HEAD request. Throws [ApiException] on non-2xx responses.

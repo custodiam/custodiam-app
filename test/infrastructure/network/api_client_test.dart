@@ -104,6 +104,37 @@ void main() {
     });
   });
 
+  group('DELETE', () {
+    test('sends Bearer token and returns decoded body', () async {
+      when(() => auth.getValidAccessToken())
+          .thenAnswer((_) async => const Success('tok-del'));
+      when(() => http_.delete(any(), headers: any(named: 'headers')))
+          .thenAnswer((_) async => http.Response('{"closed":true}', 200));
+
+      final result = await client.delete('/things/42');
+
+      expect(result, {'closed': true});
+      final captured = verify(
+        () => http_.delete(any(), headers: captureAny(named: 'headers')),
+      ).captured.single as Map<String, String>;
+      expect(captured['Authorization'], 'Bearer tok-del');
+    });
+
+    test('throws ApiException with status code on non-2xx', () async {
+      when(() => auth.getValidAccessToken())
+          .thenAnswer((_) async => const Success('tok'));
+      when(() => http_.delete(any(), headers: any(named: 'headers')))
+          .thenAnswer((_) async => http.Response('not found', 404));
+
+      expect(
+        () => client.delete('/things/42'),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 404),
+        ),
+      );
+    });
+  });
+
   group('PATCH', () {
     test('serialises body as JSON and sends Bearer token', () async {
       when(() => auth.getValidAccessToken())

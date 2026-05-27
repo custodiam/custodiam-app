@@ -100,6 +100,9 @@ sealed class VoluntariosFailure extends Failure {
   const factory VoluntariosFailure.dniOrEmailDuplicado() =
       DniOrEmailDuplicado;
   const factory VoluntariosFailure.keycloakSyncFailed() = KeycloakSyncFailed;
+  const factory VoluntariosFailure.rolYaAsignado() = RolYaAsignado;
+  const factory VoluntariosFailure.rolOAsignacionNoEncontrado() =
+      RolOAsignacionNoEncontrado;
 }
 
 final class VoluntarioNotFound extends VoluntariosFailure {
@@ -122,6 +125,16 @@ final class KeycloakSyncFailed extends VoluntariosFailure {
   const KeycloakSyncFailed()
       : super('No se pudo crear la cuenta en Keycloak. '
             'Inténtalo de nuevo o avisa a un administrador.');
+}
+
+final class RolYaAsignado extends VoluntariosFailure {
+  const RolYaAsignado()
+      : super('Ese rol ya está asignado al voluntario.');
+}
+
+final class RolOAsignacionNoEncontrado extends VoluntariosFailure {
+  const RolOAsignacionNoEncontrado()
+      : super('El rol o la asignación ya no existen.');
 }
 
 // ── Validation ───────────────────────────────────────────────────────
