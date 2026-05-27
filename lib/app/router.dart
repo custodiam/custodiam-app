@@ -35,6 +35,7 @@ import '../features/splash/presentation/pages/splash_page.dart';
 import '../features/voluntarios/presentation/pages/alta_voluntario_page.dart';
 import '../features/voluntarios/presentation/pages/editar_mi_perfil_page.dart';
 import '../features/voluntarios/presentation/pages/mi_perfil_page.dart';
+import '../features/voluntarios/presentation/pages/voluntario_ficha_page.dart';
 import '../features/voluntarios/presentation/pages/voluntarios_list_page.dart';
 import '../infrastructure/auth/keycloak_web_auth_service.dart';
 import '../infrastructure/auth/permissions.dart';
@@ -85,6 +86,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/voluntarios/alta',
         name: 'voluntarios-alta',
         builder: (_, _) => const AltaVoluntarioPage(),
+      ),
+      GoRoute(
+        path: '/voluntarios/:id',
+        name: 'voluntario-ficha',
+        builder: (_, state) => VoluntarioFichaPage(
+          voluntarioId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: '/mi-perfil',

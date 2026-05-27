@@ -277,14 +277,7 @@ class _VoluntarioTile extends StatelessWidget {
       title: Text(voluntario.nombre),
       subtitle: Text('${voluntario.telefono} · ${voluntario.municipio}'),
       trailing: _EstadoBadge(estado: voluntario.estado),
-      onTap: () {
-        AppSnackbar.show(
-          context,
-          message:
-              'Ficha detallada pendiente — disponible en una próxima iteración.',
-          variant: AppSnackbarVariant.info,
-        );
-      },
+      onTap: () => context.go('/voluntarios/${voluntario.id}'),
     );
   }
 }
