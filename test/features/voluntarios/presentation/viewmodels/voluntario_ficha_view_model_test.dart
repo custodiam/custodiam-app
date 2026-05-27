@@ -5,7 +5,9 @@ import 'package:custodiam/features/voluntarios/domain/entities/voluntario_rol_as
 import 'package:custodiam/features/voluntarios/domain/entities/voluntario_update_admin.dart';
 import 'package:custodiam/features/voluntarios/domain/repositories/roles_repository.dart';
 import 'package:custodiam/features/voluntarios/domain/repositories/voluntarios_repository.dart';
+import 'package:custodiam/features/voluntarios/domain/usecases/anonimizar_voluntario.dart';
 import 'package:custodiam/features/voluntarios/domain/usecases/asignar_rol.dart';
+import 'package:custodiam/features/voluntarios/domain/usecases/dar_de_baja_voluntario.dart';
 import 'package:custodiam/features/voluntarios/domain/usecases/get_voluntario_by_id.dart';
 import 'package:custodiam/features/voluntarios/domain/usecases/list_roles_catalogo.dart';
 import 'package:custodiam/features/voluntarios/domain/usecases/list_roles_voluntario.dart';
@@ -59,6 +61,10 @@ ProviderContainer _container(_MockVolRepo vol, _MockRolesRepo roles) {
       asignarRolProvider.overrideWithValue(AsignarRol(vol)),
       quitarRolProvider.overrideWithValue(QuitarRol(vol)),
       listRolesCatalogoProvider.overrideWithValue(ListRolesCatalogo(roles)),
+      darDeBajaVoluntarioProvider
+          .overrideWithValue(DarDeBajaVoluntario(vol)),
+      anonimizarVoluntarioProvider
+          .overrideWithValue(AnonimizarVoluntario(vol)),
     ],
   );
   addTearDown(container.dispose);
@@ -206,5 +212,109 @@ void main() {
     final state = container.read(voluntarioFichaViewModelProvider('vol-1'));
     expect(state, isA<AsyncError<VoluntarioFichaState>>());
     expect(state.error, isA<RolYaAsignado>());
+  });
+
+  group('US-02-08 — darDeBaja', () {
+    test('returns true and updates voluntario on Success', () async {
+      when(() => vol.getById('vol-1'))
+          .thenAnswer((_) async => Success(_voluntario()));
+      when(() => vol.listRolesAsignados('vol-1'))
+          .thenAnswer((_) async => const Success(<VoluntarioRolAsignacion>[]));
+      when(() => roles.listCatalogo())
+          .thenAnswer((_) async => Success([_rol('rol-1', 'voluntario', 0)]));
+      when(() => vol.darDeBaja('vol-1')).thenAnswer((_) async => Success(
+            Voluntario(
+              id: 'vol-1',
+              nombre: 'Ana',
+              telefono: '600',
+              municipio: 'Zuera',
+              fechaNacimiento: DateTime(1990, 5, 10),
+              estado: EstadoVoluntario.baja,
+              fechaAlta: DateTime(2024, 1, 15),
+            ),
+          ));
+      final container = _container(vol, roles);
+      await container.read(voluntarioFichaViewModelProvider('vol-1').future);
+
+      final ok = await container
+          .read(voluntarioFichaViewModelProvider('vol-1').notifier)
+          .darDeBaja();
+
+      expect(ok, isTrue);
+      verify(() => vol.darDeBaja('vol-1')).called(1);
+      final state = container.read(voluntarioFichaViewModelProvider('vol-1'));
+      expect(state.value!.voluntario.estado, EstadoVoluntario.baja);
+    });
+
+    test('returns false and surfaces AsyncError on Fail', () async {
+      when(() => vol.getById('vol-1'))
+          .thenAnswer((_) async => Success(_voluntario()));
+      when(() => vol.listRolesAsignados('vol-1'))
+          .thenAnswer((_) async => const Success(<VoluntarioRolAsignacion>[]));
+      when(() => roles.listCatalogo())
+          .thenAnswer((_) async => Success([_rol('rol-1', 'voluntario', 0)]));
+      when(() => vol.darDeBaja('vol-1')).thenAnswer(
+        (_) async => const Fail(VoluntariosFailure.keycloakSyncFailed()),
+      );
+      final container = _container(vol, roles);
+      await container.read(voluntarioFichaViewModelProvider('vol-1').future);
+
+      final ok = await container
+          .read(voluntarioFichaViewModelProvider('vol-1').notifier)
+          .darDeBaja();
+
+      expect(ok, isFalse);
+      final state = container.read(voluntarioFichaViewModelProvider('vol-1'));
+      expect(state, isA<AsyncError<VoluntarioFichaState>>());
+      expect(state.error, isA<KeycloakSyncFailed>());
+    });
+  });
+
+  group('US-02-08 — anonimizar', () {
+    test('returns true and updates voluntario on Success', () async {
+      when(() => vol.getById('vol-1'))
+          .thenAnswer((_) async => Success(_voluntario()));
+      when(() => vol.listRolesAsignados('vol-1'))
+          .thenAnswer((_) async => const Success(<VoluntarioRolAsignacion>[]));
+      when(() => roles.listCatalogo())
+          .thenAnswer((_) async => Success([_rol('rol-1', 'voluntario', 0)]));
+      when(() => vol.anonimizar('vol-1')).thenAnswer(
+        (_) async => Success(_voluntario(nombre: 'Anonimizado')),
+      );
+      final container = _container(vol, roles);
+      await container.read(voluntarioFichaViewModelProvider('vol-1').future);
+
+      final ok = await container
+          .read(voluntarioFichaViewModelProvider('vol-1').notifier)
+          .anonimizar();
+
+      expect(ok, isTrue);
+      verify(() => vol.anonimizar('vol-1')).called(1);
+      final state = container.read(voluntarioFichaViewModelProvider('vol-1'));
+      expect(state.value!.voluntario.nombre, 'Anonimizado');
+    });
+
+    test('returns false and surfaces AsyncError on Fail', () async {
+      when(() => vol.getById('vol-1'))
+          .thenAnswer((_) async => Success(_voluntario()));
+      when(() => vol.listRolesAsignados('vol-1'))
+          .thenAnswer((_) async => const Success(<VoluntarioRolAsignacion>[]));
+      when(() => roles.listCatalogo())
+          .thenAnswer((_) async => Success([_rol('rol-1', 'voluntario', 0)]));
+      when(() => vol.anonimizar('vol-1')).thenAnswer(
+        (_) async => const Fail(VoluntariosFailure.keycloakSyncFailed()),
+      );
+      final container = _container(vol, roles);
+      await container.read(voluntarioFichaViewModelProvider('vol-1').future);
+
+      final ok = await container
+          .read(voluntarioFichaViewModelProvider('vol-1').notifier)
+          .anonimizar();
+
+      expect(ok, isFalse);
+      final state = container.read(voluntarioFichaViewModelProvider('vol-1'));
+      expect(state, isA<AsyncError<VoluntarioFichaState>>());
+      expect(state.error, isA<KeycloakSyncFailed>());
+    });
   });
 }

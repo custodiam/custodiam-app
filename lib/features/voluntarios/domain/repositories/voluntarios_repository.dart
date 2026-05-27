@@ -63,4 +63,17 @@ abstract class VoluntariosRepository {
     String voluntarioId,
     String rolId,
   );
+
+  /// DELETE /voluntarios/{id} — soft delete (US-02-08). Sets the
+  /// volunteer estado to `baja` and disables the Keycloak account.
+  /// The backend treats it as idempotent; calling it twice still
+  /// returns the volunteer row in `baja` state without raising.
+  /// 502 maps to VoluntariosFailure.keycloakSyncFailed.
+  Future<Result<Voluntario>> darDeBaja(String id);
+
+  /// POST /voluntarios/{id}/anonimizar — Art. 17 RGPD (US-02-08
+  /// destructive branch). Replaces PII with anonymised placeholders
+  /// and deletes the Keycloak account. Irreversible. 502 maps to
+  /// VoluntariosFailure.keycloakSyncFailed.
+  Future<Result<Voluntario>> anonimizar(String id);
 }
