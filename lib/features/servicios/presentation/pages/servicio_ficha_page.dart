@@ -486,27 +486,16 @@ class _FichajeShortcut extends ConsumerWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: AppSpacing.sm),
-          if (puedeFichar)
-            AppPrimaryButton(
-              key: const ValueKey('servicio_ficha_fichaje_acceso'),
-              label: 'Fichar entrada / salida',
-              icon: Icons.fingerprint,
-              expanded: true,
-              onPressed: () =>
-                  context.go('/servicios/${servicio.id}/fichaje'),
-            ),
-          if (puedeVerVoluntarios) ...[
-            const SizedBox(height: AppSpacing.sm),
-            AppSecondaryButton(
-              key: const ValueKey('servicio_ficha_voluntarios_acceso'),
-              label: 'Ver voluntarios fichados',
-              icon: Icons.list_alt_outlined,
-              expanded: true,
-              onPressed: () => context.go(
-                '/servicios/${servicio.id}/voluntarios',
-              ),
-            ),
-          ],
+          AppPrimaryButton(
+            key: const ValueKey('servicio_ficha_fichaje_acceso'),
+            label: puedeFichar
+                ? 'Fichar entrada / salida'
+                : 'Ver voluntarios fichados',
+            icon: puedeFichar ? Icons.fingerprint : Icons.list_alt_outlined,
+            expanded: true,
+            onPressed: () =>
+                context.go('/servicios/${servicio.id}/fichaje'),
+          ),
         ],
       ),
     );

@@ -32,6 +32,8 @@ import '../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../features/auth/presentation/widgets/auth_failure_feedback.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
+import '../features/fichaje/presentation/pages/fichaje_en_servicio_page.dart';
+import '../features/fichaje/presentation/pages/mis_horas_page.dart';
 import '../features/servicios/presentation/pages/alta_servicio_page.dart';
 import '../features/servicios/presentation/pages/servicio_ficha_page.dart';
 import '../features/servicios/presentation/pages/servicios_list_page.dart';
@@ -123,6 +125,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => ServicioFichaPage(
           servicioId: state.pathParameters['id']!,
         ),
+      ),
+      GoRoute(
+        path: '/servicios/:id/fichaje',
+        name: 'servicio-fichaje',
+        builder: (_, state) => FichajeEnServicioPage(
+          servicioId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/mi-perfil/horas',
+        name: 'mi-perfil-horas',
+        builder: (_, _) => const MisHorasPage(),
       ),
       if (kIsWeb)
         GoRoute(
