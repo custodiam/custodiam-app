@@ -39,6 +39,7 @@ import '../features/inventario/presentation/pages/alta_vehiculo_page.dart';
 import '../features/inventario/presentation/pages/inventario_list_page.dart';
 import '../features/inventario/presentation/pages/material_ficha_page.dart';
 import '../features/inventario/presentation/pages/vehiculo_ficha_page.dart';
+import '../features/notificaciones/presentation/pages/notificaciones_ajustes_page.dart';
 import '../features/servicios/presentation/pages/alta_servicio_page.dart';
 import '../features/servicios/presentation/pages/servicio_ficha_page.dart';
 import '../features/servicios/presentation/pages/servicios_list_page.dart';
@@ -172,6 +173,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           vehiculoId: state.pathParameters['id']!,
         ),
       ),
+      GoRoute(
+        path: '/ajustes/notificaciones',
+        name: 'ajustes-notificaciones',
+        builder: (_, _) => const NotificacionesAjustesPage(),
+      ),
       if (kIsWeb)
         GoRoute(
           path: '/callback',
@@ -254,6 +260,15 @@ class HomePagePlaceholder extends ConsumerWidget {
               tooltip: 'Mi perfil',
               icon: const Icon(Icons.person_outline),
               onPressed: () => context.go('/mi-perfil'),
+            ),
+          ),
+          AppPermissionGate(
+            permission: Permission.notificacionesConfigurarPropias,
+            child: IconButton(
+              key: const ValueKey('home_notificaciones_button'),
+              tooltip: 'Notificaciones',
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () => context.go('/ajustes/notificaciones'),
             ),
           ),
           IconButton(
