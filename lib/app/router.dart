@@ -26,13 +26,13 @@ import 'package:go_router/go_router.dart';
 
 import '../core/ui/auth/app_permission_gate.dart';
 import '../core/ui/feedback/app_confirm_dialog.dart';
-import '../core/ui/feedback/app_snackbar.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/viewmodels/auth_di.dart';
 import '../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../features/auth/presentation/widgets/auth_failure_feedback.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
+import '../features/voluntarios/presentation/pages/voluntarios_list_page.dart';
 import '../infrastructure/auth/keycloak_web_auth_service.dart';
 import '../infrastructure/auth/permissions.dart';
 import '../infrastructure/di/providers.dart';
@@ -72,6 +72,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/settings',
         name: 'settings',
         builder: (_, _) => const SettingsPage(),
+      ),
+      GoRoute(
+        path: '/voluntarios',
+        name: 'voluntarios',
+        builder: (_, _) => const VoluntariosListPage(),
       ),
       if (kIsWeb)
         GoRoute(
@@ -127,11 +132,7 @@ class HomePagePlaceholder extends ConsumerWidget {
               key: const ValueKey('home_voluntarios_button'),
               tooltip: 'Voluntarios',
               icon: const Icon(Icons.people_outline),
-              onPressed: () => AppSnackbar.show(
-                context,
-                message: 'Módulo de voluntarios — pendiente (Sprint 4)',
-                variant: AppSnackbarVariant.info,
-              ),
+              onPressed: () => context.go('/voluntarios'),
             ),
           ),
           IconButton(
