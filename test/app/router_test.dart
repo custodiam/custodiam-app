@@ -159,7 +159,9 @@ void main() {
         // intercept `/` even though isAuthenticated is false.
         await tester.pump();
 
-        expect(find.byIcon(Icons.shield), findsOneWidget);
+        // SplashPage muestra el logo de marca (Image.asset) sobre el
+        // color brand desde el commit del branding del Sprint 5.
+        expect(find.byType(Image), findsOneWidget);
       },
     );
   });
