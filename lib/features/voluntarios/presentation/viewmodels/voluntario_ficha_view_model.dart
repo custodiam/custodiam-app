@@ -14,7 +14,9 @@ import '../../domain/entities/rol.dart';
 import '../../domain/entities/voluntario.dart';
 import '../../domain/entities/voluntario_rol_asignacion.dart';
 import '../../domain/entities/voluntario_update_admin.dart';
+import '../../domain/usecases/anonimizar_voluntario.dart';
 import '../../domain/usecases/asignar_rol.dart';
+import '../../domain/usecases/dar_de_baja_voluntario.dart';
 import '../../domain/usecases/get_voluntario_by_id.dart';
 import '../../domain/usecases/list_roles_catalogo.dart';
 import '../../domain/usecases/list_roles_voluntario.dart';
@@ -59,6 +61,10 @@ class VoluntarioFichaViewModel
   ListRolesCatalogo get _listCatalogo => ref.read(listRolesCatalogoProvider);
   AsignarRol get _asignarRol => ref.read(asignarRolProvider);
   QuitarRol get _quitarRol => ref.read(quitarRolProvider);
+  DarDeBajaVoluntario get _darDeBaja =>
+      ref.read(darDeBajaVoluntarioProvider);
+  AnonimizarVoluntario get _anonimizar =>
+      ref.read(anonimizarVoluntarioProvider);
 
   @override
   Future<VoluntarioFichaState> build(String voluntarioId) async {
@@ -158,6 +164,52 @@ class VoluntarioFichaViewModel
           isMutating: false,
         )),
       Fail(:final failure) => AsyncError(failure, StackTrace.current),
+    };
+  }
+
+  /// US-02-08 — soft delete. Updates the local voluntario with the
+  /// returned record (estado → baja). Returns `true` on success so the
+  /// page can navigate away after the confirmation; the page drives
+  /// navigation because the ViewModel doesn't know about the router.
+  Future<bool> darDeBaja() async {
+    final current = state.valueOrNull;
+    if (current == null) return false;
+    state = AsyncData(current.copyWith(isMutating: true));
+    final result = await _darDeBaja(arg);
+    return switch (result) {
+      Success(:final value) => () {
+          state = AsyncData(
+            current.copyWith(voluntario: value, isMutating: false),
+          );
+          return true;
+        }(),
+      Fail(:final failure) => () {
+          state = AsyncError(failure, StackTrace.current);
+          return false;
+        }(),
+    };
+  }
+
+  /// US-02-08 destructive branch — RGPD anonymisation. Updates the
+  /// local voluntario with the anonymised record. Returns `true` on
+  /// success so the page can navigate away (the original ficha is no
+  /// longer meaningful after the operation).
+  Future<bool> anonimizar() async {
+    final current = state.valueOrNull;
+    if (current == null) return false;
+    state = AsyncData(current.copyWith(isMutating: true));
+    final result = await _anonimizar(arg);
+    return switch (result) {
+      Success(:final value) => () {
+          state = AsyncData(
+            current.copyWith(voluntario: value, isMutating: false),
+          );
+          return true;
+        }(),
+      Fail(:final failure) => () {
+          state = AsyncError(failure, StackTrace.current);
+          return false;
+        }(),
     };
   }
 }

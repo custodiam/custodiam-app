@@ -12,8 +12,10 @@ import '../../data/repositories/roles_repository_impl.dart';
 import '../../data/repositories/voluntarios_repository_impl.dart';
 import '../../domain/repositories/roles_repository.dart';
 import '../../domain/repositories/voluntarios_repository.dart';
+import '../../domain/usecases/anonimizar_voluntario.dart';
 import '../../domain/usecases/asignar_rol.dart';
 import '../../domain/usecases/create_voluntario.dart';
+import '../../domain/usecases/dar_de_baja_voluntario.dart';
 import '../../domain/usecases/get_my_profile.dart';
 import '../../domain/usecases/get_voluntario_by_id.dart';
 import '../../domain/usecases/list_roles_catalogo.dart';
@@ -77,4 +79,12 @@ final asignarRolProvider = Provider<AsignarRol>((ref) {
 
 final quitarRolProvider = Provider<QuitarRol>((ref) {
   return QuitarRol(ref.watch(voluntariosRepositoryProvider));
+});
+
+final darDeBajaVoluntarioProvider = Provider<DarDeBajaVoluntario>((ref) {
+  return DarDeBajaVoluntario(ref.watch(voluntariosRepositoryProvider));
+});
+
+final anonimizarVoluntarioProvider = Provider<AnonimizarVoluntario>((ref) {
+  return AnonimizarVoluntario(ref.watch(voluntariosRepositoryProvider));
 });
