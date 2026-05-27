@@ -28,6 +28,15 @@ Map<String, dynamic> _dispositivoJson() => {
     };
 
 void main() {
+  setUpAll(() {
+    // mocktail necesita un fallback value para poder usar `any(named:)`
+    // contra el parámetro `plataforma` del DispositivosApi.registrar.
+    // PlataformaDispositivo es un enum, así que basta pasarle uno de
+    // sus valores; no se puede usar un Fake porque los enums no se
+    // pueden implementar como clases.
+    registerFallbackValue(PlataformaDispositivo.android);
+  });
+
   late _MockApi api;
   late _MockFcm fcm;
   late NotificacionesRepositoryImpl repo;
