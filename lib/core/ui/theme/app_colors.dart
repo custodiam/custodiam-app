@@ -10,8 +10,16 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  /// Civil Protection brand orange.
+  /// Civil Protection brand orange (light theme primary).
   static const Color brand = Color(0xFFFF6600);
+
+  /// Brand orange tuned for dark surfaces. The `ColorScheme.fromSeed`
+  /// derivation pulls the M3 primary toward a desaturated, low-chroma
+  /// tone that meets WCAG contrast on dark but loses the PC identity.
+  /// `#FF8533` (≈ brand at L≈70) keeps full saturation while pushing
+  /// luminance to ~70, which yields ≥4.5:1 against `surfaceContainer`
+  /// in the dark scheme without bleaching the orange.
+  static const Color brandDark = Color(0xFFFF8533);
 
   /// Optional institutional secondary (blue).
   static const Color brandSecondary = Color(0xFF1565C0);

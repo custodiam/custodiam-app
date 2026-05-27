@@ -19,20 +19,50 @@ class AppTheme {
   static ThemeData dark() => _build(Brightness.dark);
 
   static ThemeData _build(Brightness brightness) {
-    final colorScheme = ColorScheme.fromSeed(
+    final isDark = brightness == Brightness.dark;
+    final baseScheme = ColorScheme.fromSeed(
       seedColor: AppColors.brand,
       brightness: brightness,
     );
+
+    // Dark polish (ver `app_colors.dart` para el porqué del brand
+    // forzado): el primary derivado del seed pierde saturación para
+    // cumplir contraste; lo sobrescribimos con un naranja más vivo y
+    // forzamos `onPrimary` negro para mantener legibilidad sobre el
+    // tono claro.
+    final colorScheme = isDark
+        ? baseScheme.copyWith(
+            primary: AppColors.brandDark,
+            onPrimary: Colors.black,
+          )
+        : baseScheme;
 
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       brightness: brightness,
       textTheme: AppTypography.of(brightness),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
+        // Jerarquía visual en dark: el AppBar sale del mismo `surface`
+        // que el body por defecto y queda plano. Subir un escalón de
+        // surface lo separa sin recurrir a elevation (que en M3
+        // tendría que pintar overlay y se ve sucio).
+        backgroundColor: isDark ? colorScheme.surfaceContainer : null,
       ),
+      cardTheme: isDark
+          ? CardThemeData(
+              color: colorScheme.surfaceContainerHigh,
+              elevation: 0,
+            )
+          : null,
+      dividerTheme: isDark
+          ? DividerThemeData(
+              color: colorScheme.outline,
+              thickness: 1,
+            )
+          : null,
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(64, 48),
@@ -48,17 +78,23 @@ class AppTheme {
           minimumSize: const Size(48, 48),
         ),
       ),
-      inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(),
+      inputDecorationTheme: InputDecorationTheme(
+        border: const OutlineInputBorder(),
         filled: true,
+        // En dark el borde sin foco usa `outlineVariant` (apenas
+        // visible). Subimos a `outline` para que cards y formularios
+        // tengan límites claros.
+        enabledBorder: isDark
+            ? OutlineInputBorder(
+                borderSide: BorderSide(color: colorScheme.outline),
+              )
+            : null,
       ),
     );
 
     return base.copyWith(
       extensions: <ThemeExtension<dynamic>>[
-        brightness == Brightness.light
-            ? AppSemanticColors.light
-            : AppSemanticColors.dark,
+        isDark ? AppSemanticColors.dark : AppSemanticColors.light,
         AppSpacingExtension.standard,
       ],
     );
