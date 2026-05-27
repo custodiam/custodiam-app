@@ -32,6 +32,9 @@ import '../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../features/auth/presentation/widgets/auth_failure_feedback.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
+import '../features/servicios/presentation/pages/alta_servicio_page.dart';
+import '../features/servicios/presentation/pages/servicio_ficha_page.dart';
+import '../features/servicios/presentation/pages/servicios_list_page.dart';
 import '../features/voluntarios/presentation/pages/alta_voluntario_page.dart';
 import '../features/voluntarios/presentation/pages/editar_mi_perfil_page.dart';
 import '../features/voluntarios/presentation/pages/mi_perfil_page.dart';
@@ -104,6 +107,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'mi-perfil-editar',
         builder: (_, _) => const EditarMiPerfilPage(),
       ),
+      GoRoute(
+        path: '/servicios',
+        name: 'servicios',
+        builder: (_, _) => const ServiciosListPage(),
+      ),
+      GoRoute(
+        path: '/servicios/alta',
+        name: 'servicios-alta',
+        builder: (_, _) => const AltaServicioPage(),
+      ),
+      GoRoute(
+        path: '/servicios/:id',
+        name: 'servicio-ficha',
+        builder: (_, state) => ServicioFichaPage(
+          servicioId: state.pathParameters['id']!,
+        ),
+      ),
       if (kIsWeb)
         GoRoute(
           path: '/callback',
@@ -159,6 +179,15 @@ class HomePagePlaceholder extends ConsumerWidget {
               tooltip: 'Voluntarios',
               icon: const Icon(Icons.people_outline),
               onPressed: () => context.go('/voluntarios'),
+            ),
+          ),
+          AppPermissionGate(
+            permission: Permission.serviciosVerPublicados,
+            child: IconButton(
+              key: const ValueKey('home_servicios_button'),
+              tooltip: 'Servicios',
+              icon: const Icon(Icons.event_outlined),
+              onPressed: () => context.go('/servicios'),
             ),
           ),
           AppPermissionGate(
