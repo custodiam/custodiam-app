@@ -73,8 +73,51 @@ dev_dependencies:
   patrol: ^4.6.0
   patrol_finders: ^3.4.0
 
+  # Branding: generadores de icono de launcher y de splash nativo. Se
+  # ejecutan a demanda (no en cada build); regeneran archivos en
+  # android/, ios/ y web/ cuando el logo o la paleta cambien:
+  #   dart run flutter_launcher_icons
+  #   dart run flutter_native_splash:create
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.0
+
 flutter:
   uses-material-design: true
 
   # Localización
   generate: true
+
+  assets:
+    - assets/
+
+# Icono de launcher generado a partir de assets/logo.png (1024×1024 con
+# alfa). Para iOS el alfa se elimina rellenando con el color brand para
+# cumplir con la regla de App Store. Para Android se usa adaptive icon
+# con foreground = logo y background = color brand.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    image_path: "assets/logo.png"
+    background_color: "#FF6600"
+    theme_color: "#FF6600"
+  image_path: "assets/logo.png"
+  adaptive_icon_foreground: "assets/logo.png"
+  adaptive_icon_background: "#FF6600"
+  remove_alpha_ios: true
+  background_color_ios: "#FF6600"
+
+# Splash nativo: solo color de fondo, sin imagen. La pantalla con el
+# logo es la SplashPage custom de Flutter (features/splash) que toma el
+# relevo en cuanto el motor de Flutter arranca. Mantener el splash
+# nativo vacío evita el "doble logo" entre el splash del SO y el de
+# Flutter, y respeta las limitaciones que cada SO impone a la
+# personalización del splash nativo.
+flutter_native_splash:
+  color: "#FF6600"
+  android: true
+  ios: true
+  web: false
+  android_12:
+    color: "#FF6600"

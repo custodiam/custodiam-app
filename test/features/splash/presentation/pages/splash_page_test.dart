@@ -92,7 +92,7 @@ Future<void> _pumpSplash(
 
 void main() {
   group('SplashPage', () {
-    testWidgets('renders shield icon over the primary background', (tester) async {
+    testWidgets('renders brand logo over the primary background', (tester) async {
       // Pumps a single frame so we can observe the splash before routing.
       final router = _testRouter();
       await tester.pumpWidget(
@@ -110,7 +110,9 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byIcon(Icons.shield), findsOneWidget);
+      // SplashPage muestra el logo de marca (Image.asset) sobre el
+      // color brand desde el commit del branding del Sprint 5.
+      expect(find.byType(Image), findsOneWidget);
 
       final scaffold = tester.widget<Scaffold>(
         find.descendant(
@@ -118,7 +120,7 @@ void main() {
           matching: find.byType(Scaffold),
         ),
       );
-      final BuildContext context = tester.element(find.byIcon(Icons.shield));
+      final BuildContext context = tester.element(find.byType(Image));
       expect(scaffold.backgroundColor, Theme.of(context).colorScheme.primary);
 
       await tester.pumpAndSettle();

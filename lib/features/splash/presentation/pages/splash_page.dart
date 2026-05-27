@@ -41,10 +41,19 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     return Scaffold(
       backgroundColor: theme.colorScheme.primary,
       body: Center(
-        child: Icon(
-          Icons.shield,
-          size: 96,
-          color: theme.colorScheme.onPrimary,
+        // Logo de la app sobre el color brand. El PNG tiene fondo
+        // transparente, así que el color del Scaffold se ve a través
+        // del logo y mantiene continuidad visual con el splash nativo
+        // (que es solo color, sin imagen, configurado en pubspec.yaml
+        // → flutter_native_splash). El width fijo garantiza que el
+        // logo no se estire en pantallas pequeñas y que en tablet
+        // siga proporcionado; la guía 29 §3 prefiere tamaños fijos
+        // en assets de marca antes que escalado fraccional.
+        child: Image.asset(
+          'assets/logo.png',
+          width: 160,
+          height: 160,
+          semanticLabel: 'Custodiam',
         ),
       ),
     );
