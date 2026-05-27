@@ -90,6 +90,40 @@ final class UnknownNetworkError extends NetworkFailure {
   const UnknownNetworkError() : super('Error desconocido');
 }
 
+// ── Voluntarios ──────────────────────────────────────────────────────
+
+sealed class VoluntariosFailure extends Failure {
+  const VoluntariosFailure([super.message]);
+
+  const factory VoluntariosFailure.notFound() = VoluntarioNotFound;
+  const factory VoluntariosFailure.emailDuplicado() = EmailDuplicado;
+  const factory VoluntariosFailure.dniOrEmailDuplicado() =
+      DniOrEmailDuplicado;
+  const factory VoluntariosFailure.keycloakSyncFailed() = KeycloakSyncFailed;
+}
+
+final class VoluntarioNotFound extends VoluntariosFailure {
+  const VoluntarioNotFound()
+      : super('No hay un voluntario en BD vinculado a tu usuario. '
+            'Pide al administrador que te dé de alta.');
+}
+
+final class EmailDuplicado extends VoluntariosFailure {
+  const EmailDuplicado()
+      : super('Ese email ya está registrado para otro voluntario.');
+}
+
+final class DniOrEmailDuplicado extends VoluntariosFailure {
+  const DniOrEmailDuplicado()
+      : super('Ya existe un voluntario con ese DNI o email.');
+}
+
+final class KeycloakSyncFailed extends VoluntariosFailure {
+  const KeycloakSyncFailed()
+      : super('No se pudo crear la cuenta en Keycloak. '
+            'Inténtalo de nuevo o avisa a un administrador.');
+}
+
 // ── Validation ───────────────────────────────────────────────────────
 
 sealed class ValidationFailure extends Failure {
