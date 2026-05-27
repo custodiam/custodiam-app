@@ -1,0 +1,42 @@
+// Ficha completa de un material (MaterialResponse del backend).
+
+import 'estado_inventario.dart';
+import 'tipo_material.dart';
+
+class MaterialItem {
+  final String id;
+  final String nombre;
+  final String? descripcion;
+  final String? codigo;
+  final String? numeroSerie;
+  final TipoMaterial tipo;
+  final String? categoria;
+  final int cantidad;
+  final String ubicacionBase;
+  final DateTime? fechaAdquisicion;
+  final DateTime? fechaProximaRevision;
+  final String? fotoUrl;
+  final EstadoInventario estado;
+  final String? observacionesIncidencia;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  const MaterialItem({
+    required this.id,
+    required this.nombre,
+    required this.tipo,
+    required this.estado,
+    required this.cantidad,
+    required this.ubicacionBase,
+    this.descripcion,
+    this.codigo,
+    this.numeroSerie,
+    this.categoria,
+    this.fechaAdquisicion,
+    this.fechaProximaRevision,
+    this.fotoUrl,
+    this.observacionesIncidencia,
+    this.createdAt,
+    this.updatedAt,
+  });
+}
