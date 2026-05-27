@@ -48,6 +48,11 @@ dependencies:
     sdk: flutter
   intl: ^0.20.2
   firebase_core: ^4.9.0
+  # EN-06-02: cliente FCM en el cliente Flutter. Major sincronizado con
+  # firebase_core (4.x → firebase_messaging 16.x). Las API key
+  # restringidas por aplicación + API ya quedaron configuradas en Cloud
+  # Console como parte de EN-08-19 (guía 13 §5).
+  firebase_messaging: ^16.0.0
 
   # Offline (Sprint 9 - se añadirá cuando toque)
   # sqflite: ^2.4.0

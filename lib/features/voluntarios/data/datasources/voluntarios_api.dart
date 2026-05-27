@@ -84,4 +84,20 @@ class VoluntariosApi {
   ) {
     return _client.delete('/voluntarios/$voluntarioId/roles/$rolId');
   }
+
+  /// DELETE /voluntarios/{id} — soft delete (estado=baja + Keycloak
+  /// disabled). El backend lo trata como idempotente: si ya está de
+  /// baja, devuelve 200 con el mismo voluntario. Si el voluntario no
+  /// tiene `keycloak_id` (caso seed admin), no se sincroniza con
+  /// Keycloak y devuelve 200 igualmente.
+  Future<Map<String, dynamic>> darDeBaja(String id) {
+    return _client.delete('/voluntarios/$id');
+  }
+
+  /// POST /voluntarios/{id}/anonimizar — Art. 17 RGPD. Sobrescribe los
+  /// PII del registro con valores anónimos y elimina la cuenta de
+  /// Keycloak. Operación irreversible.
+  Future<Map<String, dynamic>> anonimizar(String id) {
+    return _client.post('/voluntarios/$id/anonimizar', const {});
+  }
 }

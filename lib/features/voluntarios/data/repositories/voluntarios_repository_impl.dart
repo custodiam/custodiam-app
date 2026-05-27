@@ -250,6 +250,48 @@ class VoluntariosRepositoryImpl implements VoluntariosRepository {
     }
   }
 
+  @override
+  Future<Result<Voluntario>> darDeBaja(String id) async {
+    try {
+      final json = await _api.darDeBaja(id);
+      return Success(VoluntarioModel.fromJson(json));
+    } on ApiException catch (e) {
+      if (e.statusCode == 502) {
+        return const Fail(VoluntariosFailure.keycloakSyncFailed());
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'voluntarios.darDeBaja failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<Voluntario>> anonimizar(String id) async {
+    try {
+      final json = await _api.anonimizar(id);
+      return Success(VoluntarioModel.fromJson(json));
+    } on ApiException catch (e) {
+      if (e.statusCode == 502) {
+        return const Fail(VoluntariosFailure.keycloakSyncFailed());
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'voluntarios.anonimizar failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
   Failure _mapApiException(ApiException e) {
     if (e.statusCode == 401) {
       return const AuthFailure.sessionExpired();

@@ -1,28 +1,32 @@
-// VoluntarioFichaPage (US-02-02). Admin ficha for any voluntario.
+// VoluntarioFichaPage (US-02-02 + US-02-08). Admin ficha for any voluntario.
 //
 // Access gate: `voluntarios.ver_ficha` shows the screen read-only.
-// `voluntarios.editar` unlocks the form + role mutations. The split
-// keeps the gate aligned with the backend: `GET /voluntarios/{id}`
-// is permitted for any rol with ver_ficha; PATCH / role mutations
-// require `voluntarios.editar`.
+// `voluntarios.editar` unlocks the form + role mutations.
+// `voluntarios.dar_baja` unlocks the destructive section at the
+// bottom (soft delete + anonimización RGPD). The split keeps the
+// gates aligned with the backend: `GET /voluntarios/{id}` requires
+// ver_ficha; PATCH and role mutations require editar; DELETE and
+// POST /anonimizar require dar_baja.
 //
 // Out of scope (documented as deuda):
 //   - Add/remove formación and certificados — backend has no PATCH
 //     endpoint for the nested catalogs yet.
 //   - Historial de cambios — depends on EN-02-04 (audit log table).
-//
-// Soft delete (DELETE /voluntarios/{id}) and anonimización
-// (POST /{id}/anonimizar) live in the lista admin, not here, because
-// they apply to a voluntario "from outside" the ficha — a future
-// iteration can move them here behind a destructive menu.
+//   - Aviso de material pendiente de devolución antes de dar de baja:
+//     no hay endpoint específico `/voluntarios/{id}/material-asignado`
+//     y filtrar el listado entero del inventario por voluntario sería
+//     caro. El diálogo se limita a recordarlo en el copy.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_destructive_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_confirm_dialog.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
@@ -37,6 +41,7 @@ import '../../domain/entities/voluntario.dart';
 import '../../domain/entities/voluntario_rol_asignacion.dart';
 import '../../domain/entities/voluntario_update_admin.dart';
 import '../viewmodels/voluntario_ficha_view_model.dart';
+import '../viewmodels/voluntarios_list_view_model.dart';
 
 class VoluntarioFichaPage extends ConsumerWidget {
   final String voluntarioId;
@@ -150,8 +155,171 @@ class _FichaContent extends StatelessWidget {
           canEdit: canEdit,
           isMutating: isMutating,
         ),
+        const SizedBox(height: AppSpacing.xl),
+        AppPermissionGate(
+          permission: Permission.voluntariosDarBaja,
+          child: _BajaSection(
+            voluntarioId: voluntarioId,
+            voluntario: state.voluntario,
+            isMutating: isMutating,
+          ),
+        ),
       ],
     );
+  }
+}
+
+/// US-02-08. Destructive section at the bottom of the ficha. Two
+/// branches: soft delete (idempotent, reversible) and anonimización
+/// (Art. 17 RGPD, irreversible). Both are gated by
+/// `voluntarios.dar_baja` from the parent. The destructive button
+/// styling separates this block from the rest of the form so it never
+/// gets confused with a "Save" click.
+class _BajaSection extends ConsumerWidget {
+  final String voluntarioId;
+  final Voluntario voluntario;
+  final bool isMutating;
+
+  const _BajaSection({
+    required this.voluntarioId,
+    required this.voluntario,
+    required this.isMutating,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final yaDeBaja = voluntario.estado == EstadoVoluntario.baja;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Zona destructiva', style: theme.textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Acciones administrativas sobre la cuenta del voluntario. '
+          'Si el voluntario tiene material asignado, gestiona la '
+          'devolución desde el módulo de inventario antes de continuar.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        if (!yaDeBaja)
+          AppDestructiveButton(
+            key: const ValueKey('ficha_dar_baja'),
+            label: 'Dar de baja',
+            icon: Icons.person_off_outlined,
+            expanded: true,
+            onPressed: isMutating
+                ? null
+                : () => _onDarDeBaja(context, ref),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 18,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'El voluntario ya está dado de baja.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: AppSpacing.md),
+        AppDestructiveButton(
+          key: const ValueKey('ficha_anonimizar'),
+          label: 'Anonimizar (RGPD, irreversible)',
+          icon: Icons.privacy_tip_outlined,
+          expanded: true,
+          onPressed: isMutating ? null : () => _onAnonimizar(context, ref),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _onDarDeBaja(BuildContext context, WidgetRef ref) async {
+    final confirmed = await AppConfirmDialog.show(
+      context,
+      title: 'Dar de baja a ${voluntario.nombre}',
+      message:
+          'El voluntario pasará a estado "baja" y su cuenta de Keycloak se '
+          'deshabilitará. La operación es reversible cambiando el estado '
+          'desde la propia ficha. ¿Continuar?',
+      confirmLabel: 'Dar de baja',
+      isDestructive: true,
+    );
+    if (!confirmed) return;
+    if (!context.mounted) return;
+    final ok = await ref
+        .read(voluntarioFichaViewModelProvider(voluntarioId).notifier)
+        .darDeBaja();
+    if (!context.mounted) return;
+    if (ok) {
+      AppSnackbar.show(
+        context,
+        message: '${voluntario.nombre} dado de baja.',
+        variant: AppSnackbarVariant.success,
+      );
+      ref.read(voluntariosListViewModelProvider.notifier).refresh();
+      context.go('/voluntarios');
+    }
+  }
+
+  Future<void> _onAnonimizar(BuildContext context, WidgetRef ref) async {
+    // Doble confirmación por la naturaleza irreversible de la operación.
+    final firstOk = await AppConfirmDialog.show(
+      context,
+      title: 'Anonimizar a ${voluntario.nombre}',
+      message:
+          'Esta operación elimina los datos personales (nombre, DNI, '
+          'email, teléfono, dirección) sustituyéndolos por valores '
+          'anonimizados y borra la cuenta de Keycloak. Es IRREVERSIBLE y '
+          'cumple el Art. 17 del RGPD. ¿Continuar?',
+      confirmLabel: 'Continuar',
+      isDestructive: true,
+    );
+    if (!firstOk) return;
+    if (!context.mounted) return;
+    final secondOk = await AppConfirmDialog.show(
+      context,
+      title: 'Confirmación final',
+      message:
+          'Vas a borrar definitivamente los datos personales de '
+          '${voluntario.nombre}. No se puede deshacer. ¿Estás absolutamente '
+          'seguro?',
+      confirmLabel: 'Anonimizar definitivamente',
+      isDestructive: true,
+    );
+    if (!secondOk) return;
+    if (!context.mounted) return;
+    final ok = await ref
+        .read(voluntarioFichaViewModelProvider(voluntarioId).notifier)
+        .anonimizar();
+    if (!context.mounted) return;
+    if (ok) {
+      AppSnackbar.show(
+        context,
+        message: 'Voluntario anonimizado correctamente.',
+        variant: AppSnackbarVariant.success,
+      );
+      ref.read(voluntariosListViewModelProvider.notifier).refresh();
+      context.go('/voluntarios');
+    }
   }
 }
 

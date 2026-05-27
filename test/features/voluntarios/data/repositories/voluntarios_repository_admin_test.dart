@@ -198,4 +198,97 @@ void main() {
       expectFailure<VoluntarioRolAsignacion>(result, KeycloakSyncFailed);
     });
   });
+
+  group('VoluntariosRepositoryImpl.darDeBaja (US-02-08 soft delete)', () {
+    test('returns Success with the updated voluntario on 200', () async {
+      when(() => api.darDeBaja('vol-1')).thenAnswer(
+        (_) async => {..._profileJson(), 'estado': 'baja'},
+      );
+
+      final result = await repo.darDeBaja('vol-1');
+
+      switch (result) {
+        case Success(:final value):
+          expect(value.id, 'vol-1');
+        case Fail():
+          fail('Expected Success');
+      }
+    });
+
+    test('maps 502 to VoluntariosFailure.keycloakSyncFailed', () async {
+      when(() => api.darDeBaja('vol-1'))
+          .thenThrow(ApiException(statusCode: 502, message: 'kc down'));
+
+      final result = await repo.darDeBaja('vol-1');
+
+      expectFailure<Voluntario>(result, KeycloakSyncFailed);
+    });
+
+    test('maps 404 to VoluntariosFailure.notFound', () async {
+      when(() => api.darDeBaja('missing'))
+          .thenThrow(ApiException(statusCode: 404, message: 'no vol'));
+
+      final result = await repo.darDeBaja('missing');
+
+      expectFailure<Voluntario>(result, VoluntarioNotFound);
+    });
+
+    test('maps 401 to AuthFailure.sessionExpired', () async {
+      when(() => api.darDeBaja('vol-1'))
+          .thenThrow(ApiException(statusCode: 401, message: 'expired'));
+
+      final result = await repo.darDeBaja('vol-1');
+
+      expectFailure<Voluntario>(result, SessionExpired);
+    });
+
+    test('maps unexpected errors to NetworkFailure.unknown', () async {
+      when(() => api.darDeBaja('vol-1'))
+          .thenThrow(StateError('parse fail'));
+
+      final result = await repo.darDeBaja('vol-1');
+
+      expectFailure<Voluntario>(result, UnknownNetworkError);
+    });
+  });
+
+  group('VoluntariosRepositoryImpl.anonimizar (US-02-08 RGPD)', () {
+    test('returns Success with the anonymised voluntario on 200', () async {
+      when(() => api.anonimizar('vol-1')).thenAnswer((_) async => {
+            ..._profileJson(),
+            'nombre': 'Anonimizado',
+            'email': null,
+            'dni': null,
+            'estado': 'baja',
+          });
+
+      final result = await repo.anonimizar('vol-1');
+
+      switch (result) {
+        case Success(:final value):
+          expect(value.nombre, 'Anonimizado');
+          expect(value.email, isNull);
+        case Fail():
+          fail('Expected Success');
+      }
+    });
+
+    test('maps 502 to VoluntariosFailure.keycloakSyncFailed', () async {
+      when(() => api.anonimizar('vol-1'))
+          .thenThrow(ApiException(statusCode: 502, message: 'kc down'));
+
+      final result = await repo.anonimizar('vol-1');
+
+      expectFailure<Voluntario>(result, KeycloakSyncFailed);
+    });
+
+    test('maps 404 to VoluntariosFailure.notFound', () async {
+      when(() => api.anonimizar('missing'))
+          .thenThrow(ApiException(statusCode: 404, message: 'no vol'));
+
+      final result = await repo.anonimizar('missing');
+
+      expectFailure<Voluntario>(result, VoluntarioNotFound);
+    });
+  });
 }
