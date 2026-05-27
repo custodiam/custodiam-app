@@ -8,9 +8,12 @@ import '../../../../infrastructure/error/failure.dart';
 import '../../../../infrastructure/error/result.dart';
 import '../../../../infrastructure/network/api_client.dart';
 import '../../domain/entities/estado_voluntario.dart';
+import '../../domain/entities/mi_perfil_update.dart';
+import '../../domain/entities/voluntario.dart';
 import '../../domain/entities/voluntarios_page.dart';
 import '../../domain/repositories/voluntarios_repository.dart';
 import '../datasources/voluntarios_api.dart';
+import '../models/voluntario_model.dart';
 import '../models/voluntario_summary_model.dart';
 
 class VoluntariosRepositoryImpl implements VoluntariosRepository {
@@ -55,9 +58,51 @@ class VoluntariosRepositoryImpl implements VoluntariosRepository {
     }
   }
 
+  @override
+  Future<Result<Voluntario>> getMyProfile() async {
+    try {
+      final json = await _api.getMe();
+      return Success(VoluntarioModel.fromJson(json));
+    } on ApiException catch (e) {
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'voluntarios.getMyProfile failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<Voluntario>> updateMyProfile(MiPerfilUpdate patch) async {
+    try {
+      final json = await _api.patchMe(patch.toJson());
+      return Success(VoluntarioModel.fromJson(json));
+    } on ApiException catch (e) {
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'voluntarios.updateMyProfile failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
   Failure _mapApiException(ApiException e) {
     if (e.statusCode == 401) {
       return const AuthFailure.sessionExpired();
+    }
+    if (e.statusCode == 404) {
+      return const VoluntariosFailure.notFound();
+    }
+    if (e.statusCode == 409) {
+      return const VoluntariosFailure.emailDuplicado();
     }
     return NetworkFailure.serverError(e.statusCode);
   }

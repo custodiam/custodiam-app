@@ -90,6 +90,26 @@ final class UnknownNetworkError extends NetworkFailure {
   const UnknownNetworkError() : super('Error desconocido');
 }
 
+// ── Voluntarios ──────────────────────────────────────────────────────
+
+sealed class VoluntariosFailure extends Failure {
+  const VoluntariosFailure([super.message]);
+
+  const factory VoluntariosFailure.notFound() = VoluntarioNotFound;
+  const factory VoluntariosFailure.emailDuplicado() = EmailDuplicado;
+}
+
+final class VoluntarioNotFound extends VoluntariosFailure {
+  const VoluntarioNotFound()
+      : super('No hay un voluntario en BD vinculado a tu usuario. '
+            'Pide al administrador que te dé de alta.');
+}
+
+final class EmailDuplicado extends VoluntariosFailure {
+  const EmailDuplicado()
+      : super('Ese email ya está registrado para otro voluntario.');
+}
+
 // ── Validation ───────────────────────────────────────────────────────
 
 sealed class ValidationFailure extends Failure {

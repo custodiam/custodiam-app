@@ -32,6 +32,8 @@ import '../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../features/auth/presentation/widgets/auth_failure_feedback.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
+import '../features/voluntarios/presentation/pages/editar_mi_perfil_page.dart';
+import '../features/voluntarios/presentation/pages/mi_perfil_page.dart';
 import '../features/voluntarios/presentation/pages/voluntarios_list_page.dart';
 import '../infrastructure/auth/keycloak_web_auth_service.dart';
 import '../infrastructure/auth/permissions.dart';
@@ -77,6 +79,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/voluntarios',
         name: 'voluntarios',
         builder: (_, _) => const VoluntariosListPage(),
+      ),
+      GoRoute(
+        path: '/mi-perfil',
+        name: 'mi-perfil',
+        builder: (_, _) => const MiPerfilPage(),
+      ),
+      GoRoute(
+        path: '/mi-perfil/editar',
+        name: 'mi-perfil-editar',
+        builder: (_, _) => const EditarMiPerfilPage(),
       ),
       if (kIsWeb)
         GoRoute(
@@ -133,6 +145,15 @@ class HomePagePlaceholder extends ConsumerWidget {
               tooltip: 'Voluntarios',
               icon: const Icon(Icons.people_outline),
               onPressed: () => context.go('/voluntarios'),
+            ),
+          ),
+          AppPermissionGate(
+            permission: Permission.voluntariosVerPropio,
+            child: IconButton(
+              key: const ValueKey('home_mi_perfil_button'),
+              tooltip: 'Mi perfil',
+              icon: const Icon(Icons.person_outline),
+              onPressed: () => context.go('/mi-perfil'),
             ),
           ),
           IconButton(

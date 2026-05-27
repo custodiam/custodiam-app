@@ -35,4 +35,14 @@ class VoluntariosApi {
     }
     return _client.getList('/voluntarios', queryParams: params);
   }
+
+  /// GET /voluntarios/me — full profile of the authenticated user.
+  Future<Map<String, dynamic>> getMe() {
+    return _client.get('/voluntarios/me');
+  }
+
+  /// PATCH /voluntarios/me — update self contact data.
+  Future<Map<String, dynamic>> patchMe(Map<String, dynamic> body) {
+    return _client.patch('/voluntarios/me', body);
+  }
 }
