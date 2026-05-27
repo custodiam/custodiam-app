@@ -1,3 +1,4 @@
+import 'package:custodiam/core/ui/theme/app_theme.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/estado_voluntario.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/voluntario_summary.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/voluntarios_page.dart';
@@ -11,7 +12,9 @@ import 'package:custodiam/infrastructure/di/providers.dart';
 import 'package:custodiam/infrastructure/error/failure.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../../test_utils/test_app.dart';
@@ -200,7 +203,7 @@ void main() {
   });
 
   testWidgets(
-    'tapping a row surfaces the "ficha pendiente" snackbar (US-02-09 deuda)',
+    'tapping a row navigates to the ficha admin (US-02-02 wiring)',
     (tester) async {
       when(() => repo.list(
             skip: any(named: 'skip'),
@@ -212,14 +215,41 @@ void main() {
             total: 1,
           )));
 
-      await pumpPage(tester);
+      // The list page now navigates via context.go, so the test needs
+      // a real GoRouter with a stub /voluntarios/:id route.
+      final router = GoRouter(
+        initialLocation: '/voluntarios',
+        routes: [
+          GoRoute(
+            path: '/voluntarios',
+            builder: (_, _) => const VoluntariosListPage(),
+          ),
+          GoRoute(
+            path: '/voluntarios/:id',
+            builder: (_, state) => Scaffold(
+              body: Text('ficha-stub:${state.pathParameters['id']}'),
+            ),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            listVoluntariosProvider.overrideWithValue(ListVoluntarios(repo)),
+            authServiceProvider.overrideWithValue(_authWith(const ['jefe_equipo'])),
+          ],
+          child: MaterialApp.router(
+            theme: AppTheme.light(),
+            routerConfig: router,
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Ana Pérez'));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      expect(find.byType(SnackBar), findsOneWidget);
-      expect(find.textContaining('Ficha detallada pendiente'), findsOneWidget);
+      expect(find.text('ficha-stub:a'), findsOneWidget);
     },
   );
 }

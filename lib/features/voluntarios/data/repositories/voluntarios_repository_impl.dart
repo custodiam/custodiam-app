@@ -11,10 +11,13 @@ import '../../domain/entities/estado_voluntario.dart';
 import '../../domain/entities/mi_perfil_update.dart';
 import '../../domain/entities/voluntario.dart';
 import '../../domain/entities/voluntario_create.dart';
+import '../../domain/entities/voluntario_rol_asignacion.dart';
+import '../../domain/entities/voluntario_update_admin.dart';
 import '../../domain/entities/voluntarios_page.dart';
 import '../../domain/repositories/voluntarios_repository.dart';
 import '../datasources/voluntarios_api.dart';
 import '../models/voluntario_model.dart';
+import '../models/voluntario_rol_asignacion_model.dart';
 import '../models/voluntario_summary_model.dart';
 
 class VoluntariosRepositoryImpl implements VoluntariosRepository {
@@ -114,6 +117,131 @@ class VoluntariosRepositoryImpl implements VoluntariosRepository {
     } catch (e, stack) {
       dev.log(
         'voluntarios.create failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<Voluntario>> getById(String id) async {
+    try {
+      final json = await _api.getById(id);
+      return Success(VoluntarioModel.fromJson(json));
+    } on ApiException catch (e) {
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'voluntarios.getById failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<Voluntario>> updateAdmin(
+    String id,
+    VoluntarioUpdateAdmin patch,
+  ) async {
+    try {
+      final json = await _api.patchAdmin(id, patch.toJson());
+      return Success(VoluntarioModel.fromJson(json));
+    } on ApiException catch (e) {
+      // Same 409 collapse rationale as create(): backend does not
+      // disambiguate dni vs email collisions in the detail.
+      if (e.statusCode == 409) {
+        return const Fail(VoluntariosFailure.dniOrEmailDuplicado());
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'voluntarios.updateAdmin failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<List<VoluntarioRolAsignacion>>> listRolesAsignados(
+    String voluntarioId,
+  ) async {
+    try {
+      final response = await _api.listRolesAsignados(voluntarioId);
+      final items = response.body
+          .cast<Map<String, dynamic>>()
+          .map(VoluntarioRolAsignacionModel.fromJson)
+          .toList(growable: false);
+      return Success(items);
+    } on ApiException catch (e) {
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'voluntarios.listRolesAsignados failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<VoluntarioRolAsignacion>> asignarRol(
+    String voluntarioId,
+    String rolId,
+  ) async {
+    try {
+      final json = await _api.asignarRol(voluntarioId, rolId);
+      return Success(VoluntarioRolAsignacionModel.fromJson(json));
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        return const Fail(VoluntariosFailure.rolYaAsignado());
+      }
+      if (e.statusCode == 404) {
+        return const Fail(VoluntariosFailure.rolOAsignacionNoEncontrado());
+      }
+      if (e.statusCode == 502) {
+        return const Fail(VoluntariosFailure.keycloakSyncFailed());
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'voluntarios.asignarRol failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<VoluntarioRolAsignacion>> quitarRol(
+    String voluntarioId,
+    String rolId,
+  ) async {
+    try {
+      final json = await _api.quitarRol(voluntarioId, rolId);
+      return Success(VoluntarioRolAsignacionModel.fromJson(json));
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) {
+        return const Fail(VoluntariosFailure.rolOAsignacionNoEncontrado());
+      }
+      if (e.statusCode == 502) {
+        return const Fail(VoluntariosFailure.keycloakSyncFailed());
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'voluntarios.quitarRol failed: $e',
         name: 'API',
         error: e,
         stackTrace: stack,
