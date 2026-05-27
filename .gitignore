@@ -61,3 +61,8 @@ CLAUDE.md
 key.properties
 *.jks
 *.keystore
+
+# Patrol (EN-08-35) — artefactos del runner que no van al repo
+playwright-report/
+test-results/
+test_bundle.dart

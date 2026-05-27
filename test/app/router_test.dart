@@ -89,7 +89,7 @@ Future<void> _pumpAt(
         authServiceProvider.overrideWithValue(auth),
       ],
       child: Builder(builder: (_) {
-        return Consumer(builder: (_, ref, __) {
+        return Consumer(builder: (_, ref, _) {
           final router = ref.watch(routerProvider);
           // Reset to the initial location each time the test wants to
           // observe a transition. `go` is synchronous-ish: the next
@@ -146,7 +146,7 @@ void main() {
             overrides: [
               authServiceProvider.overrideWithValue(auth),
             ],
-            child: Consumer(builder: (_, ref, __) {
+            child: Consumer(builder: (_, ref, _) {
               return MaterialApp.router(
                 theme: AppTheme.light(),
                 routerConfig: ref.watch(routerProvider),

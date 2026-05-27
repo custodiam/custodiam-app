@@ -56,7 +56,7 @@ class SettingsPage extends ConsumerWidget {
       title: 'Ajustes',
       body: prefsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(child: Text('Error cargando ajustes')),
+        error: (_, _) => const Center(child: Text('Error cargando ajustes')),
         data: (prefs) => Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Column(

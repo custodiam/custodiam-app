@@ -103,4 +103,118 @@ void main() {
       expect(jsonDecode(body), {'name': 'one'});
     });
   });
+
+  group('PATCH', () {
+    test('serialises body as JSON and sends Bearer token', () async {
+      when(() => auth.getValidAccessToken())
+          .thenAnswer((_) async => const Success('tok-xyz'));
+      when(() => http_.patch(
+            any(),
+            headers: any(named: 'headers'),
+            body: any(named: 'body'),
+          )).thenAnswer((_) async => http.Response('{"ok":true}', 200));
+
+      final result = await client.patch('/things/42', {'name': 'two'});
+
+      expect(result, {'ok': true});
+      final captured = verify(
+        () => http_.patch(
+          any(),
+          headers: captureAny(named: 'headers'),
+          body: captureAny(named: 'body'),
+        ),
+      ).captured;
+      final headers = captured[0] as Map<String, String>;
+      final body = captured[1] as String;
+      expect(headers['Authorization'], 'Bearer tok-xyz');
+      expect(jsonDecode(body), {'name': 'two'});
+    });
+
+    test('throws ApiException with status code on non-2xx', () async {
+      when(() => auth.getValidAccessToken())
+          .thenAnswer((_) async => const Success('tok'));
+      when(() => http_.patch(
+            any(),
+            headers: any(named: 'headers'),
+            body: any(named: 'body'),
+          )).thenAnswer((_) async => http.Response('conflict', 409));
+
+      expect(
+        () => client.patch('/things/42', const {}),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 409),
+        ),
+      );
+    });
+  });
+
+  group('getList', () {
+    test('appends query parameters to the URL', () async {
+      when(() => auth.getValidAccessToken())
+          .thenAnswer((_) async => const Success('tok'));
+      when(() => http_.get(any(), headers: any(named: 'headers')))
+          .thenAnswer((_) async => http.Response('[]', 200));
+
+      await client.getList(
+        '/voluntarios',
+        queryParams: const {'q': 'ana', 'limit': '50'},
+      );
+
+      final captured = verify(
+        () => http_.get(captureAny(), headers: any(named: 'headers')),
+      ).captured.single as Uri;
+      expect(captured.queryParameters['q'], 'ana');
+      expect(captured.queryParameters['limit'], '50');
+      expect(captured.path, '/api/v1/voluntarios');
+    });
+
+    test('exposes response headers (e.g. X-Total-Count) and decoded body',
+        () async {
+      when(() => auth.getValidAccessToken())
+          .thenAnswer((_) async => const Success('tok'));
+      when(() => http_.get(any(), headers: any(named: 'headers'))).thenAnswer(
+        (_) async => http.Response(
+          jsonEncode([
+            {'id': 'a', 'nombre': 'Ana'},
+            {'id': 'b', 'nombre': 'Bea'},
+          ]),
+          200,
+          headers: const {'x-total-count': '237'},
+        ),
+      );
+
+      final result = await client.getList('/voluntarios');
+
+      expect(result.body, hasLength(2));
+      expect((result.body.first as Map)['nombre'], 'Ana');
+      // http.Response lowercases header names.
+      expect(result.headers['x-total-count'], '237');
+    });
+
+    test('throws ApiException when the body is not a JSON array', () async {
+      when(() => auth.getValidAccessToken())
+          .thenAnswer((_) async => const Success('tok'));
+      when(() => http_.get(any(), headers: any(named: 'headers')))
+          .thenAnswer((_) async => http.Response('{"detail":"boom"}', 200));
+
+      expect(
+        () => client.getList('/voluntarios'),
+        throwsA(isA<ApiException>()),
+      );
+    });
+
+    test('throws ApiException with status code on non-2xx', () async {
+      when(() => auth.getValidAccessToken())
+          .thenAnswer((_) async => const Success('tok'));
+      when(() => http_.get(any(), headers: any(named: 'headers')))
+          .thenAnswer((_) async => http.Response('forbidden', 403));
+
+      expect(
+        () => client.getList('/voluntarios'),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 403),
+        ),
+      );
+    });
+  });
 }

@@ -25,11 +25,11 @@ GoRouter _testRouter() => GoRouter(
       routes: [
         GoRoute(
           path: '/home',
-          builder: (_, __) => const HomePagePlaceholder(),
+          builder: (_, _) => const HomePagePlaceholder(),
         ),
         GoRoute(
           path: '/login',
-          builder: (_, __) => const Scaffold(body: Text('LOGIN_SCREEN')),
+          builder: (_, _) => const Scaffold(body: Text('LOGIN_SCREEN')),
         ),
       ],
     );
