@@ -34,6 +34,11 @@ import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
 import '../features/fichaje/presentation/pages/fichaje_en_servicio_page.dart';
 import '../features/fichaje/presentation/pages/mis_horas_page.dart';
+import '../features/inventario/presentation/pages/alta_material_page.dart';
+import '../features/inventario/presentation/pages/alta_vehiculo_page.dart';
+import '../features/inventario/presentation/pages/inventario_list_page.dart';
+import '../features/inventario/presentation/pages/material_ficha_page.dart';
+import '../features/inventario/presentation/pages/vehiculo_ficha_page.dart';
 import '../features/servicios/presentation/pages/alta_servicio_page.dart';
 import '../features/servicios/presentation/pages/servicio_ficha_page.dart';
 import '../features/servicios/presentation/pages/servicios_list_page.dart';
@@ -138,6 +143,35 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'mi-perfil-horas',
         builder: (_, _) => const MisHorasPage(),
       ),
+      GoRoute(
+        path: '/inventario',
+        name: 'inventario',
+        builder: (_, _) => const InventarioListPage(),
+      ),
+      GoRoute(
+        path: '/inventario/material/alta',
+        name: 'inventario-material-alta',
+        builder: (_, _) => const AltaMaterialPage(),
+      ),
+      GoRoute(
+        path: '/inventario/material/:id',
+        name: 'inventario-material-ficha',
+        builder: (_, state) => MaterialFichaPage(
+          materialId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/inventario/vehiculos/alta',
+        name: 'inventario-vehiculo-alta',
+        builder: (_, _) => const AltaVehiculoPage(),
+      ),
+      GoRoute(
+        path: '/inventario/vehiculos/:id',
+        name: 'inventario-vehiculo-ficha',
+        builder: (_, state) => VehiculoFichaPage(
+          vehiculoId: state.pathParameters['id']!,
+        ),
+      ),
       if (kIsWeb)
         GoRoute(
           path: '/callback',
@@ -202,6 +236,15 @@ class HomePagePlaceholder extends ConsumerWidget {
               tooltip: 'Servicios',
               icon: const Icon(Icons.event_outlined),
               onPressed: () => context.go('/servicios'),
+            ),
+          ),
+          AppPermissionGate(
+            permission: Permission.inventarioVer,
+            child: IconButton(
+              key: const ValueKey('home_inventario_button'),
+              tooltip: 'Inventario',
+              icon: const Icon(Icons.inventory_2_outlined),
+              onPressed: () => context.go('/inventario'),
             ),
           ),
           AppPermissionGate(
