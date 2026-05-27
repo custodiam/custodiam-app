@@ -40,15 +40,24 @@ class _FcmBootstrapState extends ConsumerState<FcmBootstrap> {
   bool _initialChecked = false;
   bool _registeredOnce = false;
   VoidCallback? _authListener;
+  // Cacheamos el ValueListenable para poder darnos de baja en
+  // `dispose` sin tocar `ref` — Riverpod marca el `ref` como
+  // inválido durante el ciclo de dispose y lanza StateError si lo
+  // tocamos ahí (regresión detectada por el smoke `app_test.dart`).
+  Listenable? _authListenable;
 
   @override
   void initState() {
     super.initState();
     // El registro se dispara escuchando el ValueListenable de auth.
     // ref.listen no está disponible en initState, así que usamos el
-    // listenable directamente; lo arrancamos en didChangeDependencies
-    // para tener `ref` ya inicializado.
+    // listenable directamente; lo arrancamos en post-frame para que
+    // el árbol esté montado.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Si el widget se desmontó antes del frame (típico en widget
+      // tests rápidos), no continuamos: tocar `ref` aquí también
+      // dispararía el StateError del Riverpod ConsumerStatefulElement.
+      if (!mounted) return;
       _bindAuthListener();
       _bindMessageStreams();
       _checkInitialMessage();
@@ -57,6 +66,8 @@ class _FcmBootstrapState extends ConsumerState<FcmBootstrap> {
 
   void _bindAuthListener() {
     final authService = ref.read(authServiceProvider);
+    final listenable = authService.authStateListenable;
+    _authListenable = listenable;
     _authListener = () {
       if (authService.isAuthenticated && !_registeredOnce) {
         _registeredOnce = true;
@@ -68,7 +79,7 @@ class _FcmBootstrapState extends ConsumerState<FcmBootstrap> {
         _registeredOnce = false;
       }
     };
-    authService.authStateListenable.addListener(_authListener!);
+    listenable.addListener(_authListener!);
     // Dispara una vez por si la sesión ya estaba activa cuando este
     // widget se montó (caso restoreSession en SplashPage).
     _authListener!();
@@ -143,9 +154,19 @@ class _FcmBootstrapState extends ConsumerState<FcmBootstrap> {
 
   @override
   void dispose() {
+    // No tocar `ref` aquí: Riverpod lo marca como inválido durante el
+    // ciclo de dispose. Usamos la referencia cacheada al Listenable
+    // capturada en `_bindAuthListener`. El smoke `test/app/app_test.dart`
+    // detectó este StateError al hacer pumpWidget rápido seguido de
+    // tear-down (rebuild del árbol antes del primer frame).
     final listener = _authListener;
-    if (listener != null) {
-      ref.read(authServiceProvider).authStateListenable.removeListener(listener);
+    final listenable = _authListenable;
+    if (listener != null && listenable != null) {
+      try {
+        listenable.removeListener(listener);
+      } catch (e) {
+        debugPrint('FcmBootstrap.dispose: removeListener fallback — $e');
+      }
     }
     _openedSub?.cancel();
     _foregroundSub?.cancel();
