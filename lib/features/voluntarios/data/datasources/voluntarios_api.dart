@@ -45,4 +45,9 @@ class VoluntariosApi {
   Future<Map<String, dynamic>> patchMe(Map<String, dynamic> body) {
     return _client.patch('/voluntarios/me', body);
   }
+
+  /// POST /voluntarios — create a new volunteer (admin only).
+  Future<Map<String, dynamic>> create(Map<String, dynamic> body) {
+    return _client.post('/voluntarios', body);
+  }
 }

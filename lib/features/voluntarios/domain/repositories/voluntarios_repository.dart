@@ -5,6 +5,7 @@ import '../../../../infrastructure/error/result.dart';
 import '../entities/estado_voluntario.dart';
 import '../entities/mi_perfil_update.dart';
 import '../entities/voluntario.dart';
+import '../entities/voluntario_create.dart';
 import '../entities/voluntarios_page.dart';
 
 abstract class VoluntariosRepository {
@@ -24,4 +25,9 @@ abstract class VoluntariosRepository {
   /// PATCH /voluntarios/me — update contact data of the authenticated
   /// user (US-02-03). 409 maps to VoluntariosFailure.emailDuplicado.
   Future<Result<Voluntario>> updateMyProfile(MiPerfilUpdate patch);
+
+  /// POST /voluntarios — create a new volunteer (US-02-01). 409 may
+  /// be either DNI or email duplicate; both surface as
+  /// VoluntariosFailure.dniOrEmailDuplicado.
+  Future<Result<Voluntario>> create(VoluntarioCreate data);
 }

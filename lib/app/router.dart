@@ -32,6 +32,7 @@ import '../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../features/auth/presentation/widgets/auth_failure_feedback.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
+import '../features/voluntarios/presentation/pages/alta_voluntario_page.dart';
 import '../features/voluntarios/presentation/pages/editar_mi_perfil_page.dart';
 import '../features/voluntarios/presentation/pages/mi_perfil_page.dart';
 import '../features/voluntarios/presentation/pages/voluntarios_list_page.dart';
@@ -79,6 +80,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/voluntarios',
         name: 'voluntarios',
         builder: (_, _) => const VoluntariosListPage(),
+      ),
+      GoRoute(
+        path: '/voluntarios/alta',
+        name: 'voluntarios-alta',
+        builder: (_, _) => const AltaVoluntarioPage(),
       ),
       GoRoute(
         path: '/mi-perfil',

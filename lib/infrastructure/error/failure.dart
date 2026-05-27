@@ -97,6 +97,9 @@ sealed class VoluntariosFailure extends Failure {
 
   const factory VoluntariosFailure.notFound() = VoluntarioNotFound;
   const factory VoluntariosFailure.emailDuplicado() = EmailDuplicado;
+  const factory VoluntariosFailure.dniOrEmailDuplicado() =
+      DniOrEmailDuplicado;
+  const factory VoluntariosFailure.keycloakSyncFailed() = KeycloakSyncFailed;
 }
 
 final class VoluntarioNotFound extends VoluntariosFailure {
@@ -108,6 +111,17 @@ final class VoluntarioNotFound extends VoluntariosFailure {
 final class EmailDuplicado extends VoluntariosFailure {
   const EmailDuplicado()
       : super('Ese email ya está registrado para otro voluntario.');
+}
+
+final class DniOrEmailDuplicado extends VoluntariosFailure {
+  const DniOrEmailDuplicado()
+      : super('Ya existe un voluntario con ese DNI o email.');
+}
+
+final class KeycloakSyncFailed extends VoluntariosFailure {
+  const KeycloakSyncFailed()
+      : super('No se pudo crear la cuenta en Keycloak. '
+            'Inténtalo de nuevo o avisa a un administrador.');
 }
 
 // ── Validation ───────────────────────────────────────────────────────

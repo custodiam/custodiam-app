@@ -19,6 +19,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
@@ -115,6 +116,15 @@ class _VoluntariosListPageBodyState
     return AppPageScaffold(
       title: 'Voluntarios',
       actions: [
+        AppPermissionGate(
+          permission: Permission.voluntariosCrear,
+          child: IconButton(
+            key: const ValueKey('voluntarios_alta_button'),
+            tooltip: 'Alta de voluntario',
+            icon: const Icon(Icons.person_add_alt_1),
+            onPressed: () => context.go('/voluntarios/alta'),
+          ),
+        ),
         IconButton(
           key: const ValueKey('voluntarios_refresh_button'),
           tooltip: 'Recargar',

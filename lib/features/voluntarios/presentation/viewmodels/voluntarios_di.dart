@@ -9,6 +9,7 @@ import '../../../../infrastructure/di/providers.dart';
 import '../../data/datasources/voluntarios_api.dart';
 import '../../data/repositories/voluntarios_repository_impl.dart';
 import '../../domain/repositories/voluntarios_repository.dart';
+import '../../domain/usecases/create_voluntario.dart';
 import '../../domain/usecases/get_my_profile.dart';
 import '../../domain/usecases/list_voluntarios.dart';
 import '../../domain/usecases/update_my_profile.dart';
@@ -31,4 +32,8 @@ final getMyProfileProvider = Provider<GetMyProfile>((ref) {
 
 final updateMyProfileProvider = Provider<UpdateMyProfile>((ref) {
   return UpdateMyProfile(ref.watch(voluntariosRepositoryProvider));
+});
+
+final createVoluntarioProvider = Provider<CreateVoluntario>((ref) {
+  return CreateVoluntario(ref.watch(voluntariosRepositoryProvider));
 });

@@ -10,6 +10,7 @@ import '../../../../infrastructure/network/api_client.dart';
 import '../../domain/entities/estado_voluntario.dart';
 import '../../domain/entities/mi_perfil_update.dart';
 import '../../domain/entities/voluntario.dart';
+import '../../domain/entities/voluntario_create.dart';
 import '../../domain/entities/voluntarios_page.dart';
 import '../../domain/repositories/voluntarios_repository.dart';
 import '../datasources/voluntarios_api.dart';
@@ -86,6 +87,33 @@ class VoluntariosRepositoryImpl implements VoluntariosRepository {
     } catch (e, stack) {
       dev.log(
         'voluntarios.updateMyProfile failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<Voluntario>> create(VoluntarioCreate data) async {
+    try {
+      final json = await _api.create(data.toJson());
+      return Success(VoluntarioModel.fromJson(json));
+    } on ApiException catch (e) {
+      // 409 in POST /voluntarios is ambiguous: either DNI or email
+      // collided. Surface a dedicated failure so the form can show a
+      // single, accurate message instead of guessing which field.
+      if (e.statusCode == 409) {
+        return const Fail(VoluntariosFailure.dniOrEmailDuplicado());
+      }
+      if (e.statusCode == 502) {
+        return const Fail(VoluntariosFailure.keycloakSyncFailed());
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'voluntarios.create failed: $e',
         name: 'API',
         error: e,
         stackTrace: stack,
