@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:custodiam/app/app.dart';
 import 'package:custodiam/firebase_options.dart';
@@ -17,6 +18,10 @@ Future<void> main() async {
   // el redirect URI registrado en Keycloak con la ruta real del router.
   // La llamada es no-op en plataformas no-web (documentado en Flutter).
   usePathUrlStrategy();
+  // US-02-04 / US-02-06: cargar los símbolos locale-aware de `intl`
+  // antes de que el árbol pinte. Sin esta llamada `DateFormat(..., 'es_ES')`
+  // lanza `LocaleDataException` (lo cubre el smoke test del bootstrap).
+  await initializeDateFormatting('es_ES', null);
   // EN-06-02: arranca Firebase antes de runApp para que FCM tenga
   // contexto de plataforma listo cuando se pida el token tras login.
   // Envuelto en try/catch porque `flutter test` ejecuta `main()` contra
