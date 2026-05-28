@@ -20,16 +20,26 @@ class AppTheme {
 
   static ThemeData _build(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
+    // `DynamicSchemeVariant.fidelity` mantiene la identidad cromática
+    // del seed lo más fielmente posible: el `primary` derivado conserva
+    // la hue + chroma del naranja brand en lugar de desaturarse hacia
+    // un tono "polite" como hace el default `tonalSpot`. También
+    // produce un `surface` con tinte cálido (no gris neutro) que pega
+    // con la identidad PC. Es el patrón equivalente al que Material
+    // Theme Builder (m3.material.io) genera al exportar la paleta con
+    // el modo "Content" / "Fidelity".
     final baseScheme = ColorScheme.fromSeed(
       seedColor: AppColors.brand,
       brightness: brightness,
+      dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
     );
 
-    // Dark polish (ver `app_colors.dart` para el porqué del brand
-    // forzado): el primary derivado del seed pierde saturación para
-    // cumplir contraste; lo sobrescribimos con un naranja más vivo y
-    // forzamos `onPrimary` negro para mantener legibilidad sobre el
-    // tono claro.
+    // Dark polish: aun con `fidelity`, el primary cae a un tono más
+    // apagado para garantizar contraste sobre surfaces oscuras. El
+    // brand naranja (#FF6600) tiene contraste 2.94:1 sobre negro, por
+    // debajo de WCAG 3:1 para componentes. `AppColors.brandDark`
+    // (#FF8533, mismo hue con luminancia subida) llega a 4.5:1+ con
+    // black como onPrimary, manteniendo identidad y accesibilidad.
     final colorScheme = isDark
         ? baseScheme.copyWith(
             primary: AppColors.brandDark,
