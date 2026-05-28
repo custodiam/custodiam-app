@@ -272,6 +272,26 @@ final class AsignacionNoEncontrada extends InventarioFailure {
       : super('No hay una asignación activa para devolver.');
 }
 
+// ── Disponibilidad ───────────────────────────────────────────────────
+
+sealed class DisponibilidadFailure extends Failure {
+  const DisponibilidadFailure([super.message]);
+
+  const factory DisponibilidadFailure.fechaPasada() = FechaPasada;
+  const factory DisponibilidadFailure.mesInvalido() = MesInvalido;
+}
+
+final class FechaPasada extends DisponibilidadFailure {
+  const FechaPasada()
+      : super('No puedes modificar la disponibilidad de un día pasado.');
+}
+
+final class MesInvalido extends DisponibilidadFailure {
+  const MesInvalido()
+      : super('El mes solicitado no es válido. Año entre 2000 y 2100, '
+            'mes entre 1 y 12.');
+}
+
 // ── Validation ───────────────────────────────────────────────────────
 
 sealed class ValidationFailure extends Failure {
