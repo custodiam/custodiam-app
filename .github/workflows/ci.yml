@@ -98,7 +98,8 @@ jobs:
             --web-headless=true \
             --web-locale=es-ES \
             --web-timezone=Europe/Madrid \
-            --web-browser-args='["--no-sandbox", "--disable-dev-shm-usage"]'
+            --web-browser-args='["--no-sandbox", "--disable-dev-shm-usage"]' \
+            --dart-define=SKIP_FIREBASE=true
 
       - name: Upload Playwright report
         if: always()
