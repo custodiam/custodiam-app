@@ -298,8 +298,15 @@ class _CeldaDia extends StatelessWidget {
       background = scheme.primary;
       foreground = scheme.onPrimary;
     } else if (esPasado) {
+      // Días pasados: fondo levemente más oscuro para señalar "no
+      // accionable", pero el texto va a tono completo del scheme. El
+      // alpha 0.5 anterior caía por debajo de WCAG 1.4.3 (4.5:1 AA)
+      // sobre el surfaceContainerHigh en dark theme — los números se
+      // veían pero no se leían cómodos. M3 ya garantiza el contraste
+      // de onSurfaceVariant/surfaceContainerHigh por construcción del
+      // ColorScheme, así que basta con dejar de manipular el alpha.
       background = scheme.surfaceContainerHigh;
-      foreground = scheme.onSurfaceVariant.withValues(alpha: 0.5);
+      foreground = scheme.onSurfaceVariant;
     } else {
       background = scheme.surfaceContainerLow;
       foreground = scheme.onSurface;

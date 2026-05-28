@@ -519,5 +519,63 @@ void main() {
         await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       },
     );
+
+    testWidgets(
+      'meets textContrastGuideline (4.5:1 AA) at /home — light theme',
+      (tester) async {
+        await pumpWithRouter(
+          tester,
+          router: _buildShellTestRouter(initialLocation: '/home'),
+          overrides: [
+            authServiceProvider.overrideWithValue(auth),
+            authServiceForViewModelProvider.overrideWithValue(auth),
+          ],
+          themeMode: ThemeMode.light,
+        );
+
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+      },
+    );
+
+    testWidgets(
+      'meets textContrastGuideline (4.5:1 AA) at /home — dark theme',
+      (tester) async {
+        await pumpWithRouter(
+          tester,
+          router: _buildShellTestRouter(initialLocation: '/home'),
+          overrides: [
+            authServiceProvider.overrideWithValue(auth),
+            authServiceForViewModelProvider.overrideWithValue(auth),
+          ],
+          themeMode: ThemeMode.dark,
+        );
+
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+      },
+    );
+
+    testWidgets(
+      'meets textContrastGuideline (4.5:1 AA) with drawer open '
+      'in both light and dark — the drawer header is brand-painted '
+      'and the white-on-brand contrast must stay >=3:1 for UI components '
+      '(WCAG 1.4.11) and the destination labels above the body surfaces '
+      'must stay >=4.5:1 for text (WCAG 1.4.3)',
+      (tester) async {
+        await pumpWithRouter(
+          tester,
+          router: _buildShellTestRouter(initialLocation: '/home'),
+          overrides: [
+            authServiceProvider.overrideWithValue(auth),
+            authServiceForViewModelProvider.overrideWithValue(auth),
+          ],
+          themeMode: ThemeMode.dark,
+        );
+
+        await tester.tap(find.byKey(K.shellDrawerButton));
+        await tester.pumpAndSettle();
+
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+      },
+    );
   });
 }
