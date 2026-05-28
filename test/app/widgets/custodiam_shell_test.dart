@@ -418,6 +418,37 @@ void main() {
         expect(find.byKey(const ValueKey('stub_VOLUNTARIOS')), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'system back from a non-Home branch root jumps to Home '
+      '(PopScope — Material 3 primary destination behaviour)',
+      (tester) async {
+        // This is the user-facing complaint that the avatar→/mi-perfil
+        // flow had: back physical button "kicked the user out of the
+        // app" because /mi-perfil was the root of the Voluntarios
+        // branch and had nothing to pop. After the PopScope wiring,
+        // back from any non-Home branch root jumps to Home instead of
+        // letting the system close the app.
+        await pumpWithRouter(
+          tester,
+          router: _buildShellTestRouter(initialLocation: '/servicios'),
+          overrides: [
+            authServiceProvider.overrideWithValue(auth),
+            authServiceForViewModelProvider.overrideWithValue(auth),
+          ],
+        );
+
+        expect(find.byKey(const ValueKey('stub_SERVICIOS')), findsOneWidget);
+
+        // `handlePopRoute` is what Android's hardware back maps to —
+        // the same entry point that delivers the gesture or button
+        // event to Flutter. Drives `PopScope.onPopInvokedWithResult`.
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const ValueKey('stub_HOME')), findsOneWidget);
+      },
+    );
   });
 
   group('CustodiamShell — accessibility (WCAG 2.5.5 / Material 3)', () {

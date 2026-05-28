@@ -3,7 +3,7 @@
 //
 //   - body: el `navigationShell` (renderiza la branch activa)
 //   - drawer: lateral con todos los destinos (incluye logout)
-//   - bottomNavigationBar: BottomAppBar custom con
+//   - bottomNavigationBar: `AppBottomNavBar` con
 //       · hamburguesa (abre el drawer)
 //       · 3 accesos rápidos al centro (Inicio, Servicios, Inventario)
 //       · avatar circular del usuario (lleva a /mi-perfil)
@@ -12,6 +12,11 @@
 // suya con título propio y back automático en subrutas. Material 3
 // idiomático con `StatefulShellRoute.indexedStack` y ADR-028 para las
 // `K.shell*` que estabilizan los puntos de tap para tests.
+//
+// `PopScope` intercepta el back físico/gesture cuando se está en una
+// branch distinta a Home y salta a Home en lugar de salir de la app —
+// patrón Material 3 idiomático para bottom navigation, equivalente al
+// "primary destination" behaviour de Gmail / Calendar / Drive.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +24,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/ui/auth/app_permission_gate.dart';
 import '../../core/ui/feedback/app_confirm_dialog.dart';
+import '../../core/ui/navigation/app_bottom_nav_bar.dart';
+import '../../core/ui/navigation/app_drawer_header.dart';
+import '../../core/ui/navigation/app_nav_bar_icon_button.dart';
+import '../../core/ui/navigation/app_navigation_drawer.dart';
+import '../../core/ui/theme/app_colors.dart';
 import '../../core/ui/tokens/app_spacing.dart';
 import '../../features/auth/presentation/viewmodels/auth_di.dart';
 import '../../features/auth/presentation/viewmodels/auth_view_model.dart';
@@ -48,11 +58,9 @@ class CustodiamShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Logout (and any auth-state-affecting action) is triggered from the
-    // drawer in this shell, so the snackbar feedback for auth failures
-    // lives here at the shell level. This way it survives across branch
-    // switches and is available regardless of which page is currently
-    // mounted. Previously this listener lived in HomePagePlaceholder.
+    // Snackbar feedback para fallos de auth (logout fallido, sesión
+    // expirada). Vive en el shell para sobrevivir cambios de branch
+    // y estar disponible independientemente de la page mounted.
     ref.listen<AsyncValue<void>>(authViewModelProvider, (prev, next) {
       next.whenOrNull(
         error: (error, _) {
@@ -63,18 +71,34 @@ class CustodiamShell extends ConsumerWidget {
       );
     });
 
-    return Scaffold(
-      body: navigationShell,
-      drawer: const _CustodiamDrawer(),
-      bottomNavigationBar: _CustodiamBottomBar(
-        navigationShell: navigationShell,
+    final bool atHome =
+        navigationShell.currentIndex == CustodiamBranchIndex.home;
+
+    return PopScope(
+      // Si estoy en una branch que NO es Home, intercepto el back y
+      // salto a Home en lugar de salir de la app. Solo permito el pop
+      // del sistema cuando ya estoy en Home (entonces sí salgo).
+      canPop: atHome,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        navigationShell.goBranch(
+          CustodiamBranchIndex.home,
+          initialLocation: true,
+        );
+      },
+      child: Scaffold(
+        body: navigationShell,
+        drawer: const _CustodiamDrawer(),
+        bottomNavigationBar: _CustodiamBottomBar(
+          navigationShell: navigationShell,
+        ),
       ),
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// BottomAppBar custom
+// BottomAppBar (compone AppBottomNavBar + AppNavBarIconButton)
 // ---------------------------------------------------------------------------
 
 class _CustodiamBottomBar extends ConsumerWidget {
@@ -84,122 +108,71 @@ class _CustodiamBottomBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scheme = Theme.of(context).colorScheme;
     final user = ref.watch(authServiceForViewModelProvider).currentUser;
     final currentIndex = navigationShell.currentIndex;
 
-    return BottomAppBar(
-      color: scheme.primary,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      child: Row(
-        children: [
-          // Hamburguesa abre el drawer con todas las branches. iconSize 28
-          // + constraints 48dp para cumplir el tap target mínimo de WCAG
-          // 2.5.5 (AAA) y Material 3.
-          Builder(
-            builder: (innerContext) => IconButton(
-              key: K.shellDrawerButton,
-              tooltip: 'Menú',
-              color: scheme.onPrimary,
-              iconSize: 28,
-              constraints: const BoxConstraints(
-                minWidth: 48,
-                minHeight: 48,
-              ),
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(innerContext).openDrawer(),
-            ),
+    return AppBottomNavBar(
+      children: [
+        // Hamburguesa abre el drawer con todas las branches.
+        Builder(
+          builder: (innerContext) => AppNavBarIconButton(
+            key: K.shellDrawerButton,
+            tooltip: 'Menú',
+            icon: Icons.menu,
+            onPressed: () => Scaffold.of(innerContext).openDrawer(),
           ),
-          const Spacer(),
-          _BranchIconButton(
-            buttonKey: K.shellHomeButton,
-            tooltip: 'Inicio',
-            iconSelected: Icons.home,
-            iconUnselected: Icons.home_outlined,
-            isSelected: currentIndex == CustodiamBranchIndex.home,
-            onTap: () => _goBranch(CustodiamBranchIndex.home),
+        ),
+        const Spacer(),
+        AppNavBarIconButton(
+          key: K.shellHomeButton,
+          tooltip: 'Inicio',
+          icon: Icons.home_outlined,
+          iconSelected: Icons.home,
+          isSelected: currentIndex == CustodiamBranchIndex.home,
+          onPressed: () => _goBranch(CustodiamBranchIndex.home),
+        ),
+        AppPermissionGate(
+          permission: Permission.serviciosVerPublicados,
+          child: AppNavBarIconButton(
+            key: K.shellServiciosButton,
+            tooltip: 'Servicios',
+            icon: Icons.event_outlined,
+            iconSelected: Icons.event,
+            isSelected: currentIndex == CustodiamBranchIndex.servicios,
+            onPressed: () => _goBranch(CustodiamBranchIndex.servicios),
           ),
-          AppPermissionGate(
-            permission: Permission.serviciosVerPublicados,
-            child: _BranchIconButton(
-              buttonKey: K.shellServiciosButton,
-              tooltip: 'Servicios',
-              iconSelected: Icons.event,
-              iconUnselected: Icons.event_outlined,
-              isSelected: currentIndex == CustodiamBranchIndex.servicios,
-              onTap: () => _goBranch(CustodiamBranchIndex.servicios),
-            ),
+        ),
+        AppPermissionGate(
+          permission: Permission.inventarioVer,
+          child: AppNavBarIconButton(
+            key: K.shellInventarioButton,
+            tooltip: 'Inventario',
+            icon: Icons.inventory_2_outlined,
+            iconSelected: Icons.inventory_2,
+            isSelected: currentIndex == CustodiamBranchIndex.inventario,
+            onPressed: () => _goBranch(CustodiamBranchIndex.inventario),
           ),
-          AppPermissionGate(
-            permission: Permission.inventarioVer,
-            child: _BranchIconButton(
-              buttonKey: K.shellInventarioButton,
-              tooltip: 'Inventario',
-              iconSelected: Icons.inventory_2,
-              iconUnselected: Icons.inventory_2_outlined,
-              isSelected: currentIndex == CustodiamBranchIndex.inventario,
-              onTap: () => _goBranch(CustodiamBranchIndex.inventario),
-            ),
+        ),
+        const Spacer(),
+        AppPermissionGate(
+          permission: Permission.voluntariosVerPropio,
+          child: _AvatarButton(
+            user: user,
+            onTap: () => context.go('/mi-perfil'),
           ),
-          const Spacer(),
-          AppPermissionGate(
-            permission: Permission.voluntariosVerPropio,
-            child: _AvatarButton(
-              user: user,
-              onTap: () => context.go('/mi-perfil'),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   /// Salta a la rama indicada conservando su estado si ya estaba activa,
-  /// volviéndola a su initialLocation si se la pulsa estando ya seleccionada
-  /// (patrón "tap-twice-to-reset" habitual en Material 3 con
-  /// `BottomNavigationBar`).
+  /// volviéndola a su initialLocation si se la pulsa estando ya
+  /// seleccionada (patrón "tap-twice-to-reset" habitual en Material 3
+  /// con `BottomNavigationBar`).
   void _goBranch(int index) {
     navigationShell.goBranch(
       index,
       initialLocation: index == navigationShell.currentIndex,
-    );
-  }
-}
-
-class _BranchIconButton extends StatelessWidget {
-  const _BranchIconButton({
-    required this.buttonKey,
-    required this.tooltip,
-    required this.iconSelected,
-    required this.iconUnselected,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final Key buttonKey;
-  final String tooltip;
-  final IconData iconSelected;
-  final IconData iconUnselected;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    // iconSize 28 + constraints 48dp cumplen el tap target mínimo de WCAG
-    // 2.5.5 (AAA) y Material 3, y dan presencia visual frente al avatar
-    // de la derecha en la BottomAppBar.
-    return IconButton(
-      key: buttonKey,
-      tooltip: tooltip,
-      color: scheme.onPrimary,
-      iconSize: 28,
-      constraints: const BoxConstraints(
-        minWidth: 48,
-        minHeight: 48,
-      ),
-      icon: Icon(isSelected ? iconSelected : iconUnselected),
-      onPressed: onTap,
     );
   }
 }
@@ -212,7 +185,6 @@ class _AvatarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final initial = _initial(user);
     return Semantics(
       button: true,
@@ -224,11 +196,11 @@ class _AvatarButton extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.sm),
           child: CircleAvatar(
-            backgroundColor: scheme.onPrimary,
-            foregroundColor: scheme.primary,
+            backgroundColor: Colors.white,
+            foregroundColor: AppColors.brand,
             child: initial != null
                 ? Text(initial)
-                : Icon(Icons.person, color: scheme.primary),
+                : const Icon(Icons.person, color: AppColors.brand),
           ),
         ),
       ),
@@ -243,7 +215,7 @@ class _AvatarButton extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Drawer lateral con todos los destinos
+// Drawer (compone AppNavigationDrawer + AppDrawerHeader)
 // ---------------------------------------------------------------------------
 
 class _CustodiamDrawer extends ConsumerWidget {
@@ -251,100 +223,83 @@ class _CustodiamDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scheme = Theme.of(context).colorScheme;
     final user = ref.watch(authServiceForViewModelProvider).currentUser;
     final authState = ref.watch(authViewModelProvider);
 
-    return Drawer(
-      child: SafeArea(
-        child: Column(
-          children: [
-            _DrawerHeader(user: user, scheme: scheme),
-            const Divider(height: 1),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                children: [
-                  _DrawerTile(
-                    tileKey: K.drawerHomeTile,
-                    icon: Icons.home_outlined,
-                    label: 'Inicio',
-                    onTap: () => _goAndCloseDrawer(context, '/home'),
-                  ),
-                  AppPermissionGate(
-                    permission: Permission.voluntariosListar,
-                    child: _DrawerTile(
-                      tileKey: K.drawerVoluntariosTile,
-                      icon: Icons.people_outline,
-                      label: 'Voluntarios',
-                      onTap: () => _goAndCloseDrawer(context, '/voluntarios'),
-                    ),
-                  ),
-                  AppPermissionGate(
-                    permission: Permission.voluntariosVerPropio,
-                    child: _DrawerTile(
-                      tileKey: K.drawerMiPerfilTile,
-                      icon: Icons.person_outline,
-                      label: 'Mi perfil',
-                      onTap: () => _goAndCloseDrawer(context, '/mi-perfil'),
-                    ),
-                  ),
-                  AppPermissionGate(
-                    permission: Permission.serviciosVerPublicados,
-                    child: _DrawerTile(
-                      tileKey: K.drawerServiciosTile,
-                      icon: Icons.event_outlined,
-                      label: 'Servicios',
-                      onTap: () => _goAndCloseDrawer(context, '/servicios'),
-                    ),
-                  ),
-                  AppPermissionGate(
-                    permission: Permission.inventarioVer,
-                    child: _DrawerTile(
-                      tileKey: K.drawerInventarioTile,
-                      icon: Icons.inventory_2_outlined,
-                      label: 'Inventario',
-                      onTap: () => _goAndCloseDrawer(context, '/inventario'),
-                    ),
-                  ),
-                  AppPermissionGate(
-                    permission: Permission.notificacionesConfigurarPropias,
-                    child: _DrawerTile(
-                      tileKey: K.drawerNotificacionesTile,
-                      icon: Icons.notifications_outlined,
-                      label: 'Notificaciones',
-                      onTap: () =>
-                          _goAndCloseDrawer(context, '/ajustes/notificaciones'),
-                    ),
-                  ),
-                  _DrawerTile(
-                    tileKey: K.drawerSettingsTile,
-                    icon: Icons.settings_outlined,
-                    label: 'Ajustes',
-                    onTap: () => _goAndCloseDrawer(context, '/settings'),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            _DrawerTile(
-              tileKey: K.drawerLogoutTile,
-              icon: Icons.logout,
-              label: 'Cerrar sesión',
-              trailing: authState.isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : null,
-              onTap: authState.isLoading
-                  ? null
-                  : () => _confirmLogout(context, ref),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
+    return AppNavigationDrawer(
+      header: AppDrawerHeader(displayName: user?.fullName ?? ''),
+      destinations: [
+        _DrawerTile(
+          tileKey: K.drawerHomeTile,
+          icon: Icons.home_outlined,
+          label: 'Inicio',
+          onTap: () => _goAndCloseDrawer(context, '/home'),
         ),
+        AppPermissionGate(
+          permission: Permission.voluntariosListar,
+          child: _DrawerTile(
+            tileKey: K.drawerVoluntariosTile,
+            icon: Icons.people_outline,
+            label: 'Voluntarios',
+            onTap: () => _goAndCloseDrawer(context, '/voluntarios'),
+          ),
+        ),
+        AppPermissionGate(
+          permission: Permission.voluntariosVerPropio,
+          child: _DrawerTile(
+            tileKey: K.drawerMiPerfilTile,
+            icon: Icons.person_outline,
+            label: 'Mi perfil',
+            onTap: () => _goAndCloseDrawer(context, '/mi-perfil'),
+          ),
+        ),
+        AppPermissionGate(
+          permission: Permission.serviciosVerPublicados,
+          child: _DrawerTile(
+            tileKey: K.drawerServiciosTile,
+            icon: Icons.event_outlined,
+            label: 'Servicios',
+            onTap: () => _goAndCloseDrawer(context, '/servicios'),
+          ),
+        ),
+        AppPermissionGate(
+          permission: Permission.inventarioVer,
+          child: _DrawerTile(
+            tileKey: K.drawerInventarioTile,
+            icon: Icons.inventory_2_outlined,
+            label: 'Inventario',
+            onTap: () => _goAndCloseDrawer(context, '/inventario'),
+          ),
+        ),
+        AppPermissionGate(
+          permission: Permission.notificacionesConfigurarPropias,
+          child: _DrawerTile(
+            tileKey: K.drawerNotificacionesTile,
+            icon: Icons.notifications_outlined,
+            label: 'Notificaciones',
+            onTap: () =>
+                _goAndCloseDrawer(context, '/ajustes/notificaciones'),
+          ),
+        ),
+        _DrawerTile(
+          tileKey: K.drawerSettingsTile,
+          icon: Icons.settings_outlined,
+          label: 'Ajustes',
+          onTap: () => _goAndCloseDrawer(context, '/settings'),
+        ),
+      ],
+      footer: _DrawerTile(
+        tileKey: K.drawerLogoutTile,
+        icon: Icons.logout,
+        label: 'Cerrar sesión',
+        trailing: authState.isLoading
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : null,
+        onTap: authState.isLoading ? null : () => _confirmLogout(context, ref),
       ),
     );
   }
@@ -367,59 +322,6 @@ class _CustodiamDrawer extends ConsumerWidget {
     if (!context.mounted) return;
     Navigator.of(context).pop(); // cierra el drawer antes del logout
     ref.read(authViewModelProvider.notifier).logout();
-  }
-}
-
-class _DrawerHeader extends StatelessWidget {
-  const _DrawerHeader({required this.user, required this.scheme});
-
-  final CurrentUser? user;
-  final ColorScheme scheme;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final fullName = user?.fullName ?? '';
-    final hasName = fullName.isNotEmpty;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.md,
-      ),
-      color: scheme.primary,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: scheme.onPrimary,
-            foregroundColor: scheme.primary,
-            child: hasName
-                ? Text(
-                    fullName.substring(0, 1).toUpperCase(),
-                    style: textTheme.titleLarge?.copyWith(
-                      color: scheme.primary,
-                    ),
-                  )
-                : Icon(Icons.person, color: scheme.primary),
-          ),
-          const SizedBox(height: AppSpacing.smMd),
-          Text(
-            hasName ? fullName : 'Sesión activa',
-            style: textTheme.titleMedium?.copyWith(color: scheme.onPrimary),
-          ),
-          Text(
-            'Custodiam',
-            style: textTheme.bodySmall?.copyWith(
-              color: scheme.onPrimary.withValues(alpha: 0.85),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

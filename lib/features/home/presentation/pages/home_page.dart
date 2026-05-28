@@ -20,6 +20,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/cards/app_quick_action_card.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
@@ -76,8 +77,8 @@ class HomePage extends ConsumerWidget {
               const SizedBox(height: AppSpacing.lg),
               AppPermissionGate(
                 permission: Permission.voluntariosDisponibilidadPropia,
-                child: _QuickActionCard(
-                  cardKey: K.homeQuickActionDisponibilidad,
+                child: AppQuickActionCard(
+                  key: K.homeQuickActionDisponibilidad,
                   icon: Icons.event_available_outlined,
                   title: 'Editar mi disponibilidad',
                   subtitle: 'Marca las fechas en las que estás disponible.',
@@ -87,8 +88,8 @@ class HomePage extends ConsumerWidget {
               const SizedBox(height: AppSpacing.sm),
               AppPermissionGate(
                 permission: Permission.serviciosVerPublicados,
-                child: _QuickActionCard(
-                  cardKey: K.homeQuickActionServicios,
+                child: AppQuickActionCard(
+                  key: K.homeQuickActionServicios,
                   icon: Icons.event_outlined,
                   title: 'Ver próximos servicios',
                   subtitle: 'Servicios publicados a los que puedes apuntarte.',
@@ -135,61 +136,3 @@ class _ComandoOperativoBanner extends StatelessWidget {
   }
 }
 
-class _QuickActionCard extends StatelessWidget {
-  const _QuickActionCard({
-    required this.cardKey,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final Key cardKey;
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Semantics(
-      button: true,
-      label: title,
-      child: Card(
-        key: cardKey,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: scheme.primaryContainer,
-                  child: Icon(icon, color: scheme.onPrimaryContainer),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: textTheme.titleMedium),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        subtitle,
-                        style: textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
