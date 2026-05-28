@@ -175,6 +175,87 @@ void main() {
     expect(estado.eventos.first.tipo, TipoEventoVoluntario.asignacionMaterial);
   });
 
+  test('setRangoFechas propaga since/until al use case', () async {
+    when(() => repo.obtenerHistorial(
+          skip: 0,
+          limit: 50,
+          tipos: null,
+          since: null,
+          until: null,
+        )).thenAnswer((_) async => const Success(HistorialPage(
+          eventos: [],
+          total: 0,
+          skip: 0,
+          limit: 50,
+        )));
+    final container = _container(repo);
+    await container.read(miHistorialViewModelProvider.future);
+
+    final desde = DateTime.utc(2026, 1, 1);
+    final hasta = DateTime.utc(2026, 6, 30);
+    when(() => repo.obtenerHistorial(
+          skip: 0,
+          limit: 50,
+          tipos: null,
+          since: desde,
+          until: hasta,
+        )).thenAnswer((_) async => Success(HistorialPage(
+          eventos: [_evento(id: 'rango-1')],
+          total: 1,
+          skip: 0,
+          limit: 50,
+        )));
+
+    await container
+        .read(miHistorialViewModelProvider.notifier)
+        .setRangoFechas(desde: desde, hasta: hasta);
+
+    final estado = container.read(miHistorialViewModelProvider).value!;
+    expect(estado.desde, desde);
+    expect(estado.hasta, hasta);
+    expect(estado.eventos, hasLength(1));
+    verify(() => repo.obtenerHistorial(
+          skip: 0,
+          limit: 50,
+          tipos: null,
+          since: desde,
+          until: hasta,
+        )).called(1);
+  });
+
+  test('setRangoFechas() sin args limpia desde/hasta y recarga', () async {
+    when(() => repo.obtenerHistorial(
+          skip: any(named: 'skip'),
+          limit: any(named: 'limit'),
+          tipos: any(named: 'tipos'),
+          since: any(named: 'since'),
+          until: any(named: 'until'),
+        )).thenAnswer((_) async => Success(HistorialPage(
+          eventos: [_evento()],
+          total: 1,
+          skip: 0,
+          limit: 50,
+        )));
+    final container = _container(repo);
+    await container.read(miHistorialViewModelProvider.future);
+
+    // Primero aplicamos un filtro para tener algo que limpiar.
+    final desde = DateTime.utc(2026, 1, 1);
+    await container
+        .read(miHistorialViewModelProvider.notifier)
+        .setRangoFechas(desde: desde, hasta: DateTime.utc(2026, 6, 30));
+    expect(container.read(miHistorialViewModelProvider).value!.desde, desde);
+
+    // Y ahora lo limpiamos.
+    await container
+        .read(miHistorialViewModelProvider.notifier)
+        .setRangoFechas();
+
+    final estado = container.read(miHistorialViewModelProvider).value!;
+    expect(estado.desde, isNull);
+    expect(estado.hasta, isNull);
+  });
+
   test('build con fallo expone Failure en AsyncError', () async {
     when(() => repo.obtenerHistorial(
           skip: any(named: 'skip'),
