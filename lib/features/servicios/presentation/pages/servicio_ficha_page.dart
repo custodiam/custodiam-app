@@ -16,8 +16,10 @@ import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
+import '../../../../core/ui/buttons/app_text_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_confirm_dialog.dart';
+import '../../../../core/ui/feedback/app_dialog.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
@@ -416,38 +418,36 @@ class _AdminActions extends ConsumerWidget {
     String servicioId,
   ) async {
     final controller = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Cerrar servicio'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'El servicio quedará cerrado y se sellarán automáticamente '
-              'los fichajes que sigan abiertos.',
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: const ValueKey('servicio_ficha_cerrar_observaciones'),
-              label: 'Observaciones (opcional)',
-              controller: controller,
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+    final ok = await AppDialog.show<bool>(
+      context,
+      title: 'Cerrar servicio',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'El servicio quedará cerrado y se sellarán automáticamente '
+            'los fichajes que sigan abiertos.',
           ),
-          FilledButton.tonal(
-            key: const ValueKey('servicio_ficha_cerrar_confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Cerrar'),
+          const SizedBox(height: AppSpacing.md),
+          AppTextField(
+            key: const ValueKey('servicio_ficha_cerrar_observaciones'),
+            label: 'Observaciones (opcional)',
+            controller: controller,
+            maxLines: 3,
           ),
         ],
       ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        AppPrimaryButton(
+          key: const ValueKey('servicio_ficha_cerrar_confirm'),
+          label: 'Cerrar',
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
     if (ok != true) return;
     final observaciones =
