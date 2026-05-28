@@ -36,7 +36,7 @@ void main() {
 
       expect(find.text('Ajustes'), findsOneWidget);
       expect(find.text('Tema de la aplicación'), findsOneWidget);
-      expect(find.text('Sistema (automático)'), findsOneWidget);
+      expect(find.text('Sistema'), findsOneWidget);
       expect(find.text('Claro'), findsOneWidget);
       expect(find.text('Oscuro'), findsOneWidget);
     });
@@ -55,10 +55,10 @@ void main() {
           ],
         );
 
-        final group = tester.widget<RadioGroup<ThemeMode>>(
-          find.byType(RadioGroup<ThemeMode>),
+        final segmented = tester.widget<SegmentedButton<ThemeMode>>(
+          find.byType(SegmentedButton<ThemeMode>),
         );
-        expect(group.groupValue, ThemeMode.dark);
+        expect(segmented.selected, {ThemeMode.dark});
       },
     );
 
