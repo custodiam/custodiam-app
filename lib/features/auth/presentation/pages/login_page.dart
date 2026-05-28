@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -70,6 +71,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final theme = Theme.of(context);
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.formMaxWidth,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         child: Center(
