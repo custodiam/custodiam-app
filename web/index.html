@@ -33,6 +33,21 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <!--
+    DIAGNOSTIC ONLY (issue #40): unregister every Service Worker at boot to
+    verify whether stray SWs (Flutter's deprecated `flutter_service_worker.js`
+    auto-emitted by `flutter build web`, and our `firebase-messaging-sw.js`)
+    are what makes Playwright's cleanup hang in CI headless runs.
+    Reverting this block restores the original behavior. Do not promote to
+    production without conditional gating on a release build flag.
+  -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        regs.forEach(function (r) { r.unregister(); });
+      });
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
