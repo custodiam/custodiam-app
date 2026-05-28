@@ -6,7 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
+import '../../../../core/ui/buttons/app_primary_button.dart';
+import '../../../../core/ui/buttons/app_text_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_dialog.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
@@ -199,29 +202,27 @@ class _LoadedVehiculo extends ConsumerWidget {
     String title,
   ) async {
     final descripcionCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title),
-        content: AppTextField(
-          key: const ValueKey('vehiculo_incidencia_descripcion'),
-          label: 'Descripción de la incidencia',
-          controller: descripcionCtrl,
-          prefixIcon: Icons.notes_outlined,
-          maxLines: 4,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton.tonal(
-            key: const ValueKey('vehiculo_incidencia_confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Registrar'),
-          ),
-        ],
+    final ok = await AppDialog.show<bool>(
+      context,
+      title: title,
+      content: AppTextField(
+        key: const ValueKey('vehiculo_incidencia_descripcion'),
+        label: 'Descripción de la incidencia',
+        controller: descripcionCtrl,
+        prefixIcon: Icons.notes_outlined,
+        maxLines: 4,
       ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        AppPrimaryButton(
+          key: const ValueKey('vehiculo_incidencia_confirm'),
+          label: 'Registrar',
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
     if (ok != true) return;
     if (!context.mounted) return;

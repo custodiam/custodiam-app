@@ -18,7 +18,9 @@ import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
+import '../../../../core/ui/buttons/app_text_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_dialog.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
@@ -271,45 +273,41 @@ class _LoadedMaterial extends ConsumerWidget {
   }) async {
     final voluntarioCtrl = TextEditingController();
     final cantidadCtrl = TextEditingController(text: '1');
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(
-          tipo == TipoAsignacion.personal
-              ? 'Asignar equipamiento personal'
-              : 'Prestar material',
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              key: const ValueKey('material_asignar_voluntario_id'),
-              label: 'ID del voluntario (UUID)',
-              controller: voluntarioCtrl,
-              prefixIcon: Icons.person_outline,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: const ValueKey('material_asignar_cantidad'),
-              label: 'Cantidad',
-              controller: cantidadCtrl,
-              keyboardType: TextInputType.number,
-              prefixIcon: Icons.numbers,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+    final ok = await AppDialog.show<bool>(
+      context,
+      title: tipo == TipoAsignacion.personal
+          ? 'Asignar equipamiento personal'
+          : 'Prestar material',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppTextField(
+            key: const ValueKey('material_asignar_voluntario_id'),
+            label: 'ID del voluntario (UUID)',
+            controller: voluntarioCtrl,
+            prefixIcon: Icons.person_outline,
           ),
-          FilledButton(
-            key: const ValueKey('material_asignar_confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Asignar'),
+          const SizedBox(height: AppSpacing.md),
+          AppTextField(
+            key: const ValueKey('material_asignar_cantidad'),
+            label: 'Cantidad',
+            controller: cantidadCtrl,
+            keyboardType: TextInputType.number,
+            prefixIcon: Icons.numbers,
           ),
         ],
       ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        AppPrimaryButton(
+          key: const ValueKey('material_asignar_confirm'),
+          label: 'Asignar',
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
     if (ok != true) return;
     if (!context.mounted) return;
@@ -347,41 +345,39 @@ class _LoadedMaterial extends ConsumerWidget {
   ) async {
     final voluntarioCtrl = TextEditingController();
     final observacionesCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Registrar devolución'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              key: const ValueKey('material_devolver_voluntario_id'),
-              label: 'ID del voluntario que devuelve',
-              controller: voluntarioCtrl,
-              prefixIcon: Icons.person_outline,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: const ValueKey('material_devolver_observaciones'),
-              label: 'Observaciones (opcional)',
-              controller: observacionesCtrl,
-              prefixIcon: Icons.notes_outlined,
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+    final ok = await AppDialog.show<bool>(
+      context,
+      title: 'Registrar devolución',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppTextField(
+            key: const ValueKey('material_devolver_voluntario_id'),
+            label: 'ID del voluntario que devuelve',
+            controller: voluntarioCtrl,
+            prefixIcon: Icons.person_outline,
           ),
-          FilledButton(
-            key: const ValueKey('material_devolver_confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Devolver'),
+          const SizedBox(height: AppSpacing.md),
+          AppTextField(
+            key: const ValueKey('material_devolver_observaciones'),
+            label: 'Observaciones (opcional)',
+            controller: observacionesCtrl,
+            prefixIcon: Icons.notes_outlined,
+            maxLines: 3,
           ),
         ],
       ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        AppPrimaryButton(
+          key: const ValueKey('material_devolver_confirm'),
+          label: 'Devolver',
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
     if (ok != true) return;
     if (!context.mounted) return;
@@ -420,29 +416,27 @@ class _LoadedMaterial extends ConsumerWidget {
     String title,
   ) async {
     final descripcionCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title),
-        content: AppTextField(
-          key: const ValueKey('material_incidencia_descripcion'),
-          label: 'Descripción de la incidencia',
-          controller: descripcionCtrl,
-          prefixIcon: Icons.notes_outlined,
-          maxLines: 4,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton.tonal(
-            key: const ValueKey('material_incidencia_confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Registrar'),
-          ),
-        ],
+    final ok = await AppDialog.show<bool>(
+      context,
+      title: title,
+      content: AppTextField(
+        key: const ValueKey('material_incidencia_descripcion'),
+        label: 'Descripción de la incidencia',
+        controller: descripcionCtrl,
+        prefixIcon: Icons.notes_outlined,
+        maxLines: 4,
       ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        AppPrimaryButton(
+          key: const ValueKey('material_incidencia_confirm'),
+          label: 'Registrar',
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
     if (ok != true) return;
     if (!context.mounted) return;
