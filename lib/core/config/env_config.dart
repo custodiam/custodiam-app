@@ -36,4 +36,14 @@ class EnvConfig {
     'KEYCLOAK_CLIENT_ID',
     defaultValue: 'custodiam-app',
   );
+
+  /// Web Push VAPID key emitted by Firebase Cloud Messaging (EN-06-02).
+  /// Only meaningful on web targets: `FcmServiceFirebase.getToken` forwards
+  /// it to `FirebaseMessaging.getToken(vapidKey: ...)`. When empty, the
+  /// Web client stays in degraded mode (`FcmServiceUnavailable`) and the
+  /// login flow keeps working without push.
+  static const String fcmVapidKey = String.fromEnvironment(
+    'FCM_VAPID_KEY',
+    defaultValue: '',
+  );
 }
