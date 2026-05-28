@@ -137,8 +137,8 @@ class _CustodiamBottomBar extends ConsumerWidget {
           child: AppNavBarIconButton(
             key: K.shellServiciosButton,
             tooltip: 'Servicios',
-            icon: Icons.event_outlined,
-            iconSelected: Icons.event,
+            icon: MdiIcons.alarmLightOutline,
+            iconSelected: MdiIcons.alarmLight,
             isSelected: currentIndex == CustodiamBranchIndex.servicios,
             onPressed: () => _goBranch(CustodiamBranchIndex.servicios),
           ),
@@ -148,8 +148,8 @@ class _CustodiamBottomBar extends ConsumerWidget {
           child: AppNavBarIconButton(
             key: K.shellInventarioButton,
             tooltip: 'Inventario',
-            icon: Icons.inventory_2_outlined,
-            iconSelected: Icons.inventory_2,
+            icon: MdiIcons.toolboxOutline,
+            iconSelected: MdiIcons.toolbox,
             isSelected: currentIndex == CustodiamBranchIndex.inventario,
             onPressed: () => _goBranch(CustodiamBranchIndex.inventario),
           ),
