@@ -57,7 +57,7 @@ class AppNavBarIconButton extends StatelessWidget {
     return IconButton(
       tooltip: tooltip,
       color: foregroundColor ?? Colors.white,
-      iconSize: 32,
+      iconSize: 36,
       icon: Icon(effectiveIcon),
       onPressed: onPressed,
     );

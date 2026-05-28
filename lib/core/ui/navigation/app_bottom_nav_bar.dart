@@ -24,6 +24,7 @@ class AppBottomNavBar extends StatelessWidget {
     required this.children,
     this.padding =
         const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+    this.height = 64,
   });
 
   /// Hijos de la fila. Normalmente una mezcla de `AppNavBarIconButton`,
@@ -34,11 +35,20 @@ class AppBottomNavBar extends StatelessWidget {
   /// a cada lado, lo que deja respiro frente a los bordes del display.
   final EdgeInsetsGeometry padding;
 
+  /// Altura visual de la barra. El default de Material BottomAppBar es
+  /// 80dp, que en una barra densa con iconos a 36dp deja espacio
+  /// vertical en blanco arriba y abajo que hace ver los iconos
+  /// flotando. 64dp ajusta a una densidad similar a la del Material 3
+  /// NavigationBar sin perder el tap target (48dp interno garantizado
+  /// por materialTapTargetSize: padded).
+  final double height;
+
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
       color: AppColors.brand,
       padding: padding,
+      height: height,
       child: Row(children: children),
     );
   }

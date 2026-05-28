@@ -132,6 +132,7 @@ class _CustodiamBottomBar extends ConsumerWidget {
           isSelected: currentIndex == CustodiamBranchIndex.home,
           onPressed: () => _goBranch(CustodiamBranchIndex.home),
         ),
+        const SizedBox(width: AppSpacing.xs),
         AppPermissionGate(
           permission: Permission.serviciosVerPublicados,
           child: AppNavBarIconButton(
@@ -143,6 +144,7 @@ class _CustodiamBottomBar extends ConsumerWidget {
             onPressed: () => _goBranch(CustodiamBranchIndex.servicios),
           ),
         ),
+        const SizedBox(width: AppSpacing.xs),
         AppPermissionGate(
           permission: Permission.inventarioVer,
           child: AppNavBarIconButton(
