@@ -13,6 +13,7 @@ import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/config/env_config.dart';
 import '../../domain/entities/notificacion_payload.dart';
 import '../../domain/entities/plataforma_dispositivo.dart';
 import 'fcm_service.dart';
@@ -53,9 +54,14 @@ class FcmServiceFirebase implements FcmService {
 
   @override
   Future<String?> getToken() async {
-    // En Web `getToken` exige la VAPID key; sin ella, FlutterFire
-    // devuelve null y registra warning. En MVP no la pasamos y
-    // dejamos Web sin push.
+    // En Web `getToken` exige la VAPID key; si el build no la inyecta
+    // vía `--dart-define=FCM_VAPID_KEY=...` el SDK devuelve null y el
+    // repository entra automáticamente en modo `FcmServiceUnavailable`,
+    // por lo que el login NUNCA se rompe por culpa de notificaciones.
+    if (kIsWeb) {
+      if (EnvConfig.fcmVapidKey.isEmpty) return null;
+      return _messaging.getToken(vapidKey: EnvConfig.fcmVapidKey);
+    }
     return _messaging.getToken();
   }
 
