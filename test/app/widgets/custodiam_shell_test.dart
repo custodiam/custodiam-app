@@ -419,4 +419,74 @@ void main() {
       },
     );
   });
+
+  group('CustodiamShell — accessibility (WCAG 2.5.5 / Material 3)', () {
+    // These cover the rule "every tappable in the shell meets the platform
+    // minimum tap target" so we never ship icons that are too small to
+    // touch comfortably. The bottom bar of v0.1.0 of F1 missed this and
+    // produced visibly tiny icons against the avatar — fixed by giving
+    // every IconButton iconSize 28 + constraints 48×48 in the shell.
+    //
+    // androidTapTargetGuideline requires every interactive widget to
+    // measure at least 48×48 logical pixels. iOSTapTargetGuideline is
+    // the stricter Apple HIG version at 44×44 (smaller but enforced).
+
+    late _MockAuthService auth;
+
+    setUp(() {
+      auth = _MockAuthService();
+      _wireSuperuser(auth);
+    });
+
+    testWidgets(
+      'meets androidTapTargetGuideline (48dp min) at /home',
+      (tester) async {
+        await pumpWithRouter(
+          tester,
+          router: _buildShellTestRouter(initialLocation: '/home'),
+          overrides: [
+            authServiceProvider.overrideWithValue(auth),
+            authServiceForViewModelProvider.overrideWithValue(auth),
+          ],
+        );
+
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      },
+    );
+
+    testWidgets(
+      'meets iOSTapTargetGuideline (44dp min) at /home',
+      (tester) async {
+        await pumpWithRouter(
+          tester,
+          router: _buildShellTestRouter(initialLocation: '/home'),
+          overrides: [
+            authServiceProvider.overrideWithValue(auth),
+            authServiceForViewModelProvider.overrideWithValue(auth),
+          ],
+        );
+
+        await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+      },
+    );
+
+    testWidgets(
+      'meets androidTapTargetGuideline (48dp min) with drawer open',
+      (tester) async {
+        await pumpWithRouter(
+          tester,
+          router: _buildShellTestRouter(initialLocation: '/home'),
+          overrides: [
+            authServiceProvider.overrideWithValue(auth),
+            authServiceForViewModelProvider.overrideWithValue(auth),
+          ],
+        );
+
+        await tester.tap(find.byKey(K.shellDrawerButton));
+        await tester.pumpAndSettle();
+
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      },
+    );
+  });
 }

@@ -93,12 +93,19 @@ class _CustodiamBottomBar extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       child: Row(
         children: [
-          // Hamburguesa abre el drawer con todas las branches.
+          // Hamburguesa abre el drawer con todas las branches. iconSize 28
+          // + constraints 48dp para cumplir el tap target mínimo de WCAG
+          // 2.5.5 (AAA) y Material 3.
           Builder(
             builder: (innerContext) => IconButton(
               key: K.shellDrawerButton,
               tooltip: 'Menú',
               color: scheme.onPrimary,
+              iconSize: 28,
+              constraints: const BoxConstraints(
+                minWidth: 48,
+                minHeight: 48,
+              ),
               icon: const Icon(Icons.menu),
               onPressed: () => Scaffold.of(innerContext).openDrawer(),
             ),
@@ -179,10 +186,18 @@ class _BranchIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // iconSize 28 + constraints 48dp cumplen el tap target mínimo de WCAG
+    // 2.5.5 (AAA) y Material 3, y dan presencia visual frente al avatar
+    // de la derecha en la BottomAppBar.
     return IconButton(
       key: buttonKey,
       tooltip: tooltip,
       color: scheme.onPrimary,
+      iconSize: 28,
+      constraints: const BoxConstraints(
+        minWidth: 48,
+        minHeight: 48,
+      ),
       icon: Icon(isSelected ? iconSelected : iconUnselected),
       onPressed: onTap,
     );
