@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_date_range_picker.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
@@ -78,9 +79,19 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
     final asyncHistorial = ref.watch(miHistorialViewModelProvider);
     final asyncResumen = ref.watch(miResumenViewModelProvider);
 
+    final estadoActual = asyncHistorial.valueOrNull;
+
     return AppPageScaffold(
       title: 'Mi historial',
       actions: [
+        IconButton(
+          key: const ValueKey('mi_historial_filtro_fechas'),
+          tooltip: 'Filtrar por fechas',
+          icon: const Icon(Icons.date_range),
+          onPressed: estadoActual == null
+              ? null
+              : () => _abrirDateRangePicker(context, estadoActual),
+        ),
         IconButton(
           key: const ValueKey('mi_historial_refresh'),
           tooltip: 'Recargar',
@@ -94,6 +105,14 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
       body: Column(
         children: [
           _ResumenCard(asyncResumen: asyncResumen),
+          if (estadoActual != null && _tieneRangoActivo(estadoActual))
+            _RangoActivoChip(
+              desde: estadoActual.desde,
+              hasta: estadoActual.hasta,
+              onLimpiar: () => ref
+                  .read(miHistorialViewModelProvider.notifier)
+                  .setRangoFechas(),
+            ),
           const Divider(height: 1),
           Expanded(
             child: asyncHistorial.when(
@@ -125,6 +144,81 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  bool _tieneRangoActivo(MiHistorialState estado) =>
+      estado.desde != null || estado.hasta != null;
+
+  Future<void> _abrirDateRangePicker(
+    BuildContext context,
+    MiHistorialState estado,
+  ) async {
+    final hoy = DateTime.now();
+    final inicial =
+        estado.desde != null && estado.hasta != null
+            ? DateTimeRange(start: estado.desde!, end: estado.hasta!)
+            : null;
+    // Acotamos el `firstDate` a hace cinco años porque el voluntario
+    // medio del piloto tiene historial reciente. Si en el futuro hace
+    // falta cubrir más, basta con extender este parámetro o pedirlo a
+    // un endpoint que devuelva la fecha de alta del voluntario.
+    final hace5Anios = DateTime(hoy.year - 5, hoy.month, hoy.day);
+
+    final range = await showAppDateRangePicker(
+      context: context,
+      firstDate: hace5Anios,
+      lastDate: hoy,
+      initialDateRange: inicial,
+    );
+    if (range == null) return;
+    if (!mounted) return;
+    await ref.read(miHistorialViewModelProvider.notifier).setRangoFechas(
+          desde: range.start,
+          hasta: range.end,
+        );
+  }
+}
+
+class _RangoActivoChip extends StatelessWidget {
+  final DateTime? desde;
+  final DateTime? hasta;
+  final VoidCallback onLimpiar;
+
+  const _RangoActivoChip({
+    required this.desde,
+    required this.hasta,
+    required this.onLimpiar,
+  });
+
+  String _fmt(DateTime f) => DateFormat('dd/MM/yyyy', 'es_ES').format(f);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final label = desde != null && hasta != null
+        ? 'Del ${_fmt(desde!)} al ${_fmt(hasta!)}'
+        : desde != null
+            ? 'Desde ${_fmt(desde!)}'
+            : 'Hasta ${_fmt(hasta!)}';
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: InputChip(
+          key: const ValueKey('mi_historial_chip_rango_activo'),
+          avatar: Icon(Icons.date_range,
+              size: 18, color: theme.colorScheme.onSecondaryContainer),
+          label: Text(label),
+          backgroundColor: theme.colorScheme.secondaryContainer,
+          deleteIcon: const Icon(Icons.close, size: 18),
+          deleteButtonTooltipMessage: 'Quitar filtro de fechas',
+          onDeleted: onLimpiar,
+        ),
       ),
     );
   }
