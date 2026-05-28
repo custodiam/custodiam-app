@@ -27,6 +27,7 @@ import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -114,6 +115,7 @@ class _VoluntariosListPageBodyState
     );
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.listMaxWidth,
       title: 'Voluntarios',
       actions: [
         AppPermissionGate(
