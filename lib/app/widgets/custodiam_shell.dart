@@ -21,6 +21,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 import '../../core/ui/auth/app_permission_gate.dart';
 import '../../core/ui/feedback/app_confirm_dialog.dart';
@@ -257,7 +258,7 @@ class _CustodiamDrawer extends ConsumerWidget {
           permission: Permission.serviciosVerPublicados,
           child: _DrawerTile(
             tileKey: K.drawerServiciosTile,
-            icon: Icons.event_outlined,
+            icon: MdiIcons.alarmLightOutline,
             label: 'Servicios',
             onTap: () => _goAndCloseDrawer(context, '/servicios'),
           ),
@@ -266,7 +267,7 @@ class _CustodiamDrawer extends ConsumerWidget {
           permission: Permission.inventarioVer,
           child: _DrawerTile(
             tileKey: K.drawerInventarioTile,
-            icon: Icons.inventory_2_outlined,
+            icon: MdiIcons.toolboxOutline,
             label: 'Inventario',
             onTap: () => _goAndCloseDrawer(context, '/inventario'),
           ),

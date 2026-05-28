@@ -17,6 +17,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
@@ -90,7 +91,7 @@ class HomePage extends ConsumerWidget {
                 permission: Permission.serviciosVerPublicados,
                 child: AppQuickActionCard(
                   key: K.homeQuickActionServicios,
-                  icon: Icons.event_outlined,
+                  icon: MdiIcons.alarmLightOutline,
                   title: 'Ver próximos servicios',
                   subtitle: 'Servicios publicados a los que puedes apuntarte.',
                   onTap: () => context.go('/servicios'),
