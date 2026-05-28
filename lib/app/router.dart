@@ -32,8 +32,10 @@ import '../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../features/auth/presentation/widgets/auth_failure_feedback.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
+import '../features/disponibilidad/presentation/pages/mi_disponibilidad_page.dart';
 import '../features/fichaje/presentation/pages/fichaje_en_servicio_page.dart';
 import '../features/fichaje/presentation/pages/mis_horas_page.dart';
+import '../features/historial/presentation/pages/mi_historial_page.dart';
 import '../features/inventario/presentation/pages/alta_material_page.dart';
 import '../features/inventario/presentation/pages/alta_vehiculo_page.dart';
 import '../features/inventario/presentation/pages/inventario_list_page.dart';
@@ -143,6 +145,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/mi-perfil/horas',
         name: 'mi-perfil-horas',
         builder: (_, _) => const MisHorasPage(),
+      ),
+      GoRoute(
+        path: '/mi-perfil/disponibilidad',
+        name: 'mi-perfil-disponibilidad',
+        builder: (_, _) => const MiDisponibilidadPage(),
+      ),
+      GoRoute(
+        path: '/mi-perfil/historial',
+        name: 'mi-perfil-historial',
+        builder: (_, _) => const MiHistorialPage(),
       ),
       GoRoute(
         path: '/inventario',

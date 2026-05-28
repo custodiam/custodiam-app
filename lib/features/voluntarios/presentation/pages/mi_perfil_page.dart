@@ -151,12 +151,89 @@ class _ProfileContent extends StatelessWidget {
             value: roles.isEmpty ? '—' : roles.join(', '),
           ),
         ]),
+        const SizedBox(height: AppSpacing.lg),
+        const _MiActividadSection(),
         const SizedBox(height: AppSpacing.xl),
         const AppPermissionGate(
           permission: Permission.voluntariosEditarPropio,
           child: _EditButton(),
         ),
       ],
+    );
+  }
+}
+
+class _MiActividadSection extends StatelessWidget {
+  const _MiActividadSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Mi actividad', style: theme.textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.sm),
+        const Card(
+          margin: EdgeInsets.zero,
+          child: Column(
+            children: [
+              AppPermissionGate(
+                permission: Permission.fichajeVerPropio,
+                child: _ActividadTile(
+                  icon: Icons.timer_outlined,
+                  label: 'Mis horas',
+                  route: '/mi-perfil/horas',
+                  keyValue: 'mi_perfil_tile_horas',
+                ),
+              ),
+              AppPermissionGate(
+                permission: Permission.voluntariosVerPropio,
+                child: _ActividadTile(
+                  icon: Icons.event_available_outlined,
+                  label: 'Mi disponibilidad',
+                  route: '/mi-perfil/disponibilidad',
+                  keyValue: 'mi_perfil_tile_disponibilidad',
+                ),
+              ),
+              AppPermissionGate(
+                permission: Permission.voluntariosVerPropio,
+                child: _ActividadTile(
+                  icon: Icons.history,
+                  label: 'Mi historial',
+                  route: '/mi-perfil/historial',
+                  keyValue: 'mi_perfil_tile_historial',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActividadTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String route;
+  final String keyValue;
+
+  const _ActividadTile({
+    required this.icon,
+    required this.label,
+    required this.route,
+    required this.keyValue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      key: ValueKey(keyValue),
+      leading: Icon(icon),
+      title: Text(label),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.go(route),
     );
   }
 }
