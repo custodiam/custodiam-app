@@ -1,22 +1,32 @@
-// App-wide GoRouter configuration.
+// App-wide GoRouter configuration with `StatefulShellRoute.indexedStack`.
 //
-// '/' is SplashPage. It runs DecideStartupDestination (guía 26 §7) and
-// navigates to '/home' or '/login' according to the live session.
+// The router has three top-level routes outside the shell (splash, login,
+// callback) and five branches inside the shell:
 //
-// '/login' is the real LoginPage (EN-01-02 PR B). '/home' is still a
-// private placeholder until the dashboard feature lands; it carries
-// the logout button so the auth flow can be exercised end-to-end.
+//   Branch 0 — Inicio:       /home
+//   Branch 1 — Voluntarios:  /voluntarios{,/alta,/:id}, /mi-perfil{,/editar,
+//                            /horas,/disponibilidad,/historial}
+//   Branch 2 — Servicios:    /servicios{,/alta,/:id{,/fichaje}}
+//   Branch 3 — Inventario:   /inventario{,/material{/alta,/:id},/vehiculos{
+//                            /alta,/:id}}
+//   Branch 4 — Ajustes:      /settings, /ajustes/notificaciones
 //
-// '/callback' only exists on web. KeycloakWebAuthService.login() returns
-// immediately after launching the browser; the redirect lands here and
-// _CallbackHandler completes the authorization-code exchange before
-// pushing the user to /home (or back to /login on failure).
+// Each branch owns its own Navigator. `context.go('/voluntarios/123')`
+// pushes onto the voluntarios branch stack, so the Android system back
+// button and iOS swipe-back gesture work to return to `/voluntarios`
+// — the bug that the flat-routes + `context.go(...)` previous setup
+// produced (no back stack ever materialised because go() replaced
+// instead of pushing). Branch state (scroll position, in-progress
+// forms) survives across branch switches because IndexedStack keeps
+// the inactive branches alive.
 //
-// US-01-03: the GoRouter is wrapped in a Riverpod Provider so it can
-// observe AuthService.authStateListenable and run a redirect every
-// time the auth state flips. When a refresh-token expires mid-session,
-// the protected routes auto-bounce to /login. LoginPage then reads
-// AuthService.consumeExpiredFlag() to decide whether to show the
+// The shell itself (Scaffold with BottomAppBar + drawer) lives in
+// `CustodiamShell` (`widgets/custodiam_shell.dart`).
+//
+// Per ADR-013 the redirect still bounces protected routes to /login
+// when AuthService.authStateListenable fires (logout, refresh-token
+// expiry mid-session). The `LoginPage` consumes
+// `AuthService.consumeExpiredFlag()` to decide whether to show the
 // "sesión expirada" banner.
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -24,18 +34,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/ui/auth/app_permission_gate.dart';
-import '../core/ui/feedback/app_confirm_dialog.dart';
 import '../features/auth/presentation/pages/login_page.dart';
-import '../features/auth/presentation/viewmodels/auth_di.dart';
-import '../features/auth/presentation/viewmodels/auth_view_model.dart';
-import '../features/auth/presentation/widgets/auth_failure_feedback.dart';
-import '../features/settings/presentation/pages/settings_page.dart';
-import '../features/splash/presentation/pages/splash_page.dart';
 import '../features/disponibilidad/presentation/pages/mi_disponibilidad_page.dart';
 import '../features/fichaje/presentation/pages/fichaje_en_servicio_page.dart';
 import '../features/fichaje/presentation/pages/mis_horas_page.dart';
 import '../features/historial/presentation/pages/mi_historial_page.dart';
+import '../features/home/presentation/pages/home_page.dart';
 import '../features/inventario/presentation/pages/alta_material_page.dart';
 import '../features/inventario/presentation/pages/alta_vehiculo_page.dart';
 import '../features/inventario/presentation/pages/inventario_list_page.dart';
@@ -45,15 +49,16 @@ import '../features/notificaciones/presentation/pages/notificaciones_ajustes_pag
 import '../features/servicios/presentation/pages/alta_servicio_page.dart';
 import '../features/servicios/presentation/pages/servicio_ficha_page.dart';
 import '../features/servicios/presentation/pages/servicios_list_page.dart';
+import '../features/settings/presentation/pages/settings_page.dart';
+import '../features/splash/presentation/pages/splash_page.dart';
 import '../features/voluntarios/presentation/pages/alta_voluntario_page.dart';
 import '../features/voluntarios/presentation/pages/editar_mi_perfil_page.dart';
 import '../features/voluntarios/presentation/pages/mi_perfil_page.dart';
 import '../features/voluntarios/presentation/pages/voluntario_ficha_page.dart';
 import '../features/voluntarios/presentation/pages/voluntarios_list_page.dart';
 import '../infrastructure/auth/keycloak_web_auth_service.dart';
-import '../infrastructure/auth/permissions.dart';
 import '../infrastructure/di/providers.dart';
-import '../infrastructure/error/failure.dart';
+import 'widgets/custodiam_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authService = ref.watch(authServiceProvider);
@@ -80,302 +85,167 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'login',
         builder: (_, _) => const LoginPage(),
       ),
-      GoRoute(
-        path: '/home',
-        name: 'home',
-        builder: (_, _) => const HomePagePlaceholder(),
-      ),
-      GoRoute(
-        path: '/settings',
-        name: 'settings',
-        builder: (_, _) => const SettingsPage(),
-      ),
-      GoRoute(
-        path: '/voluntarios',
-        name: 'voluntarios',
-        builder: (_, _) => const VoluntariosListPage(),
-      ),
-      GoRoute(
-        path: '/voluntarios/alta',
-        name: 'voluntarios-alta',
-        builder: (_, _) => const AltaVoluntarioPage(),
-      ),
-      GoRoute(
-        path: '/voluntarios/:id',
-        name: 'voluntario-ficha',
-        builder: (_, state) => VoluntarioFichaPage(
-          voluntarioId: state.pathParameters['id']!,
-        ),
-      ),
-      GoRoute(
-        path: '/mi-perfil',
-        name: 'mi-perfil',
-        builder: (_, _) => const MiPerfilPage(),
-      ),
-      GoRoute(
-        path: '/mi-perfil/editar',
-        name: 'mi-perfil-editar',
-        builder: (_, _) => const EditarMiPerfilPage(),
-      ),
-      GoRoute(
-        path: '/servicios',
-        name: 'servicios',
-        builder: (_, _) => const ServiciosListPage(),
-      ),
-      GoRoute(
-        path: '/servicios/alta',
-        name: 'servicios-alta',
-        builder: (_, _) => const AltaServicioPage(),
-      ),
-      GoRoute(
-        path: '/servicios/:id',
-        name: 'servicio-ficha',
-        builder: (_, state) => ServicioFichaPage(
-          servicioId: state.pathParameters['id']!,
-        ),
-      ),
-      GoRoute(
-        path: '/servicios/:id/fichaje',
-        name: 'servicio-fichaje',
-        builder: (_, state) => FichajeEnServicioPage(
-          servicioId: state.pathParameters['id']!,
-        ),
-      ),
-      GoRoute(
-        path: '/mi-perfil/horas',
-        name: 'mi-perfil-horas',
-        builder: (_, _) => const MisHorasPage(),
-      ),
-      GoRoute(
-        path: '/mi-perfil/disponibilidad',
-        name: 'mi-perfil-disponibilidad',
-        builder: (_, _) => const MiDisponibilidadPage(),
-      ),
-      GoRoute(
-        path: '/mi-perfil/historial',
-        name: 'mi-perfil-historial',
-        builder: (_, _) => const MiHistorialPage(),
-      ),
-      GoRoute(
-        path: '/inventario',
-        name: 'inventario',
-        builder: (_, _) => const InventarioListPage(),
-      ),
-      GoRoute(
-        path: '/inventario/material/alta',
-        name: 'inventario-material-alta',
-        builder: (_, _) => const AltaMaterialPage(),
-      ),
-      GoRoute(
-        path: '/inventario/material/:id',
-        name: 'inventario-material-ficha',
-        builder: (_, state) => MaterialFichaPage(
-          materialId: state.pathParameters['id']!,
-        ),
-      ),
-      GoRoute(
-        path: '/inventario/vehiculos/alta',
-        name: 'inventario-vehiculo-alta',
-        builder: (_, _) => const AltaVehiculoPage(),
-      ),
-      GoRoute(
-        path: '/inventario/vehiculos/:id',
-        name: 'inventario-vehiculo-ficha',
-        builder: (_, state) => VehiculoFichaPage(
-          vehiculoId: state.pathParameters['id']!,
-        ),
-      ),
-      GoRoute(
-        path: '/ajustes/notificaciones',
-        name: 'ajustes-notificaciones',
-        builder: (_, _) => const NotificacionesAjustesPage(),
-      ),
       if (kIsWeb)
         GoRoute(
           path: '/callback',
           name: 'callback',
           builder: (_, state) => _CallbackHandler(callbackUri: state.uri),
         ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) => CustodiamShell(
+          navigationShell: navigationShell,
+        ),
+        branches: [
+          // ---------- Branch 0 — Inicio --------------------------------
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home',
+                name: 'home',
+                builder: (_, _) => const HomePage(),
+              ),
+            ],
+          ),
+          // ---------- Branch 1 — Voluntarios + Mi perfil ---------------
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/voluntarios',
+                name: 'voluntarios',
+                builder: (_, _) => const VoluntariosListPage(),
+                routes: [
+                  GoRoute(
+                    path: 'alta',
+                    name: 'voluntarios-alta',
+                    builder: (_, _) => const AltaVoluntarioPage(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    name: 'voluntario-ficha',
+                    builder: (_, state) => VoluntarioFichaPage(
+                      voluntarioId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: '/mi-perfil',
+                name: 'mi-perfil',
+                builder: (_, _) => const MiPerfilPage(),
+                routes: [
+                  GoRoute(
+                    path: 'editar',
+                    name: 'mi-perfil-editar',
+                    builder: (_, _) => const EditarMiPerfilPage(),
+                  ),
+                  GoRoute(
+                    path: 'horas',
+                    name: 'mi-perfil-horas',
+                    builder: (_, _) => const MisHorasPage(),
+                  ),
+                  GoRoute(
+                    path: 'disponibilidad',
+                    name: 'mi-perfil-disponibilidad',
+                    builder: (_, _) => const MiDisponibilidadPage(),
+                  ),
+                  GoRoute(
+                    path: 'historial',
+                    name: 'mi-perfil-historial',
+                    builder: (_, _) => const MiHistorialPage(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // ---------- Branch 2 — Servicios -----------------------------
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/servicios',
+                name: 'servicios',
+                builder: (_, _) => const ServiciosListPage(),
+                routes: [
+                  GoRoute(
+                    path: 'alta',
+                    name: 'servicios-alta',
+                    builder: (_, _) => const AltaServicioPage(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    name: 'servicio-ficha',
+                    builder: (_, state) => ServicioFichaPage(
+                      servicioId: state.pathParameters['id']!,
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'fichaje',
+                        name: 'servicio-fichaje',
+                        builder: (_, state) => FichajeEnServicioPage(
+                          servicioId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // ---------- Branch 3 — Inventario ----------------------------
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/inventario',
+                name: 'inventario',
+                builder: (_, _) => const InventarioListPage(),
+                routes: [
+                  GoRoute(
+                    path: 'material/alta',
+                    name: 'inventario-material-alta',
+                    builder: (_, _) => const AltaMaterialPage(),
+                  ),
+                  GoRoute(
+                    path: 'material/:id',
+                    name: 'inventario-material-ficha',
+                    builder: (_, state) => MaterialFichaPage(
+                      materialId: state.pathParameters['id']!,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'vehiculos/alta',
+                    name: 'inventario-vehiculo-alta',
+                    builder: (_, _) => const AltaVehiculoPage(),
+                  ),
+                  GoRoute(
+                    path: 'vehiculos/:id',
+                    name: 'inventario-vehiculo-ficha',
+                    builder: (_, state) => VehiculoFichaPage(
+                      vehiculoId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // ---------- Branch 4 — Ajustes -------------------------------
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                name: 'settings',
+                builder: (_, _) => const SettingsPage(),
+              ),
+              GoRoute(
+                path: '/ajustes/notificaciones',
+                name: 'ajustes-notificaciones',
+                builder: (_, _) => const NotificacionesAjustesPage(),
+              ),
+            ],
+          ),
+        ],
+      ),
     ],
   );
 });
-
-/// Stand-in for the dashboard until the real home feature lands.
-/// Public so widget tests can mount the logout flow without spinning
-/// up the full router. Will be replaced when the home feature is built
-/// (Sprint 4+).
-class HomePagePlaceholder extends ConsumerWidget {
-  const HomePagePlaceholder({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authViewModelProvider);
-
-    ref.listen<AsyncValue<void>>(authViewModelProvider, (prev, next) {
-      next.whenOrNull(
-        error: (error, _) {
-          if (error is AuthFailure) {
-            showAuthFailure(context, error);
-          }
-        },
-      );
-    });
-    // Note: success-path navigation to /login is handled by the
-    // router's redirect (US-01-03). AuthService publishes the auth
-    // flip; refreshListenable picks it up and bounces protected routes.
-
-    // Read currentUser from the feature-local wrapper so tests can
-    // override the auth source by overriding a single provider.
-    final user = ref.watch(authServiceForViewModelProvider).currentUser;
-    final greeting = user?.fullName.isNotEmpty == true
-        ? 'Hola, ${user!.fullName}'
-        : 'Hola';
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Custodiam'),
-        actions: [
-          // Demo de UI condicional (US-01-04): el botón de "Voluntarios"
-          // solo aparece para quien tiene voluntarios.listar — ver
-          // matriz en docs/trabajo/backlog/RBAC_v0.1.0.md.
-          AppPermissionGate(
-            permission: Permission.voluntariosListar,
-            child: IconButton(
-              key: const ValueKey('home_voluntarios_button'),
-              tooltip: 'Voluntarios',
-              icon: const Icon(Icons.people_outline),
-              onPressed: () => context.go('/voluntarios'),
-            ),
-          ),
-          AppPermissionGate(
-            permission: Permission.serviciosVerPublicados,
-            child: IconButton(
-              key: const ValueKey('home_servicios_button'),
-              tooltip: 'Servicios',
-              icon: const Icon(Icons.event_outlined),
-              onPressed: () => context.go('/servicios'),
-            ),
-          ),
-          AppPermissionGate(
-            permission: Permission.inventarioVer,
-            child: IconButton(
-              key: const ValueKey('home_inventario_button'),
-              tooltip: 'Inventario',
-              icon: const Icon(Icons.inventory_2_outlined),
-              onPressed: () => context.go('/inventario'),
-            ),
-          ),
-          AppPermissionGate(
-            permission: Permission.voluntariosVerPropio,
-            child: IconButton(
-              key: const ValueKey('home_mi_perfil_button'),
-              tooltip: 'Mi perfil',
-              icon: const Icon(Icons.person_outline),
-              onPressed: () => context.go('/mi-perfil'),
-            ),
-          ),
-          AppPermissionGate(
-            permission: Permission.notificacionesConfigurarPropias,
-            child: IconButton(
-              key: const ValueKey('home_notificaciones_button'),
-              tooltip: 'Notificaciones',
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => context.go('/ajustes/notificaciones'),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Ajustes',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.go('/settings'),
-          ),
-          IconButton(
-            tooltip: 'Cerrar sesión',
-            icon: authState.isLoading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.logout),
-            onPressed: authState.isLoading
-                ? null
-                : () async {
-                    final confirmed = await AppConfirmDialog.show(
-                      context,
-                      title: 'Cerrar sesión',
-                      message:
-                          '¿Seguro que quieres cerrar sesión? Tendrás que '
-                          'volver a iniciar sesión para acceder.',
-                      confirmLabel: 'Cerrar sesión',
-                      isDestructive: true,
-                    );
-                    if (!confirmed) return;
-                    if (!context.mounted) return;
-                    ref.read(authViewModelProvider.notifier).logout();
-                  },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.shield, size: 64),
-            const SizedBox(height: 16),
-            const Text(
-              'Custodiam',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(greeting),
-            const SizedBox(height: 8),
-            const Text('Protección Civil — MVP en desarrollo'),
-            const SizedBox(height: 24),
-            // Banner solo visible para mandos altos / coordinador.
-            const AppPermissionGate.anyOf(
-              anyOf: [
-                Permission.serviciosCrearEmergencia,
-                Permission.serviciosConvocar,
-              ],
-              child: _ComandoOperativoBanner(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ComandoOperativoBanner extends StatelessWidget {
-  const _ComandoOperativoBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      key: const ValueKey('home_comando_banner'),
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: scheme.primaryContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.notifications_active_outlined, color: scheme.onPrimaryContainer),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              'Tienes capacidad de mando operativo activa.',
-              style: TextStyle(color: scheme.onPrimaryContainer),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _CallbackHandler extends ConsumerStatefulWidget {
   const _CallbackHandler({required this.callbackUri});
