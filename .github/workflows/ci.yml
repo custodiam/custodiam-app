@@ -60,16 +60,24 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Activate patrol_cli + propagate PATH
-        # subosito/flutter-action exports PUB_CACHE pointing to the real
-        # pub-cache directory on every OS (Linux ~/.pub-cache, Windows
-        # C:\Users\runneradmin\AppData\Local\Pub\Cache). Using $PUB_CACHE/bin
-        # is the universal way to expose `patrol` after `dart pub global
-        # activate`. $LOCALAPPDATA was not available in Git Bash.
+      - name: Activate patrol_cli (Linux/macOS)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           dart pub global activate patrol_cli
-          echo "$PUB_CACHE/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      - name: Activate patrol_cli (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        # On Windows runner, pwsh handles the backslashed Windows paths
+        # natively and writes them to $GITHUB_PATH in a form that the
+        # next step's bash shell can resolve. Previous attempts with
+        # bash + $LOCALAPPDATA or $PUB_CACHE both produced empty/wrong
+        # paths because of how Git Bash translates Windows env vars.
+        run: |
+          dart pub global activate patrol_cli
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:PUB_CACHE\bin"
 
       - name: Install Flutter dependencies
         shell: bash
