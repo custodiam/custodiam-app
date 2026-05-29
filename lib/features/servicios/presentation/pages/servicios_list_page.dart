@@ -242,12 +242,28 @@ class _EstadoFilterRow extends StatelessWidget {
             selected: selected == EstadoServicio.activo,
             onSelected: (_) => onChanged(EstadoServicio.activo),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          ChoiceChip(
-            key: const ValueKey('servicios_filter_borrador'),
-            label: const Text('Borradores'),
-            selected: selected == EstadoServicio.borrador,
-            onSelected: (_) => onChanged(EstadoServicio.borrador),
+          // Auditoría RBAC (29-may, hallazgo A3): el filtro `borrador`
+          // se ofrecía a cualquier rol con `serviciosVerPublicados` pero
+          // el backend no expone borradores ajenos, así que voluntarios
+          // /tesorero/secretario/etc filtraban a vacío siempre. Se
+          // gatea por los dos permisos de creación de servicio.
+          AppPermissionGate.anyOf(
+            anyOf: const [
+              Permission.serviciosCrearPreventivo,
+              Permission.serviciosCrearEmergencia,
+            ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(width: AppSpacing.sm),
+                ChoiceChip(
+                  key: const ValueKey('servicios_filter_borrador'),
+                  label: const Text('Borradores'),
+                  selected: selected == EstadoServicio.borrador,
+                  onSelected: (_) => onChanged(EstadoServicio.borrador),
+                ),
+              ],
+            ),
           ),
           const SizedBox(width: AppSpacing.sm),
           ChoiceChip(
