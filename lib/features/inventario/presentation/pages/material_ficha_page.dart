@@ -37,6 +37,7 @@ import '../../domain/entities/tipo_asignacion.dart';
 import '../../domain/entities/tipo_material.dart';
 import '../viewmodels/material_ficha_view_model.dart';
 import '../viewmodels/materiales_list_view_model.dart';
+import '../widgets/asignacion_actual_section.dart';
 import '../widgets/inventario_estado_badge.dart';
 
 class MaterialFichaPage extends ConsumerWidget {
@@ -186,6 +187,7 @@ class _LoadedMaterial extends ConsumerWidget {
               label: 'Incidencia registrada',
               value: material.observacionesIncidencia!,
             ),
+          AsignacionActualSection(asignaciones: material.asignacionesActivas),
           const SizedBox(height: AppSpacing.lg),
 
           // — Acciones de asignación / devolución (solo si operativo) —

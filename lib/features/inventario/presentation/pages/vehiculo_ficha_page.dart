@@ -25,6 +25,7 @@ import '../../domain/entities/tipo_vehiculo.dart';
 import '../../domain/entities/vehiculo_item.dart';
 import '../viewmodels/vehiculo_ficha_view_model.dart';
 import '../viewmodels/vehiculos_list_view_model.dart';
+import '../widgets/asignacion_actual_section.dart';
 import '../widgets/inventario_estado_badge.dart';
 
 class VehiculoFichaPage extends ConsumerWidget {
@@ -164,6 +165,11 @@ class _LoadedVehiculo extends ConsumerWidget {
               label: 'Incidencia registrada',
               value: vehiculo.observacionesIncidencia!,
             ),
+          AsignacionActualSection(
+            asignaciones: vehiculo.asignacionActual != null
+                ? [vehiculo.asignacionActual!]
+                : const [],
+          ),
           const SizedBox(height: AppSpacing.lg),
           if (vehiculo.estado != EstadoInventario.averiado &&
               vehiculo.estado != EstadoInventario.perdido)
