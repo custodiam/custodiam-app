@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_date_range_picker.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
@@ -86,18 +87,18 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
     return AppPageScaffold(
       title: 'Mi historial',
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('mi_historial_filtro_fechas'),
           tooltip: 'Filtrar por fechas',
-          icon: const Icon(Icons.date_range),
+          icon: Icons.date_range,
           onPressed: estadoActual == null
               ? null
               : () => _abrirDateRangePicker(context, estadoActual),
         ),
-        IconButton(
+        AppIconButton(
           key: const ValueKey('mi_historial_refresh'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () {
             ref.read(miHistorialViewModelProvider.notifier).refresh();
             ref.read(miResumenViewModelProvider.notifier).refresh();

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
@@ -39,10 +40,10 @@ class _MisHorasBody extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Mis horas',
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('mis_horas_refresh'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () =>
               ref.read(misHorasViewModelProvider.notifier).refresh(),
         ),

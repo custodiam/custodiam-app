@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
@@ -114,10 +115,10 @@ class _ServiciosListPageBodyState
           ],
           child: _AltaServicioButton(),
         ),
-        IconButton(
+        AppIconButton(
           key: const ValueKey('servicios_refresh_button'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () =>
               ref.read(serviciosListViewModelProvider.notifier).refresh(),
         ),
@@ -202,10 +203,10 @@ class _AltaServicioButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
+    return AppIconButton(
       key: const ValueKey('servicios_alta_button'),
       tooltip: 'Crear servicio',
-      icon: const Icon(Icons.add),
+      icon: Icons.add,
       onPressed: () => context.go('/servicios/alta'),
     );
   }

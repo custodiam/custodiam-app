@@ -23,6 +23,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
@@ -82,10 +83,10 @@ class _VoluntarioFichaBody extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Ficha de voluntario',
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('voluntario_ficha_refresh'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () => ref.read(provider.notifier).refresh(),
         ),
       ],

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_text_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
@@ -112,10 +113,10 @@ class _LoadedVehiculo extends ConsumerWidget {
     return AppPageScaffold(
       title: '${vehiculo.codigoInterno} · ${vehiculo.matricula}',
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('vehiculo_ficha_refresh'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () => ref
               .read(vehiculoFichaViewModelProvider(vehiculo.id).notifier)
               .refresh(),

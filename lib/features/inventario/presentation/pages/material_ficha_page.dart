@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/buttons/app_text_button.dart';
@@ -123,10 +124,10 @@ class _LoadedMaterial extends ConsumerWidget {
     return AppPageScaffold(
       title: material.nombre,
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('material_ficha_refresh'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () => ref
               .read(materialFichaViewModelProvider(material.id).notifier)
               .refresh(),

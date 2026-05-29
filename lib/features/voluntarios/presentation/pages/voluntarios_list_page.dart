@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
@@ -133,17 +134,17 @@ class _VoluntariosListPageBodyState
       actions: [
         AppPermissionGate(
           permission: Permission.voluntariosCrear,
-          child: IconButton(
+          child: AppIconButton(
             key: const ValueKey('voluntarios_alta_button'),
             tooltip: 'Alta de voluntario',
-            icon: const Icon(Icons.person_add_alt_1),
+            icon: Icons.person_add_alt_1,
             onPressed: () => context.go('/voluntarios/alta'),
           ),
         ),
-        IconButton(
+        AppIconButton(
           key: const ValueKey('voluntarios_refresh_button'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () =>
               ref.read(voluntariosListViewModelProvider.notifier).refresh(),
         ),

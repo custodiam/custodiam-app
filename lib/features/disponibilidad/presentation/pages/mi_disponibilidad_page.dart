@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
@@ -53,10 +54,10 @@ class _MiDisponibilidadBody extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Mi disponibilidad',
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('mi_disponibilidad_refresh'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () => ref
               .read(miDisponibilidadViewModelProvider.notifier)
               .refresh(),
@@ -175,20 +176,20 @@ class _MesNavegacion extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('mi_disponibilidad_prev_month'),
           tooltip: 'Mes anterior',
-          icon: const Icon(Icons.chevron_left),
+          icon: Icons.chevron_left,
           onPressed: onPrev,
         ),
         Text(
           etiqueta[0].toUpperCase() + etiqueta.substring(1),
           style: theme.textTheme.titleLarge,
         ),
-        IconButton(
+        AppIconButton(
           key: const ValueKey('mi_disponibilidad_next_month'),
           tooltip: 'Mes siguiente',
-          icon: const Icon(Icons.chevron_right),
+          icon: Icons.chevron_right,
           onPressed: onNext,
         ),
       ],
