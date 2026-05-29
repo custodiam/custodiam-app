@@ -29,6 +29,11 @@ abstract final class K {
   static const Key drawerNotificacionesTile = ValueKey('drawer_notificaciones_tile');
   static const Key drawerSettingsTile = ValueKey('drawer_settings_tile');
   static const Key drawerLogoutTile = ValueKey('drawer_logout_tile');
+  static const Key drawerAdministracionTile =
+      ValueKey('drawer_administracion_tile');
+  static const Key drawerRgpdTile = ValueKey('drawer_rgpd_tile');
+  static const Key drawerDocumentalTile = ValueKey('drawer_documental_tile');
+  static const Key drawerEconomicoTile = ValueKey('drawer_economico_tile');
 
   // ---- Home (dashboard básico tras login) -------------------------------
   static const Key homeGreeting = ValueKey('home_greeting');

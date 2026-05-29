@@ -283,6 +283,46 @@ class _CustodiamDrawer extends ConsumerWidget {
                 _goAndCloseDrawer(context, '/ajustes/notificaciones'),
           ),
         ),
+        // Capacidades transversales sin pantalla propia todavía. Cada
+        // tile está gateado por su permiso RBAC y lleva a una página
+        // "Próximamente" (AppComingSoonPage) — da superficie a la
+        // capacidad sin prometer una funcionalidad aún no construida.
+        AppPermissionGate(
+          permission: Permission.sistemaPanelAdmin,
+          child: _DrawerTile(
+            tileKey: K.drawerAdministracionTile,
+            icon: Symbols.admin_panel_settings,
+            label: 'Administración',
+            onTap: () => _goAndCloseDrawer(context, '/administracion'),
+          ),
+        ),
+        AppPermissionGate(
+          permission: Permission.sistemaExportarRgpd,
+          child: _DrawerTile(
+            tileKey: K.drawerRgpdTile,
+            icon: Symbols.privacy_tip,
+            label: 'Exportar datos (RGPD)',
+            onTap: () => _goAndCloseDrawer(context, '/exportar-rgpd'),
+          ),
+        ),
+        AppPermissionGate(
+          permission: Permission.documentalGestionar,
+          child: _DrawerTile(
+            tileKey: K.drawerDocumentalTile,
+            icon: Symbols.folder,
+            label: 'Gestión documental',
+            onTap: () => _goAndCloseDrawer(context, '/gestion-documental'),
+          ),
+        ),
+        AppPermissionGate(
+          permission: Permission.economicoGestionar,
+          child: _DrawerTile(
+            tileKey: K.drawerEconomicoTile,
+            icon: Symbols.payments,
+            label: 'Gestión económica',
+            onTap: () => _goAndCloseDrawer(context, '/gestion-economica'),
+          ),
+        ),
         // Ajustes: sin AppPermissionGate por diseño. La página
         // /settings expone preferencias locales (tema, etc.) que no
         // tocan backend ni dependen de RBAC. Documentado para que

@@ -120,12 +120,47 @@ GoRouter _buildShellTestRouter({String initialLocation = '/home'}) {
                 path: '/settings',
                 builder: (_, _) => const _StubPage('SETTINGS'),
               ),
+              GoRoute(
+                path: '/administracion',
+                builder: (_, _) => const _StubPage('ADMINISTRACION'),
+              ),
+              GoRoute(
+                path: '/exportar-rgpd',
+                builder: (_, _) => const _StubPage('EXPORTAR_RGPD'),
+              ),
+              GoRoute(
+                path: '/gestion-documental',
+                builder: (_, _) => const _StubPage('GESTION_DOCUMENTAL'),
+              ),
+              GoRoute(
+                path: '/gestion-economica',
+                builder: (_, _) => const _StubPage('GESTION_ECONOMICA'),
+              ),
             ],
           ),
         ],
       ),
     ],
   );
+}
+
+/// Auth fake granting an arbitrary list of roles. Used by the
+/// transversal-capability drawer tests so each role only sees the tiles
+/// its permission set allows.
+void _wireRoles(_MockAuthService auth, List<String> roles) {
+  when(() => auth.currentUser).thenReturn(
+    CurrentUser(
+      sub: 'tk-sub',
+      email: 'tester@custodiam.local',
+      givenName: 'Test',
+      familyName: 'User',
+      roles: roles,
+    ),
+  );
+  when(() => auth.isAuthenticated).thenReturn(true);
+  when(() => auth.authStateListenable).thenReturn(ValueNotifier(true));
+  when(() => auth.consumeExpiredFlag()).thenReturn(false);
+  when(() => auth.logout()).thenAnswer((_) async => const Success(null));
 }
 
 /// Auth fake that grants every role in the RBAC matrix. Tests of the
@@ -575,6 +610,160 @@ void main() {
         await tester.pumpAndSettle();
 
         await expectLater(tester, meetsGuideline(textContrastGuideline));
+      },
+    );
+  });
+
+  group('CustodiamShell — transversal RBAC drawer entries', () {
+    late _MockAuthService auth;
+
+    setUp(() {
+      auth = _MockAuthService();
+    });
+
+    Future<void> openDrawer(WidgetTester tester) async {
+      await tester.tap(find.byKey(K.shellDrawerButton));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> pump(WidgetTester tester, List<String> roles) async {
+      // The drawer is a (lazy) ListView; with a role that unlocks many
+      // top tiles the transversal tiles fall below the fold and the
+      // viewport never materialises them. A tall surface keeps every
+      // tile built so find.byKey can locate them without scrolling.
+      tester.view.physicalSize = const Size(1080, 4000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      _wireRoles(auth, roles);
+      await pumpWithRouter(
+        tester,
+        router: _buildShellTestRouter(),
+        overrides: [
+          authServiceProvider.overrideWithValue(auth),
+          authServiceForViewModelProvider.overrideWithValue(auth),
+        ],
+      );
+    }
+
+    testWidgets(
+      'admin sees Administración + RGPD but not documental/económica',
+      (tester) async {
+        await pump(tester, const ['admin']);
+        await openDrawer(tester);
+
+        expect(find.byKey(K.drawerAdministracionTile), findsOneWidget);
+        expect(find.byKey(K.drawerRgpdTile), findsOneWidget);
+        expect(find.byKey(K.drawerDocumentalTile), findsNothing);
+        expect(find.byKey(K.drawerEconomicoTile), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'admin tapping Administración navigates to the coming-soon stub',
+      (tester) async {
+        await pump(tester, const ['admin']);
+        await openDrawer(tester);
+
+        await tester.tap(find.byKey(K.drawerAdministracionTile));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey('stub_ADMINISTRACION')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'admin tapping RGPD navigates to the coming-soon stub',
+      (tester) async {
+        await pump(tester, const ['admin']);
+        await openDrawer(tester);
+
+        await tester.tap(find.byKey(K.drawerRgpdTile));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey('stub_EXPORTAR_RGPD')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'secretario sees Documental + RGPD but not Administración/Económica',
+      (tester) async {
+        await pump(tester, const ['secretario']);
+        await openDrawer(tester);
+
+        expect(find.byKey(K.drawerDocumentalTile), findsOneWidget);
+        expect(find.byKey(K.drawerRgpdTile), findsOneWidget);
+        expect(find.byKey(K.drawerAdministracionTile), findsNothing);
+        expect(find.byKey(K.drawerEconomicoTile), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'secretario tapping Documental navigates to the coming-soon stub',
+      (tester) async {
+        await pump(tester, const ['secretario']);
+        await openDrawer(tester);
+
+        await tester.tap(find.byKey(K.drawerDocumentalTile));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey('stub_GESTION_DOCUMENTAL')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'tesorero sees Económica only — the RBAC matrix does not grant '
+      'tesorero sistema.exportar_rgpd, so the RGPD tile stays gated',
+      (tester) async {
+        await pump(tester, const ['tesorero']);
+        await openDrawer(tester);
+
+        expect(find.byKey(K.drawerEconomicoTile), findsOneWidget);
+        // tesorero lacks sistemaExportarRgpd in kRolePermissions, so the
+        // gate collapses the RGPD tile. Driven by the matrix, not by this
+        // screen; do not relax the gate to match an incorrect assumption.
+        expect(find.byKey(K.drawerRgpdTile), findsNothing);
+        expect(find.byKey(K.drawerAdministracionTile), findsNothing);
+        expect(find.byKey(K.drawerDocumentalTile), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'tesorero tapping Económica navigates to the coming-soon stub',
+      (tester) async {
+        await pump(tester, const ['tesorero']);
+        await openDrawer(tester);
+
+        await tester.tap(find.byKey(K.drawerEconomicoTile));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey('stub_GESTION_ECONOMICA')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'voluntario sees none of the four transversal tiles',
+      (tester) async {
+        await pump(tester, const ['voluntario']);
+        await openDrawer(tester);
+
+        expect(find.byKey(K.drawerAdministracionTile), findsNothing);
+        expect(find.byKey(K.drawerRgpdTile), findsNothing);
+        expect(find.byKey(K.drawerDocumentalTile), findsNothing);
+        expect(find.byKey(K.drawerEconomicoTile), findsNothing);
       },
     );
   });
