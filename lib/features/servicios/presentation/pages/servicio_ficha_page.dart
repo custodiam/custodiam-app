@@ -169,8 +169,9 @@ class _LoadedFicha extends ConsumerWidget {
           if (servicio.numeroVoluntarios != null)
             _InfoRow(
               icon: Symbols.groups,
-              label: 'Voluntarios necesarios',
-              value: servicio.numeroVoluntarios!.toString(),
+              label: 'Plazas',
+              value:
+                  '${servicio.inscritosCount}/${servicio.numeroVoluntarios}',
             ),
           if (servicio.notasMaterial != null &&
               servicio.notasMaterial!.isNotEmpty)
@@ -269,16 +270,12 @@ class _SelfServiceActions extends ConsumerWidget {
     final puedeApuntarse = servicio.estado == EstadoServicio.publicado ||
         servicio.estado == EstadoServicio.activo;
 
-    // TODO(rbac-d3): hide "Apuntarme" when aforo is reached. Blocked
-    // by backend: the Servicio entity exposes capacity (numeroVoluntarios)
-    // but not the current inscritos count. Two options pending decision
-    // with PO/backend:
-    //   (a) include inscritosCount in ServicioResponse (preferred, no
-    //       extra round-trip).
-    //   (b) call GET /servicios/{id}/voluntarios on ficha load and
-    //       count locally.
-    // Defense-in-depth at backend already returns 4xx when full, so
-    // the worst current UX is a snackbar after the tap.
+    // Gate de aforo (UI-only). null = aforo ilimitado → siempre
+    // habilitado. El backend revalida la capacidad en la petición; esta
+    // puerta solo evita ofrecer una acción que terminaría en 4xx.
+    final aforoLleno = servicio.numeroVoluntarios != null &&
+        servicio.inscritosCount >= servicio.numeroVoluntarios!;
+    final canApuntarse = puedeApuntarse && !aforoLleno;
 
     return Column(
       children: [
@@ -287,18 +284,24 @@ class _SelfServiceActions extends ConsumerWidget {
             permission: Permission.serviciosApuntarsePropio,
             child: Padding(
               padding: const EdgeInsets.only(top: AppSpacing.sm),
-              child: AppPrimaryButton(
-                key: const ValueKey('servicio_ficha_apuntarse_button'),
-                label: 'Apuntarme',
-                icon: Symbols.check_circle,
-                expanded: true,
-                isLoading: loading,
-                onPressed: loading
-                    ? null
-                    : () => ref
-                        .read(servicioFichaViewModelProvider(servicio.id)
-                            .notifier)
-                        .apuntarse(),
+              child: Semantics(
+                // AppPrimaryButton solo se deshabilita vía onPressed null
+                // y no expone un slot de etiqueta accesible, así que
+                // anunciamos el motivo aquí para el lector de pantalla.
+                label: aforoLleno ? 'Aforo completo' : null,
+                child: AppPrimaryButton(
+                  key: const ValueKey('servicio_ficha_apuntarse_button'),
+                  label: 'Apuntarme',
+                  icon: Symbols.check_circle,
+                  expanded: true,
+                  isLoading: loading,
+                  onPressed: (loading || !canApuntarse)
+                      ? null
+                      : () => ref
+                          .read(servicioFichaViewModelProvider(servicio.id)
+                              .notifier)
+                          .apuntarse(),
+                ),
               ),
             ),
           ),
