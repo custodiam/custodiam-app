@@ -5,10 +5,13 @@
 // hoy aparecen deshabilitados (el backend devuelve 422 FechaPasada en
 // PUT, y el cliente espeja la regla para no enviar la request).
 //
-// La página se gata por `voluntariosVerPropio`; el toggle se gata
-// adicionalmente por `voluntariosDisponibilidadPropia` (ambos están en
-// el frozenset base operativo, así que en la práctica un voluntario
-// con acceso a la página también puede tocar).
+// La página se gata por `voluntariosDisponibilidadPropia`: quien lee
+// (secretario/tesorero) no necesita esta pantalla — para esos roles el
+// resumen vive en MiHistorialPage / MiPerfilPage. Esta pantalla es
+// estrictamente para gestionar. Antes había un doble gate
+// (página=voluntariosVerPropio + toggle=voluntariosDisponibilidadPropia)
+// que abría una versión sólo-lectura silenciosa para sec/tes; se
+// eliminó tras la auditoría RBAC del 29-may (hallazgo B2).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +24,6 @@ import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
-import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/mes_disponibilidad.dart';
 import '../viewmodels/mi_disponibilidad_view_model.dart';
@@ -32,7 +34,7 @@ class MiDisponibilidadPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return const AppPermissionGate(
-      permission: Permission.voluntariosVerPropio,
+      permission: Permission.voluntariosDisponibilidadPropia,
       fallback: _ForbiddenScreen(),
       child: _MiDisponibilidadBody(),
     );
@@ -92,10 +94,6 @@ class _CalendarioContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(miDisponibilidadViewModelProvider.notifier);
-    final roles =
-        ref.watch(authServiceProvider).currentUser?.roles ?? const <String>[];
-    final tieneToggle = permissionsForRoles(roles)
-        .contains(Permission.voluntariosDisponibilidadPropia);
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -113,7 +111,11 @@ class _CalendarioContent extends ConsumerWidget {
           Expanded(
             child: _GrilladeDias(
               mes: mes,
-              habilitado: tieneToggle,
+              // El gate de la página garantiza el permiso, así que el
+              // toggle es siempre `true`; solo `esPasado` lo bloquea
+              // por día. Conservamos la propiedad por si en el futuro
+              // hay un modo readonly por estado (suspendido, baja...).
+              habilitado: true,
               onTap: (fecha) async {
                 final failure = await notifier.toggleDia(fecha);
                 if (failure != null && context.mounted) {
