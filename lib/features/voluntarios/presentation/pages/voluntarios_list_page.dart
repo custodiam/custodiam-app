@@ -30,6 +30,7 @@ import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
+import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/estado_voluntario.dart';
 import '../../domain/entities/voluntario_summary.dart';
@@ -96,6 +97,16 @@ class _VoluntariosListPageBodyState
   @override
   Widget build(BuildContext context) {
     final asyncState = ref.watch(voluntariosListViewModelProvider);
+    // Voluntarios sin permission.voluntariosVerFicha ven la lista pero
+    // sus filas deben quedar no-tap. La auditoría RBAC (29-may, hallazgo
+    // A1) lo formaliza: el rol `voluntario` tiene `voluntariosListar` pero
+    // no `voluntariosVerFicha`; sin este gate, el tap aterrizaba en el
+    // `_ForbiddenScreen` de la ficha.
+    final canViewFicha = ref
+            .watch(authServiceProvider)
+            .currentUser
+            ?.hasPermission(Permission.voluntariosVerFicha) ??
+        false;
 
     ref.listen<AsyncValue<VoluntariosListState>>(
       voluntariosListViewModelProvider,
@@ -158,13 +169,16 @@ class _VoluntariosListPageBodyState
                 .filterByEstado(estado),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Expanded(child: _buildBody(asyncState)),
+          Expanded(child: _buildBody(asyncState, canViewFicha: canViewFicha)),
         ],
       ),
     );
   }
 
-  Widget _buildBody(AsyncValue<VoluntariosListState> asyncState) {
+  Widget _buildBody(
+    AsyncValue<VoluntariosListState> asyncState, {
+    required bool canViewFicha,
+  }) {
     return asyncState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) {
@@ -201,7 +215,7 @@ class _VoluntariosListPageBodyState
               );
             }
             final v = state.items[index];
-            return _VoluntarioTile(voluntario: v);
+            return _VoluntarioTile(voluntario: v, canViewFicha: canViewFicha);
           },
         );
       },
@@ -257,8 +271,12 @@ class _EstadoFilterRow extends StatelessWidget {
 
 class _VoluntarioTile extends StatelessWidget {
   final VoluntarioSummary voluntario;
+  final bool canViewFicha;
 
-  const _VoluntarioTile({required this.voluntario});
+  const _VoluntarioTile({
+    required this.voluntario,
+    required this.canViewFicha,
+  });
 
   String get _initials {
     final parts = voluntario.nombre.trim().split(RegExp(r'\s+'));
@@ -279,7 +297,9 @@ class _VoluntarioTile extends StatelessWidget {
       title: Text(voluntario.nombre),
       subtitle: Text('${voluntario.telefono} · ${voluntario.municipio}'),
       trailing: _EstadoBadge(estado: voluntario.estado),
-      onTap: () => context.go('/voluntarios/${voluntario.id}'),
+      onTap: canViewFicha
+          ? () => context.go('/voluntarios/${voluntario.id}')
+          : null,
     );
   }
 }
