@@ -16,7 +16,6 @@ import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
-import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/tipo_vehiculo.dart';
@@ -104,9 +103,10 @@ class _LoadedVehiculo extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authServiceProvider).currentUser;
-    final puedeReportar =
-        user?.hasPermission(Permission.inventarioReportarIncidencia) ?? false;
+    // Auditoría RBAC (29-may, hallazgo B3): se migra el check inline
+    // por permiso a `AppPermissionGate` para unificar el patrón con el
+    // resto de pages. El `if` por `estado` se conserva como regla de
+    // dominio (no RBAC).
     return AppPageScaffold(
       title: '${vehiculo.codigoInterno} · ${vehiculo.matricula}',
       actions: [
@@ -161,35 +161,41 @@ class _LoadedVehiculo extends ConsumerWidget {
               value: vehiculo.observacionesIncidencia!,
             ),
           const SizedBox(height: AppSpacing.lg),
-          if (puedeReportar &&
-              vehiculo.estado != EstadoInventario.averiado &&
-              vehiculo.estado != EstadoInventario.perdido) ...[
-            AppDestructiveButton(
-              key: const ValueKey('vehiculo_ficha_averia'),
-              label: 'Reportar avería',
-              icon: Icons.build_outlined,
-              expanded: true,
-              onPressed: () => _abrirIncidencia(
-                context,
-                ref,
-                EstadoInventario.averiado,
-                'Reportar avería',
+          if (vehiculo.estado != EstadoInventario.averiado &&
+              vehiculo.estado != EstadoInventario.perdido)
+            AppPermissionGate(
+              permission: Permission.inventarioReportarIncidencia,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppDestructiveButton(
+                    key: const ValueKey('vehiculo_ficha_averia'),
+                    label: 'Reportar avería',
+                    icon: Icons.build_outlined,
+                    expanded: true,
+                    onPressed: () => _abrirIncidencia(
+                      context,
+                      ref,
+                      EstadoInventario.averiado,
+                      'Reportar avería',
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppDestructiveButton(
+                    key: const ValueKey('vehiculo_ficha_perdida'),
+                    label: 'Reportar pérdida',
+                    icon: Icons.report_outlined,
+                    expanded: true,
+                    onPressed: () => _abrirIncidencia(
+                      context,
+                      ref,
+                      EstadoInventario.perdido,
+                      'Reportar pérdida',
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AppDestructiveButton(
-              key: const ValueKey('vehiculo_ficha_perdida'),
-              label: 'Reportar pérdida',
-              icon: Icons.report_outlined,
-              expanded: true,
-              onPressed: () => _abrirIncidencia(
-                context,
-                ref,
-                EstadoInventario.perdido,
-                'Reportar pérdida',
-              ),
-            ),
-          ],
         ],
       ),
     );

@@ -27,7 +27,6 @@ import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
-import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/material_item.dart';
@@ -109,16 +108,15 @@ class _LoadedMaterial extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authServiceProvider).currentUser;
-    final puedeReportar =
-        user?.hasPermission(Permission.inventarioReportarIncidencia) ?? false;
-    final puedeAsignarPersonal = (user?.hasPermission(
-            Permission.inventarioAsignarEquipamientoPersonal) ??
-        false);
-    final puedePrestar =
-        user?.hasPermission(Permission.inventarioPrestarTemporal) ?? false;
-    final puedeDevolver =
-        user?.hasPermission(Permission.inventarioRegistrarDevolucion) ?? false;
+    // Auditoría RBAC (29-may, hallazgo B3): la ficha leía los permisos
+    // con `user.hasPermission` y los inlineaba en `if`s. Funciona pero
+    // rompe la convención del repo (resto de pages envuelven en
+    // `AppPermissionGate`). Migramos a `AppPermissionGate` para que un
+    // grep por `AppPermissionGate` localice todas las superficies
+    // gateadas, y que los tests genéricos por rol funcionen igual aquí
+    // que en otras pages. El `if` por `estado`/`tipo` se conserva como
+    // regla de dominio (no RBAC) — decide si el botón aparece en
+    // absoluto; el `AppPermissionGate` decide si el usuario lo ve.
 
     return AppPageScaffold(
       title: material.nombre,
@@ -188,79 +186,104 @@ class _LoadedMaterial extends ConsumerWidget {
 
           // — Acciones de asignación / devolución (solo si operativo) —
           if (material.estado == EstadoInventario.operativo) ...[
-            if (puedeAsignarPersonal &&
-                material.tipo == TipoMaterial.personal) ...[
-              AppPrimaryButton(
-                key: const ValueKey('material_ficha_asignar_personal'),
-                label: 'Asignar como equipamiento personal',
-                icon: Icons.person_add_alt_1,
-                expanded: true,
-                onPressed: () => _abrirDialogAsignar(
-                  context,
-                  ref,
-                  tipo: TipoAsignacion.personal,
+            if (material.tipo == TipoMaterial.personal)
+              AppPermissionGate(
+                permission:
+                    Permission.inventarioAsignarEquipamientoPersonal,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppPrimaryButton(
+                      key: const ValueKey('material_ficha_asignar_personal'),
+                      label: 'Asignar como equipamiento personal',
+                      icon: Icons.person_add_alt_1,
+                      expanded: true,
+                      onPressed: () => _abrirDialogAsignar(
+                        context,
+                        ref,
+                        tipo: TipoAsignacion.personal,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-            ],
-            if (puedePrestar &&
-                material.tipo == TipoMaterial.prestable) ...[
-              AppPrimaryButton(
-                key: const ValueKey('material_ficha_prestar'),
-                label: 'Prestar a un voluntario',
-                icon: Icons.swap_horiz,
-                expanded: true,
-                onPressed: () => _abrirDialogAsignar(
-                  context,
-                  ref,
-                  tipo: TipoAsignacion.prestamo,
+            if (material.tipo == TipoMaterial.prestable)
+              AppPermissionGate(
+                permission: Permission.inventarioPrestarTemporal,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppPrimaryButton(
+                      key: const ValueKey('material_ficha_prestar'),
+                      label: 'Prestar a un voluntario',
+                      icon: Icons.swap_horiz,
+                      expanded: true,
+                      onPressed: () => _abrirDialogAsignar(
+                        context,
+                        ref,
+                        tipo: TipoAsignacion.prestamo,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-            ],
-            if (puedeDevolver) ...[
-              AppSecondaryButton(
-                key: const ValueKey('material_ficha_devolver'),
-                label: 'Registrar devolución',
-                icon: Icons.assignment_return_outlined,
-                expanded: true,
-                onPressed: () => _abrirDialogDevolver(context, ref),
+            AppPermissionGate(
+              permission: Permission.inventarioRegistrarDevolucion,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppSecondaryButton(
+                    key: const ValueKey('material_ficha_devolver'),
+                    label: 'Registrar devolución',
+                    icon: Icons.assignment_return_outlined,
+                    expanded: true,
+                    onPressed: () => _abrirDialogDevolver(context, ref),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
               ),
-              const SizedBox(height: AppSpacing.sm),
-            ],
+            ),
           ],
 
           // — Acciones de incidencia (siempre que el material no
           //   esté ya en estado final) —
-          if (puedeReportar &&
-              material.estado != EstadoInventario.averiado &&
-              material.estado != EstadoInventario.perdido) ...[
-            AppDestructiveButton(
-              key: const ValueKey('material_ficha_averia'),
-              label: 'Reportar avería',
-              icon: Icons.build_outlined,
-              expanded: true,
-              onPressed: () => _abrirDialogIncidencia(
-                context,
-                ref,
-                EstadoInventario.averiado,
-                'Reportar avería',
+          if (material.estado != EstadoInventario.averiado &&
+              material.estado != EstadoInventario.perdido)
+            AppPermissionGate(
+              permission: Permission.inventarioReportarIncidencia,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppDestructiveButton(
+                    key: const ValueKey('material_ficha_averia'),
+                    label: 'Reportar avería',
+                    icon: Icons.build_outlined,
+                    expanded: true,
+                    onPressed: () => _abrirDialogIncidencia(
+                      context,
+                      ref,
+                      EstadoInventario.averiado,
+                      'Reportar avería',
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppDestructiveButton(
+                    key: const ValueKey('material_ficha_perdida'),
+                    label: 'Reportar pérdida',
+                    icon: Icons.report_outlined,
+                    expanded: true,
+                    onPressed: () => _abrirDialogIncidencia(
+                      context,
+                      ref,
+                      EstadoInventario.perdido,
+                      'Reportar pérdida',
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AppDestructiveButton(
-              key: const ValueKey('material_ficha_perdida'),
-              label: 'Reportar pérdida',
-              icon: Icons.report_outlined,
-              expanded: true,
-              onPressed: () => _abrirDialogIncidencia(
-                context,
-                ref,
-                EstadoInventario.perdido,
-                'Reportar pérdida',
-              ),
-            ),
-          ],
         ],
       ),
     );
