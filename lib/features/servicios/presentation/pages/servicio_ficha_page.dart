@@ -265,6 +265,17 @@ class _SelfServiceActions extends ConsumerWidget {
     final puedeApuntarse = servicio.estado == EstadoServicio.publicado ||
         servicio.estado == EstadoServicio.activo;
 
+    // TODO(rbac-d3): hide "Apuntarme" when aforo is reached. Blocked
+    // by backend: the Servicio entity exposes capacity (numeroVoluntarios)
+    // but not the current inscritos count. Two options pending decision
+    // with PO/backend:
+    //   (a) include inscritosCount in ServicioResponse (preferred, no
+    //       extra round-trip).
+    //   (b) call GET /servicios/{id}/voluntarios on ficha load and
+    //       count locally.
+    // Defense-in-depth at backend already returns 4xx when full, so
+    // the worst current UX is a snackbar after the tap.
+
     return Column(
       children: [
         if (puedeApuntarse)
