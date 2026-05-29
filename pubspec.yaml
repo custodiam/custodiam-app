@@ -122,6 +122,12 @@ flutter_launcher_icons:
 # nativo vacío evita el "doble logo" entre el splash del SO y el de
 # Flutter, y respeta las limitaciones que cada SO impone a la
 # personalización del splash nativo.
+#
+# Android 12+ obliga a mostrar un icono centrado en el splash del SO
+# (windowSplashScreenAnimatedIcon); si no se le indica ninguno, cae al
+# icono del launcher. Para conservar el splash nativo "solo color" se le
+# pasa una imagen 100% transparente (assets/splash_transparent.png), que
+# anula ese icono forzado sin dibujar nada encima del naranja.
 flutter_native_splash:
   color: "#FF6600"
   android: true
@@ -129,3 +135,4 @@ flutter_native_splash:
   web: false
   android_12:
     color: "#FF6600"
+    image: assets/splash_transparent.png
