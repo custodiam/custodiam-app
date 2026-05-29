@@ -393,7 +393,7 @@ class _EstadoBadge extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: fg),
           const SizedBox(width: AppSpacing.xs),
-          Text(label, style: TextStyle(color: fg, fontSize: 12)),
+          Text(label, style: theme.textTheme.labelSmall?.copyWith(color: fg)),
         ],
       ),
     );
