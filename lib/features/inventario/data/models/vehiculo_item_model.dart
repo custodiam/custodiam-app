@@ -1,6 +1,7 @@
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/tipo_vehiculo.dart';
 import '../../domain/entities/vehiculo_item.dart';
+import 'asignacion_actual_model.dart';
 
 class VehiculoItemModel {
   const VehiculoItemModel._();
@@ -35,6 +36,10 @@ class VehiculoItemModel {
           : null,
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
+          : null,
+      asignacionActual: json['asignacion_actual'] != null
+          ? AsignacionActualModel.fromJson(
+              json['asignacion_actual'] as Map<String, dynamic>)
           : null,
     );
   }

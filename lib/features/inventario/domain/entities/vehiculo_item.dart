@@ -1,3 +1,4 @@
+import 'asignacion_actual.dart';
 import 'estado_inventario.dart';
 import 'tipo_vehiculo.dart';
 
@@ -16,6 +17,11 @@ class VehiculoItem {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  /// Asignación a servicio activa del vehículo, o `null` si está libre
+  /// (PR1). Un vehículo es una unidad única, así que su asignación es
+  /// singular. Solo llega en el detalle, nunca en el listado.
+  final AsignacionActual? asignacionActual;
+
   const VehiculoItem({
     required this.id,
     required this.codigoInterno,
@@ -30,5 +36,6 @@ class VehiculoItem {
     this.observacionesIncidencia,
     this.createdAt,
     this.updatedAt,
+    this.asignacionActual,
   });
 }
