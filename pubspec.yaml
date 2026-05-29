@@ -48,14 +48,13 @@ dependencies:
     sdk: flutter
   intl: ^0.20.2
 
-  # Icon catalogue beyond Material core. Adds vocabulary specific to
-  # civil protection / emergency services (alarm-light, toolbox, axe,
-  # firefighter, fire-truck, fire-hydrant…) without dropping Material
-  # core: both coexist via `Icons.*` and `MdiIcons.*`. Font subsetting
-  # via Flutter's --tree-shake-icons (release default) keeps the bundle
-  # tight: only the glyphs we actually use ship with the APK / web
-  # build. Never use `MdiIcons.fromString()` — that breaks tree-shake.
-  material_design_icons_flutter: ^7.0.7296
+  # Material Symbols icon set, accessed via `Symbols.*` (outlined is the
+  # default, no suffix; `_rounded` / `_sharp` for the other styles). The
+  # whole app uses this set; the fill/weight axes drive states such as
+  # selected nav items. Font subsetting via Flutter's --tree-shake-icons
+  # (release default) keeps the bundle tight: only the glyphs actually
+  # used ship with the APK / web build.
+  material_symbols_icons: ^4.2928.1
   firebase_core: ^4.9.0
   # EN-06-02: cliente FCM en el cliente Flutter. Major sincronizado con
   # firebase_core (4.x → firebase_messaging 16.x). Las API key

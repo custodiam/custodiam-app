@@ -18,6 +18,7 @@
 // navigation later is a one-line change.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -137,14 +138,14 @@ class _VoluntariosListPageBodyState
           child: AppIconButton(
             key: const ValueKey('voluntarios_alta_button'),
             tooltip: 'Alta de voluntario',
-            icon: Icons.person_add_alt_1,
+            icon: Symbols.person_add,
             onPressed: () => context.go('/voluntarios/alta'),
           ),
         ),
         AppIconButton(
           key: const ValueKey('voluntarios_refresh_button'),
           tooltip: 'Recargar',
-          icon: Icons.refresh,
+          icon: Symbols.refresh,
           onPressed: () =>
               ref.read(voluntariosListViewModelProvider.notifier).refresh(),
         ),
@@ -160,7 +161,7 @@ class _VoluntariosListPageBodyState
               key: const ValueKey('voluntarios_search_field'),
               label: 'Buscar por nombre, DNI o email',
               controller: _searchController,
-              prefixIcon: Icons.search,
+              prefixIcon: Symbols.search,
               textInputAction: TextInputAction.search,
               onEditingComplete: _submitSearch,
             ),
@@ -201,7 +202,7 @@ class _VoluntariosListPageBodyState
             description: state.query.isNotEmpty || state.estado != null
                 ? 'Prueba a cambiar la búsqueda o el filtro.'
                 : 'Todavía no hay voluntarios dados de alta.',
-            icon: Icons.people_outline,
+            icon: Symbols.people,
           );
         }
         return ListView.separated(
@@ -322,19 +323,19 @@ class _EstadoBadge extends StatelessWidget {
       EstadoVoluntario.activo => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
-          Icons.check_circle_outline,
+          Symbols.check_circle,
           'Activo',
         ),
       EstadoVoluntario.baja => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
-          Icons.do_not_disturb_off_outlined,
+          Symbols.do_not_disturb_off,
           'Baja',
         ),
       EstadoVoluntario.suspendido => (
           theme.colorScheme.errorContainer,
           theme.colorScheme.onErrorContainer,
-          Icons.block_outlined,
+          Symbols.block,
           'Suspendido',
         ),
     };
@@ -371,7 +372,7 @@ class _ForbiddenScreen extends StatelessWidget {
         description:
             'Tu rol no permite consultar la lista de voluntarios. '
             'Si crees que es un error, contacta con un responsable.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

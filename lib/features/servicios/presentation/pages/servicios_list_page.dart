@@ -6,6 +6,7 @@
 // servicio → ficha detalle.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -118,7 +119,7 @@ class _ServiciosListPageBodyState
         AppIconButton(
           key: const ValueKey('servicios_refresh_button'),
           tooltip: 'Recargar',
-          icon: Icons.refresh,
+          icon: Symbols.refresh,
           onPressed: () =>
               ref.read(serviciosListViewModelProvider.notifier).refresh(),
         ),
@@ -134,7 +135,7 @@ class _ServiciosListPageBodyState
               key: const ValueKey('servicios_search_field'),
               label: 'Buscar por título o ubicación',
               controller: _searchController,
-              prefixIcon: Icons.search,
+              prefixIcon: Symbols.search,
               textInputAction: TextInputAction.search,
               onEditingComplete: _submitSearch,
             ),
@@ -173,7 +174,7 @@ class _ServiciosListPageBodyState
             description: state.query.isNotEmpty || state.estado != null
                 ? 'Prueba a cambiar la búsqueda o el filtro.'
                 : 'Aún no hay servicios disponibles.',
-            icon: Icons.event_outlined,
+            icon: Symbols.event,
           );
         }
         return ListView.separated(
@@ -206,7 +207,7 @@ class _AltaServicioButton extends StatelessWidget {
     return AppIconButton(
       key: const ValueKey('servicios_alta_button'),
       tooltip: 'Crear servicio',
-      icon: Icons.add,
+      icon: Symbols.add,
       onPressed: () => context.go('/servicios/alta'),
     );
   }
@@ -324,19 +325,19 @@ class _TipoIcon extends StatelessWidget {
     final theme = Theme.of(context);
     final (IconData icon, Color color) = switch (tipo) {
       TipoServicio.emergencia => (
-          Icons.warning_amber_rounded,
+          Symbols.warning_amber,
           theme.colorScheme.error,
         ),
       TipoServicio.preventivo => (
-          Icons.event,
+          Symbols.event,
           theme.colorScheme.primary,
         ),
       TipoServicio.formacion => (
-          Icons.school_outlined,
+          Symbols.school,
           theme.colorScheme.tertiary,
         ),
       TipoServicio.otro => (
-          Icons.bookmark_border,
+          Symbols.bookmark,
           theme.colorScheme.secondary,
         ),
     };
@@ -360,25 +361,25 @@ class _EstadoBadge extends StatelessWidget {
       EstadoServicio.borrador => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
-          Icons.edit_note_outlined,
+          Symbols.edit_note,
           'Borrador',
         ),
       EstadoServicio.publicado => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
-          Icons.campaign_outlined,
+          Symbols.campaign,
           'Publicado',
         ),
       EstadoServicio.activo => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
-          Icons.play_circle_outline,
+          Symbols.play_circle,
           'Activo',
         ),
       EstadoServicio.cerrado => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
-          Icons.lock_outline,
+          Symbols.lock,
           'Cerrado',
         ),
     };
@@ -414,7 +415,7 @@ class _ForbiddenScreen extends StatelessWidget {
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar los servicios. '
             'Si crees que es un error, contacta con un responsable.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

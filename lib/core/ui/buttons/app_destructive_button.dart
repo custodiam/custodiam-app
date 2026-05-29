@@ -2,7 +2,7 @@
 // the action. See guide 27 §5.4.
 
 import 'package:flutter/material.dart';
-
+import 'package:material_symbols_icons/symbols.dart';
 class AppDestructiveButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -28,7 +28,7 @@ class AppDestructiveButton extends StatelessWidget {
     final Widget button = FilledButton.icon(
       onPressed: onPressed,
       style: style,
-      icon: Icon(icon ?? Icons.delete_outline),
+      icon: Icon(icon ?? Symbols.delete),
       label: Text(label),
     );
 

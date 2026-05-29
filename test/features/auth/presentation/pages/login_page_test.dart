@@ -5,6 +5,7 @@ import 'package:custodiam/infrastructure/di/providers.dart';
 import 'package:custodiam/infrastructure/error/failure.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -32,7 +33,7 @@ void main() {
           ],
         );
 
-        expect(find.byIcon(Icons.shield), findsOneWidget);
+        expect(find.byIcon(Symbols.shield), findsOneWidget);
         expect(find.text('Custodiam'), findsOneWidget);
         expect(find.text('Protección Civil'), findsOneWidget);
         expect(find.text('Iniciar sesión'), findsOneWidget);
@@ -112,7 +113,7 @@ void main() {
         );
         // Cancellation is not an error — the info icon distinguishes it
         // from the danger variants visually.
-        expect(find.byIcon(Icons.info_outline), findsOneWidget);
+        expect(find.byIcon(Symbols.info), findsOneWidget);
       },
     );
 
@@ -137,7 +138,7 @@ void main() {
 
         expect(find.byType(SnackBar), findsOneWidget);
         expect(find.textContaining('(503)'), findsOneWidget);
-        expect(find.byIcon(Icons.error_outline), findsOneWidget);
+        expect(find.byIcon(Symbols.error), findsOneWidget);
       },
     );
 
@@ -166,7 +167,7 @@ void main() {
           findsOneWidget,
         );
         // Warning variant uses the warning_amber_outlined icon.
-        expect(find.byIcon(Icons.warning_amber_outlined), findsOneWidget);
+        expect(find.byIcon(Symbols.warning_amber), findsOneWidget);
         verify(() => expiredAuth.consumeExpiredFlag()).called(1);
       },
     );

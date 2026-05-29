@@ -1,5 +1,6 @@
 import 'package:custodiam/core/ui/inputs/app_text_field.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../test_utils/test_app.dart';
@@ -44,10 +45,10 @@ void main() {
     testWidgets('renders prefix icon when provided', (tester) async {
       await pumpRiverpod(
         tester,
-        const AppTextField(label: 'Email', prefixIcon: Icons.mail_outline),
+        const AppTextField(label: 'Email', prefixIcon: Symbols.mail),
       );
 
-      expect(find.byIcon(Icons.mail_outline), findsOneWidget);
+      expect(find.byIcon(Symbols.mail), findsOneWidget);
     });
 
     testWidgets('obscureText forces single line and hides characters',

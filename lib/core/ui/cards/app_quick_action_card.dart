@@ -10,7 +10,7 @@
 // Ver guía 27 §5 y ADR-018.
 
 import 'package:flutter/material.dart';
-
+import 'package:material_symbols_icons/symbols.dart';
 import '../tokens/app_spacing.dart';
 
 class AppQuickActionCard extends StatelessWidget {
@@ -64,7 +64,7 @@ class AppQuickActionCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right),
+                const Icon(Symbols.chevron_right),
               ],
             ),
           ),

@@ -7,6 +7,7 @@
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -79,7 +80,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.shield,
+                Symbols.shield,
                 size: 80,
                 color: theme.colorScheme.primary,
               ),
@@ -100,7 +101,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               const SizedBox(height: AppSpacing.xxl),
               AppPrimaryButton(
                 label: 'Iniciar sesión',
-                icon: Icons.login,
+                icon: Symbols.login,
                 expanded: true,
                 isLoading: authState.isLoading,
                 onPressed: authState.isLoading

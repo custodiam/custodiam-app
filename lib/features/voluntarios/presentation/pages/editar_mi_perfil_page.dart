@@ -9,6 +9,7 @@
 // AppSnackbar so the user understands why the change was rejected.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -201,7 +202,7 @@ class _FormState extends ConsumerState<_Form> {
             label: 'Teléfono',
             controller: _telefonoCtrl,
             keyboardType: TextInputType.phone,
-            prefixIcon: Icons.phone_outlined,
+            prefixIcon: Symbols.phone,
             validator: _validateTelefono,
           ),
           const SizedBox(height: AppSpacing.md),
@@ -210,7 +211,7 @@ class _FormState extends ConsumerState<_Form> {
             label: 'Email',
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
-            prefixIcon: Icons.email_outlined,
+            prefixIcon: Symbols.email,
             validator: _validateEmail,
           ),
           const SizedBox(height: AppSpacing.md),
@@ -218,7 +219,7 @@ class _FormState extends ConsumerState<_Form> {
             key: const ValueKey('editar_perfil_municipio'),
             label: 'Municipio',
             controller: _municipioCtrl,
-            prefixIcon: Icons.location_city_outlined,
+            prefixIcon: Symbols.location_city,
             validator: _validateMunicipio,
           ),
           const SizedBox(height: AppSpacing.md),
@@ -226,7 +227,7 @@ class _FormState extends ConsumerState<_Form> {
             key: const ValueKey('editar_perfil_direccion'),
             label: 'Dirección',
             controller: _direccionCtrl,
-            prefixIcon: Icons.home_outlined,
+            prefixIcon: Symbols.home,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -234,13 +235,13 @@ class _FormState extends ConsumerState<_Form> {
             label: 'URL de foto',
             controller: _fotoCtrl,
             keyboardType: TextInputType.url,
-            prefixIcon: Icons.image_outlined,
+            prefixIcon: Symbols.image,
           ),
           const SizedBox(height: AppSpacing.xl),
           AppPrimaryButton(
             key: const ValueKey('editar_perfil_submit'),
             label: 'Guardar',
-            icon: Icons.save_outlined,
+            icon: Symbols.save,
             expanded: true,
             isLoading: asyncSubmit.isLoading,
             onPressed: asyncSubmit.isLoading ? null : _onSubmit,
@@ -270,7 +271,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite editar tus propios datos.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

@@ -11,7 +11,7 @@
 // Ver guía 27 §5.
 
 import 'package:flutter/material.dart';
-
+import 'package:material_symbols_icons/symbols.dart';
 class ThemeModeSelector extends StatelessWidget {
   final ThemeMode selected;
   final ValueChanged<ThemeMode> onChanged;
@@ -29,17 +29,17 @@ class ThemeModeSelector extends StatelessWidget {
         ButtonSegment<ThemeMode>(
           value: ThemeMode.system,
           label: Text('Sistema'),
-          icon: Icon(Icons.brightness_auto_outlined),
+          icon: Icon(Symbols.brightness_auto),
         ),
         ButtonSegment<ThemeMode>(
           value: ThemeMode.light,
           label: Text('Claro'),
-          icon: Icon(Icons.light_mode_outlined),
+          icon: Icon(Symbols.light_mode),
         ),
         ButtonSegment<ThemeMode>(
           value: ThemeMode.dark,
           label: Text('Oscuro'),
-          icon: Icon(Icons.dark_mode_outlined),
+          icon: Icon(Symbols.dark_mode),
         ),
       ],
       selected: <ThemeMode>{selected},

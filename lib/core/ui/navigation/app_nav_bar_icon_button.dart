@@ -9,8 +9,10 @@
 // sobre otro fondo, pasar `foregroundColor` explícito.
 //
 // Si el botón representa una pestaña/destino navegable que puede
-// estar activo, pasar `iconSelected` para que el icono cambie a la
-// variante rellena cuando `isSelected = true`.
+// estar activo, el icono se renderiza relleno (eje `fill` de Material
+// Symbols) cuando `isSelected = true`, dando el contraste visual del
+// estado activo sin necesitar una constante de icono distinta. Si se
+// pasa `iconSelected`, se usa esa constante en el estado seleccionado.
 //
 // Ver guía 27 §5 y ADR-018.
 
@@ -58,7 +60,7 @@ class AppNavBarIconButton extends StatelessWidget {
       tooltip: tooltip,
       color: foregroundColor ?? Colors.white,
       iconSize: 36,
-      icon: Icon(effectiveIcon),
+      icon: Icon(effectiveIcon, fill: isSelected ? 1 : 0),
       onPressed: onPressed,
     );
   }

@@ -4,6 +4,7 @@
 // usuario al menos llegue, y validamos al enviar.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -241,7 +242,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               label: 'Título',
               controller: _tituloCtrl,
               autofocus: true,
-              prefixIcon: Icons.title,
+              prefixIcon: Symbols.title,
               validator: (v) => _validateRequired(v, 'Título'),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -249,7 +250,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               key: const ValueKey('alta_servicio_ubicacion'),
               label: 'Ubicación',
               controller: _ubicacionCtrl,
-              prefixIcon: Icons.location_on_outlined,
+              prefixIcon: Symbols.location_on,
               validator: (v) => _validateRequired(v, 'Ubicación'),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -266,7 +267,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
                   child: AppTextField(
                     label: 'Fecha y hora de inicio',
                     controller: _fechaInicioCtrl,
-                    prefixIcon: Icons.calendar_today_outlined,
+                    prefixIcon: Symbols.calendar_today,
                     validator: (_) =>
                         _fechaInicio == null ? 'Fecha obligatoria' : null,
                   ),
@@ -283,7 +284,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               key: const ValueKey('alta_servicio_descripcion'),
               label: 'Descripción',
               controller: _descripcionCtrl,
-              prefixIcon: Icons.description_outlined,
+              prefixIcon: Symbols.description,
               maxLines: 3,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -297,7 +298,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
                   child: AppTextField(
                     label: 'Fecha y hora de fin',
                     controller: _fechaFinCtrl,
-                    prefixIcon: Icons.event_outlined,
+                    prefixIcon: Symbols.event,
                   ),
                 ),
               ),
@@ -308,7 +309,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               label: 'Número de voluntarios necesarios',
               controller: _numeroVoluntariosCtrl,
               keyboardType: TextInputType.number,
-              prefixIcon: Icons.groups_outlined,
+              prefixIcon: Symbols.groups,
               validator: _validateNumeroVoluntarios,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -316,7 +317,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               key: const ValueKey('alta_servicio_notas_material'),
               label: 'Notas sobre material',
               controller: _notasMaterialCtrl,
-              prefixIcon: Icons.inventory_2_outlined,
+              prefixIcon: Symbols.inventory_2,
               maxLines: 2,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -324,7 +325,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               key: const ValueKey('alta_servicio_notas_vehiculos'),
               label: 'Notas sobre vehículos',
               controller: _notasVehiculosCtrl,
-              prefixIcon: Icons.directions_car_outlined,
+              prefixIcon: Symbols.directions_car,
               maxLines: 2,
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -334,8 +335,8 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
                   ? 'Crear emergencia'
                   : 'Crear servicio',
               icon: _tipo == TipoServicio.emergencia
-                  ? Icons.warning_amber_rounded
-                  : Icons.event_available,
+                  ? Symbols.warning_amber
+                  : Symbols.event_available,
               expanded: true,
               isLoading: asyncSubmit.isLoading,
               onPressed: asyncSubmit.isLoading ? null : _onSubmit,
@@ -410,7 +411,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite crear servicios.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

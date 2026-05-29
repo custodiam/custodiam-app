@@ -10,6 +10,7 @@
 // button. Tap navigates to /mi-perfil/editar.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -54,7 +55,7 @@ class _MiPerfilPageBody extends ConsumerWidget {
         AppIconButton(
           key: const ValueKey('mi_perfil_refresh_button'),
           tooltip: 'Recargar',
-          icon: Icons.refresh,
+          icon: Symbols.refresh,
           onPressed: () =>
               ref.read(miPerfilViewModelProvider.notifier).refresh(),
         ),
@@ -66,7 +67,7 @@ class _MiPerfilPageBody extends ConsumerWidget {
             return AppEmptyState(
               title: 'Sin perfil',
               description: error.message,
-              icon: Icons.person_outline,
+              icon: Symbols.person,
             );
           }
           final message =
@@ -183,7 +184,7 @@ class _MiActividadSection extends StatelessWidget {
               AppPermissionGate(
                 permission: Permission.fichajeVerPropio,
                 child: _ActividadTile(
-                  icon: Icons.timer_outlined,
+                  icon: Symbols.timer,
                   label: 'Mis horas',
                   route: '/mi-perfil/horas',
                   keyValue: 'mi_perfil_tile_horas',
@@ -198,7 +199,7 @@ class _MiActividadSection extends StatelessWidget {
                 // que realmente controla la edición.
                 permission: Permission.voluntariosDisponibilidadPropia,
                 child: _ActividadTile(
-                  icon: Icons.event_available_outlined,
+                  icon: Symbols.event_available,
                   label: 'Mi disponibilidad',
                   route: '/mi-perfil/disponibilidad',
                   keyValue: 'mi_perfil_tile_disponibilidad',
@@ -207,7 +208,7 @@ class _MiActividadSection extends StatelessWidget {
               AppPermissionGate(
                 permission: Permission.voluntariosVerPropio,
                 child: _ActividadTile(
-                  icon: Icons.history,
+                  icon: Symbols.history,
                   label: 'Mi historial',
                   route: '/mi-perfil/historial',
                   keyValue: 'mi_perfil_tile_historial',
@@ -240,7 +241,7 @@ class _ActividadTile extends StatelessWidget {
       key: ValueKey(keyValue),
       leading: Icon(icon),
       title: Text(label),
-      trailing: const Icon(Icons.chevron_right),
+      trailing: const Icon(Symbols.chevron_right),
       onTap: () => context.go(route),
     );
   }
@@ -254,7 +255,7 @@ class _EditButton extends StatelessWidget {
     return AppPrimaryButton(
       key: const ValueKey('mi_perfil_edit_button'),
       label: 'Editar mis datos de contacto',
-      icon: Icons.edit_outlined,
+      icon: Symbols.edit,
       expanded: true,
       onPressed: () => context.go('/mi-perfil/editar'),
     );
@@ -332,7 +333,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar el perfil propio.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

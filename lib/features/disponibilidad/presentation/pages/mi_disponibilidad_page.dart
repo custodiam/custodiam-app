@@ -14,6 +14,7 @@
 // eliminó tras la auditoría RBAC del 29-may (hallazgo B2).
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -57,7 +58,7 @@ class _MiDisponibilidadBody extends ConsumerWidget {
         AppIconButton(
           key: const ValueKey('mi_disponibilidad_refresh'),
           tooltip: 'Recargar',
-          icon: Icons.refresh,
+          icon: Symbols.refresh,
           onPressed: () => ref
               .read(miDisponibilidadViewModelProvider.notifier)
               .refresh(),
@@ -70,7 +71,7 @@ class _MiDisponibilidadBody extends ConsumerWidget {
             return AppEmptyState(
               title: 'Sin perfil',
               description: error.message,
-              icon: Icons.person_outline,
+              icon: Symbols.person,
             );
           }
           final message =
@@ -179,7 +180,7 @@ class _MesNavegacion extends StatelessWidget {
         AppIconButton(
           key: const ValueKey('mi_disponibilidad_prev_month'),
           tooltip: 'Mes anterior',
-          icon: Icons.chevron_left,
+          icon: Symbols.chevron_left,
           onPressed: onPrev,
         ),
         Text(
@@ -189,7 +190,7 @@ class _MesNavegacion extends StatelessWidget {
         AppIconButton(
           key: const ValueKey('mi_disponibilidad_next_month'),
           tooltip: 'Mes siguiente',
-          icon: Icons.chevron_right,
+          icon: Symbols.chevron_right,
           onPressed: onNext,
         ),
       ],
@@ -370,7 +371,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite gestionar la disponibilidad propia.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

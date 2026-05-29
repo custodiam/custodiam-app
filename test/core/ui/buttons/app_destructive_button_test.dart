@@ -1,5 +1,6 @@
 import 'package:custodiam/core/ui/buttons/app_destructive_button.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../test_utils/test_app.dart';
@@ -42,7 +43,7 @@ void main() {
         AppDestructiveButton(label: 'Eliminar', onPressed: () {}),
       );
 
-      expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+      expect(find.byIcon(Symbols.delete), findsOneWidget);
     });
 
     testWidgets('renders custom icon when provided', (tester) async {
@@ -51,11 +52,11 @@ void main() {
         AppDestructiveButton(
           label: 'Cerrar sesión',
           onPressed: () {},
-          icon: Icons.logout,
+          icon: Symbols.logout,
         ),
       );
 
-      expect(find.byIcon(Icons.logout), findsOneWidget);
+      expect(find.byIcon(Symbols.logout), findsOneWidget);
     });
 
     testWidgets('is disabled when onPressed is null', (tester) async {

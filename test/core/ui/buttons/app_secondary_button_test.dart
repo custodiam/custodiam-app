@@ -1,5 +1,6 @@
 import 'package:custodiam/core/ui/buttons/app_secondary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../test_utils/test_app.dart';
@@ -37,11 +38,11 @@ void main() {
         AppSecondaryButton(
           label: 'Cancelar',
           onPressed: () {},
-          icon: Icons.close,
+          icon: Symbols.close,
         ),
       );
 
-      expect(find.byIcon(Icons.close), findsOneWidget);
+      expect(find.byIcon(Symbols.close), findsOneWidget);
     });
 
     testWidgets('expanded variant stretches to parent width', (tester) async {

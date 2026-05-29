@@ -1,6 +1,6 @@
 import 'package:custodiam/core/ui/buttons/app_primary_button.dart';
 import 'package:custodiam/core/ui/states/app_empty_state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../test_utils/test_app.dart';
@@ -14,7 +14,7 @@ void main() {
       );
 
       expect(find.text('Sin voluntarios'), findsOneWidget);
-      expect(find.byIcon(Icons.inbox_outlined), findsOneWidget);
+      expect(find.byIcon(Symbols.inbox), findsOneWidget);
     });
 
     testWidgets('renders description when provided', (tester) async {
