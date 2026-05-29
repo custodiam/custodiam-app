@@ -284,6 +284,10 @@ class _CustodiamDrawer extends ConsumerWidget {
                 _goAndCloseDrawer(context, '/ajustes/notificaciones'),
           ),
         ),
+        // Ajustes: sin AppPermissionGate por diseño. La página
+        // /settings expone preferencias locales (tema, etc.) que no
+        // tocan backend ni dependen de RBAC. Documentado para que
+        // auditorías futuras no la marquen como falso positivo.
         _DrawerTile(
           tileKey: K.drawerSettingsTile,
           icon: Icons.settings_outlined,
