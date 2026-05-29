@@ -529,15 +529,25 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             validator: (v) => _validateRequired(v, 'Municipio'),
           ),
           const SizedBox(height: AppSpacing.md),
-          GestureDetector(
-            key: const ValueKey('ficha_fecha_nacimiento'),
-            onTap: widget.canEdit && !widget.isMutating ? _pickDate : null,
-            child: AbsorbPointer(
-              child: AppTextField(
-                label: 'Fecha de nacimiento',
-                controller: _fechaCtrl,
-                enabled: widget.canEdit && !widget.isMutating,
-                prefixIcon: Icons.calendar_today_outlined,
+          // Guía 28 §WCAG 4.1.2: el GestureDetector envuelve un campo
+          // que el screen reader leería como TextField editable, pero
+          // su rol real es "botón que abre un date picker".
+          // `Semantics(button: true, label: ...)` fuerza la
+          // interpretación correcta.
+          Semantics(
+            label: 'Fecha de nacimiento',
+            button: true,
+            enabled: widget.canEdit && !widget.isMutating,
+            child: GestureDetector(
+              key: const ValueKey('ficha_fecha_nacimiento'),
+              onTap: widget.canEdit && !widget.isMutating ? _pickDate : null,
+              child: AbsorbPointer(
+                child: AppTextField(
+                  label: 'Fecha de nacimiento',
+                  controller: _fechaCtrl,
+                  enabled: widget.canEdit && !widget.isMutating,
+                  prefixIcon: Icons.calendar_today_outlined,
+                ),
               ),
             ),
           ),

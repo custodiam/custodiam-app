@@ -206,14 +206,21 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
               prefixIcon: Icons.commute_outlined,
             ),
             const SizedBox(height: AppSpacing.md),
-            GestureDetector(
-              key: const ValueKey('alta_vehiculo_itv'),
-              onTap: _pickItv,
-              child: AbsorbPointer(
-                child: AppTextField(
-                  label: 'Próxima ITV',
-                  controller: _itvCtrl,
-                  prefixIcon: Icons.event_outlined,
+            // Guía 28 §WCAG 4.1.2: rol real = botón que abre date
+            // picker, no TextField. Semantics fuerza la interpretación
+            // para el screen reader.
+            Semantics(
+              label: 'Próxima ITV',
+              button: true,
+              child: GestureDetector(
+                key: const ValueKey('alta_vehiculo_itv'),
+                onTap: _pickItv,
+                child: AbsorbPointer(
+                  child: AppTextField(
+                    label: 'Próxima ITV',
+                    controller: _itvCtrl,
+                    prefixIcon: Icons.event_outlined,
+                  ),
                 ),
               ),
             ),

@@ -207,17 +207,24 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               validator: (v) => _validateRequired(v, 'Municipio'),
             ),
             const SizedBox(height: AppSpacing.md),
-            GestureDetector(
-              key: const ValueKey('alta_fecha_nacimiento'),
-              onTap: _pickDate,
-              child: AbsorbPointer(
-                child: AppTextField(
-                  label: 'Fecha de nacimiento',
-                  controller: _fechaCtrl,
-                  prefixIcon: Icons.calendar_today_outlined,
-                  validator: (_) => _fechaNacimiento == null
-                      ? 'Fecha obligatoria'
-                      : null,
+            // Guía 28 §WCAG 4.1.2: rol real = botón que abre date
+            // picker, no TextField. Semantics fuerza la interpretación
+            // para el screen reader.
+            Semantics(
+              label: 'Fecha de nacimiento',
+              button: true,
+              child: GestureDetector(
+                key: const ValueKey('alta_fecha_nacimiento'),
+                onTap: _pickDate,
+                child: AbsorbPointer(
+                  child: AppTextField(
+                    label: 'Fecha de nacimiento',
+                    controller: _fechaCtrl,
+                    prefixIcon: Icons.calendar_today_outlined,
+                    validator: (_) => _fechaNacimiento == null
+                        ? 'Fecha obligatoria'
+                        : null,
+                  ),
                 ),
               ),
             ),

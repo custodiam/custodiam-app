@@ -253,16 +253,23 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               validator: (v) => _validateRequired(v, 'Ubicación'),
             ),
             const SizedBox(height: AppSpacing.md),
-            GestureDetector(
-              key: const ValueKey('alta_servicio_fecha_inicio'),
-              onTap: _pickFechaInicio,
-              child: AbsorbPointer(
-                child: AppTextField(
-                  label: 'Fecha y hora de inicio',
-                  controller: _fechaInicioCtrl,
-                  prefixIcon: Icons.calendar_today_outlined,
-                  validator: (_) =>
-                      _fechaInicio == null ? 'Fecha obligatoria' : null,
+            // Guía 28 §WCAG 4.1.2: rol real = botón que abre date+time
+            // picker, no TextField. Semantics fuerza la interpretación
+            // para el screen reader.
+            Semantics(
+              label: 'Fecha y hora de inicio',
+              button: true,
+              child: GestureDetector(
+                key: const ValueKey('alta_servicio_fecha_inicio'),
+                onTap: _pickFechaInicio,
+                child: AbsorbPointer(
+                  child: AppTextField(
+                    label: 'Fecha y hora de inicio',
+                    controller: _fechaInicioCtrl,
+                    prefixIcon: Icons.calendar_today_outlined,
+                    validator: (_) =>
+                        _fechaInicio == null ? 'Fecha obligatoria' : null,
+                  ),
                 ),
               ),
             ),
@@ -280,14 +287,18 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               maxLines: 3,
             ),
             const SizedBox(height: AppSpacing.md),
-            GestureDetector(
-              key: const ValueKey('alta_servicio_fecha_fin'),
-              onTap: _pickFechaFin,
-              child: AbsorbPointer(
-                child: AppTextField(
-                  label: 'Fecha y hora de fin',
-                  controller: _fechaFinCtrl,
-                  prefixIcon: Icons.event_outlined,
+            Semantics(
+              label: 'Fecha y hora de fin',
+              button: true,
+              child: GestureDetector(
+                key: const ValueKey('alta_servicio_fecha_fin'),
+                onTap: _pickFechaFin,
+                child: AbsorbPointer(
+                  child: AppTextField(
+                    label: 'Fecha y hora de fin',
+                    controller: _fechaFinCtrl,
+                    prefixIcon: Icons.event_outlined,
+                  ),
                 ),
               ),
             ),
