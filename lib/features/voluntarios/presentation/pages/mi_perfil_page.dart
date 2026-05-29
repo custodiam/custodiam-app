@@ -188,7 +188,13 @@ class _MiActividadSection extends StatelessWidget {
                 ),
               ),
               AppPermissionGate(
-                permission: Permission.voluntariosVerPropio,
+                // Auditoría RBAC (29-may, B1): el tile abre el calendario
+                // de gestión, no una vista. secretario/tesorero tienen
+                // `voluntariosVerPropio` pero no `voluntariosDisponibilidadPropia`,
+                // así que veían el tile y aterrizaban en una pantalla
+                // sin toggle activo. Lockstep semántico con el permiso
+                // que realmente controla la edición.
+                permission: Permission.voluntariosDisponibilidadPropia,
                 child: _ActividadTile(
                   icon: Icons.event_available_outlined,
                   label: 'Mi disponibilidad',
