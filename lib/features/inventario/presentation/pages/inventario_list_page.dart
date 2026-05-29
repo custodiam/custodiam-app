@@ -14,6 +14,7 @@ import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
+import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/material_summary.dart';
@@ -73,11 +74,11 @@ class _InventarioListBody extends ConsumerWidget {
   }
 }
 
-class _AltaMenuButton extends StatelessWidget {
+class _AltaMenuButton extends ConsumerWidget {
   const _AltaMenuButton();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AppPermissionGate.anyOf(
       anyOf: const [
         Permission.inventarioRegistrarMaterial,
@@ -88,22 +89,42 @@ class _AltaMenuButton extends StatelessWidget {
         tooltip: 'Registrar nuevo',
         icon: const Icon(Icons.add),
         onSelected: (target) => context.go('/inventario/$target'),
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: 'material/alta',
-            child: ListTile(
-              leading: Icon(Icons.inventory_2_outlined),
-              title: Text('Nuevo material'),
-            ),
-          ),
-          const PopupMenuItem(
-            value: 'vehiculos/alta',
-            child: ListTile(
-              leading: Icon(Icons.directions_car_outlined),
-              title: Text('Nuevo vehículo'),
-            ),
-          ),
-        ],
+        // La auditoría RBAC (29-may, hallazgo A2) detectó que el gate
+        // exterior `anyOf` oculta el icono cuando faltan ambos permisos,
+        // pero los items no se filtran individualmente. jefe_equipo
+        // (con `inventarioRegistrarMaterial` pero NO
+        // `inventarioRegistrarVehiculo` por Decisión 9 del RBAC) veía
+        // "Nuevo vehículo" y comía 403 silencioso del backend.
+        // `AppPermissionGate` no puede envolver `PopupMenuItem` porque
+        // el menú no se reconstruye con `ref.watch`; filtramos en el
+        // itemBuilder leyendo el user en `ref.read`.
+        itemBuilder: (context) {
+          final user = ref.read(authServiceProvider).currentUser;
+          final canMaterial =
+              user?.hasPermission(Permission.inventarioRegistrarMaterial) ??
+                  false;
+          final canVehiculo =
+              user?.hasPermission(Permission.inventarioRegistrarVehiculo) ??
+                  false;
+          return <PopupMenuEntry<String>>[
+            if (canMaterial)
+              const PopupMenuItem<String>(
+                value: 'material/alta',
+                child: ListTile(
+                  leading: Icon(Icons.inventory_2_outlined),
+                  title: Text('Nuevo material'),
+                ),
+              ),
+            if (canVehiculo)
+              const PopupMenuItem<String>(
+                value: 'vehiculos/alta',
+                child: ListTile(
+                  leading: Icon(Icons.directions_car_outlined),
+                  title: Text('Nuevo vehículo'),
+                ),
+              ),
+          ];
+        },
       ),
     );
   }
