@@ -352,25 +352,30 @@ class _EstadoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (estado) {
+    // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
+    final (Color bg, Color fg, IconData icon, String label) = switch (estado) {
       EstadoServicio.borrador => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.edit_note_outlined,
           'Borrador',
         ),
       EstadoServicio.publicado => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
+          Icons.campaign_outlined,
           'Publicado',
         ),
       EstadoServicio.activo => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
+          Icons.play_circle_outline,
           'Activo',
         ),
       EstadoServicio.cerrado => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.lock_outline,
           'Cerrado',
         ),
     };
@@ -383,7 +388,14 @@ class _EstadoBadge extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(label, style: TextStyle(color: fg, fontSize: 12)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: TextStyle(color: fg, fontSize: 12)),
+        ],
+      ),
     );
   }
 }

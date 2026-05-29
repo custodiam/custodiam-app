@@ -520,25 +520,30 @@ class _EstadoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (estado) {
+    // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
+    final (Color bg, Color fg, IconData icon, String label) = switch (estado) {
       EstadoServicio.borrador => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.edit_note_outlined,
           'Borrador',
         ),
       EstadoServicio.publicado => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
+          Icons.campaign_outlined,
           'Publicado',
         ),
       EstadoServicio.activo => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
+          Icons.play_circle_outline,
           'Activo',
         ),
       EstadoServicio.cerrado => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.lock_outline,
           'Cerrado',
         ),
     };
@@ -551,7 +556,14 @@ class _EstadoBadge extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(label, style: TextStyle(color: fg)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: fg),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: TextStyle(color: fg)),
+        ],
+      ),
     );
   }
 }
@@ -563,25 +575,30 @@ class _TipoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (tipo) {
+    // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
+    final (Color bg, Color fg, IconData icon, String label) = switch (tipo) {
       TipoServicio.emergencia => (
           theme.colorScheme.errorContainer,
           theme.colorScheme.onErrorContainer,
+          Icons.warning_amber_outlined,
           'Emergencia',
         ),
       TipoServicio.preventivo => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
+          Icons.shield_outlined,
           'Preventivo',
         ),
       TipoServicio.formacion => (
           theme.colorScheme.secondaryContainer,
           theme.colorScheme.onSecondaryContainer,
+          Icons.school_outlined,
           'Formación',
         ),
       TipoServicio.otro => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.event_outlined,
           'Otro',
         ),
     };
@@ -594,7 +611,14 @@ class _TipoBadge extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(label, style: TextStyle(color: fg)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: fg),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: TextStyle(color: fg)),
+        ],
+      ),
     );
   }
 }
