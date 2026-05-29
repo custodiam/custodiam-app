@@ -165,7 +165,10 @@ class _FcmBootstrapState extends ConsumerState<FcmBootstrap> {
       try {
         listenable.removeListener(listener);
       } catch (e) {
-        debugPrint('FcmBootstrap.dispose: removeListener fallback — $e');
+        dev.log(
+          'FcmBootstrap.dispose: removeListener fallback — $e',
+          name: 'Push',
+        );
       }
     }
     _openedSub?.cancel();
