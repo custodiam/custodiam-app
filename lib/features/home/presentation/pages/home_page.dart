@@ -76,6 +76,26 @@ class HomePage extends ConsumerWidget {
                 child: _ComandoOperativoBanner(),
               ),
               const SizedBox(height: AppSpacing.lg),
+              // Auditoría RBAC (29-may, hallazgo D2): el banner sólo
+              // informaba; ahora ofrece atajo a "Crear emergencia".
+              // Una emergencia se mide en segundos: ahorra
+              // drawer → Servicios → +. El query param `?tipo=emergencia`
+              // hace que el alta abra con el tipo ya seleccionado.
+              AppPermissionGate(
+                permission: Permission.serviciosCrearEmergencia,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: AppQuickActionCard(
+                    key: K.homeQuickActionEmergencia,
+                    icon: MdiIcons.alarmLight,
+                    title: 'Crear emergencia',
+                    subtitle:
+                        'Genera un servicio de emergencia y convoca al equipo.',
+                    onTap: () =>
+                        context.go('/servicios/alta?tipo=emergencia'),
+                  ),
+                ),
+              ),
               AppPermissionGate(
                 permission: Permission.voluntariosDisponibilidadPropia,
                 child: AppQuickActionCard(

@@ -46,6 +46,7 @@ import '../features/inventario/presentation/pages/inventario_list_page.dart';
 import '../features/inventario/presentation/pages/material_ficha_page.dart';
 import '../features/inventario/presentation/pages/vehiculo_ficha_page.dart';
 import '../features/notificaciones/presentation/pages/notificaciones_ajustes_page.dart';
+import '../features/servicios/domain/entities/tipo_servicio.dart';
 import '../features/servicios/presentation/pages/alta_servicio_page.dart';
 import '../features/servicios/presentation/pages/servicio_ficha_page.dart';
 import '../features/servicios/presentation/pages/servicios_list_page.dart';
@@ -168,7 +169,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'alta',
                     name: 'servicios-alta',
-                    builder: (_, _) => const AltaServicioPage(),
+                    builder: (_, state) {
+                      // Soporta `/servicios/alta?tipo=emergencia` para
+                      // que la quick action "Crear emergencia" del
+                      // home aterrice con ese tipo preseleccionado.
+                      // Cualquier otro valor o ausencia → preventivo
+                      // por defecto.
+                      final tipoParam = state.uri.queryParameters['tipo'];
+                      final tipoInicial = tipoParam == null
+                          ? null
+                          : TipoServicio.values
+                              .where((t) => t.wire == tipoParam)
+                              .firstOrNull;
+                      return AltaServicioPage(tipoInicial: tipoInicial);
+                    },
                   ),
                   GoRoute(
                     path: ':id',

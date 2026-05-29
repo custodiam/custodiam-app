@@ -25,23 +25,31 @@ import '../viewmodels/alta_servicio_view_model.dart';
 import '../viewmodels/servicios_list_view_model.dart';
 
 class AltaServicioPage extends ConsumerWidget {
-  const AltaServicioPage({super.key});
+  /// Tipo preseleccionado al abrir la página. Si `null`, arranca en
+  /// `preventivo`. Se propaga desde el query param `?tipo=` del router
+  /// para que la quick action "Crear emergencia" del home aterrice ya
+  /// con `emergencia` marcado.
+  final TipoServicio? tipoInicial;
+
+  const AltaServicioPage({super.key, this.tipoInicial});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const AppPermissionGate.anyOf(
-      anyOf: [
+    return AppPermissionGate.anyOf(
+      anyOf: const [
         Permission.serviciosCrearPreventivo,
         Permission.serviciosCrearEmergencia,
       ],
-      fallback: _ForbiddenScreen(),
-      child: _AltaServicioForm(),
+      fallback: const _ForbiddenScreen(),
+      child: _AltaServicioForm(tipoInicial: tipoInicial),
     );
   }
 }
 
 class _AltaServicioForm extends ConsumerStatefulWidget {
-  const _AltaServicioForm();
+  final TipoServicio? tipoInicial;
+
+  const _AltaServicioForm({this.tipoInicial});
 
   @override
   ConsumerState<_AltaServicioForm> createState() => _AltaServicioFormState();
@@ -57,7 +65,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
   final _notasVehiculosCtrl = TextEditingController();
   final _fechaInicioCtrl = TextEditingController();
   final _fechaFinCtrl = TextEditingController();
-  TipoServicio _tipo = TipoServicio.preventivo;
+  late TipoServicio _tipo = widget.tipoInicial ?? TipoServicio.preventivo;
   DateTime? _fechaInicio;
   DateTime? _fechaFin;
 

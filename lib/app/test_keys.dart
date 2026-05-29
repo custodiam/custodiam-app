@@ -37,4 +37,6 @@ abstract final class K {
       ValueKey('home_quick_action_disponibilidad');
   static const Key homeQuickActionServicios =
       ValueKey('home_quick_action_servicios');
+  static const Key homeQuickActionEmergencia =
+      ValueKey('home_quick_action_emergencia');
 }
