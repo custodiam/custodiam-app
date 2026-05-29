@@ -115,6 +115,42 @@ void main() {
       }
     });
 
+    test('maps a non-zero inscritos_count from snake_case to camelCase',
+        () async {
+      // Los fixtures por defecto usan inscritos_count: 0; este caso blinda el
+      // mapeo snake→camel con un valor real (3) en summary y detalle.
+      when(() => api.list(
+            skip: any(named: 'skip'),
+            limit: any(named: 'limit'),
+            query: any(named: 'query'),
+            estado: any(named: 'estado'),
+            tipo: any(named: 'tipo'),
+          )).thenAnswer((_) async => _envelope(
+            [
+              {..._summaryRow(id: 'a'), 'inscritos_count': 3},
+            ],
+            total: 1,
+          ));
+      when(() => api.getById('a')).thenAnswer(
+          (_) async => {..._servicioRow(id: 'a'), 'inscritos_count': 3});
+
+      final listResult = await repo.list();
+      final detalleResult = await repo.getById('a');
+
+      switch (listResult) {
+        case Success(:final value):
+          expect(value.items.single.inscritosCount, 3);
+        case Fail():
+          fail('Expected Success');
+      }
+      switch (detalleResult) {
+        case Success(:final value):
+          expect(value.inscritosCount, 3);
+        case Fail():
+          fail('Expected Success');
+      }
+    });
+
     test('forwards filters to the data source', () async {
       when(() => api.list(
             skip: any(named: 'skip'),

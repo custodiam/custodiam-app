@@ -87,6 +87,29 @@ void main() {
     );
   });
 
+  testWidgets(
+      'Apuntarme deshabilitado con Semantics Aforo completo cuando hay overflow (6/5)',
+      (tester) async {
+    // El gate usa `>=` (no `==`) para cubrir overflow ante posibles race
+    // conditions del backend: si el contador de inscritos rebasa el aforo,
+    // el botón debe seguir bloqueado igual que en el caso exactamente lleno.
+    await pumpFicha(
+      tester,
+      _servicio(numeroVoluntarios: 5, inscritosCount: 6),
+    );
+
+    expect(apuntarseButton(tester).onPressed, isNull);
+    expect(
+      find.descendant(
+        of: find.bySemanticsLabel('Aforo completo'),
+        matching: find.byKey(
+          const ValueKey('servicio_ficha_apuntarse_button'),
+        ),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('Apuntarme habilitado con plazas', (tester) async {
     await pumpFicha(
       tester,
@@ -94,6 +117,18 @@ void main() {
     );
 
     expect(apuntarseButton(tester).onPressed, isNotNull);
+  });
+
+  testWidgets('Sin Semantics Aforo completo cuando quedan plazas',
+      (tester) async {
+    // Rama negativa del gate: con plazas libres el Semantics 'Aforo completo'
+    // no debe existir en el árbol (hasta ahora solo se testeaba el caso lleno).
+    await pumpFicha(
+      tester,
+      _servicio(numeroVoluntarios: 5, inscritosCount: 3),
+    );
+
+    expect(find.bySemanticsLabel('Aforo completo'), findsNothing);
   });
 
   testWidgets('Apuntarme habilitado con aforo ilimitado', (tester) async {
