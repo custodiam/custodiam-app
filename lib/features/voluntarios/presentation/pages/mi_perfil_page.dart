@@ -14,8 +14,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
@@ -49,16 +51,16 @@ class _MiPerfilPageBody extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Mi perfil',
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('mi_perfil_refresh_button'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () =>
               ref.read(miPerfilViewModelProvider.notifier).refresh(),
         ),
       ],
       body: asyncProfile.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) {
           if (error is VoluntarioNotFound) {
             return AppEmptyState(
@@ -188,7 +190,13 @@ class _MiActividadSection extends StatelessWidget {
                 ),
               ),
               AppPermissionGate(
-                permission: Permission.voluntariosVerPropio,
+                // Auditoría RBAC (29-may, B1): el tile abre el calendario
+                // de gestión, no una vista. secretario/tesorero tienen
+                // `voluntariosVerPropio` pero no `voluntariosDisponibilidadPropia`,
+                // así que veían el tile y aterrizaban en una pantalla
+                // sin toggle activo. Lockstep semántico con el permiso
+                // que realmente controla la edición.
+                permission: Permission.voluntariosDisponibilidadPropia,
                 child: _ActividadTile(
                   icon: Icons.event_available_outlined,
                   label: 'Mi disponibilidad',

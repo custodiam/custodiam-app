@@ -19,6 +19,7 @@ import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -168,6 +169,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
     });
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.formMaxWidth,
       title: 'Alta de voluntario',
       body: Form(
         key: _formKey,
@@ -205,17 +207,24 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               validator: (v) => _validateRequired(v, 'Municipio'),
             ),
             const SizedBox(height: AppSpacing.md),
-            GestureDetector(
-              key: const ValueKey('alta_fecha_nacimiento'),
-              onTap: _pickDate,
-              child: AbsorbPointer(
-                child: AppTextField(
-                  label: 'Fecha de nacimiento',
-                  controller: _fechaCtrl,
-                  prefixIcon: Icons.calendar_today_outlined,
-                  validator: (_) => _fechaNacimiento == null
-                      ? 'Fecha obligatoria'
-                      : null,
+            // Guía 28 §WCAG 4.1.2: rol real = botón que abre date
+            // picker, no TextField. Semantics fuerza la interpretación
+            // para el screen reader.
+            Semantics(
+              label: 'Fecha de nacimiento',
+              button: true,
+              child: GestureDetector(
+                key: const ValueKey('alta_fecha_nacimiento'),
+                onTap: _pickDate,
+                child: AbsorbPointer(
+                  child: AppTextField(
+                    label: 'Fecha de nacimiento',
+                    controller: _fechaCtrl,
+                    prefixIcon: Icons.calendar_today_outlined,
+                    validator: (_) => _fechaNacimiento == null
+                        ? 'Fecha obligatoria'
+                        : null,
+                  ),
                 ),
               ),
             ),

@@ -16,10 +16,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_date_range_picker.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -84,18 +87,18 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
     return AppPageScaffold(
       title: 'Mi historial',
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('mi_historial_filtro_fechas'),
           tooltip: 'Filtrar por fechas',
-          icon: const Icon(Icons.date_range),
+          icon: Icons.date_range,
           onPressed: estadoActual == null
               ? null
               : () => _abrirDateRangePicker(context, estadoActual),
         ),
-        IconButton(
+        AppIconButton(
           key: const ValueKey('mi_historial_refresh'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () {
             ref.read(miHistorialViewModelProvider.notifier).refresh();
             ref.read(miResumenViewModelProvider.notifier).refresh();
@@ -117,7 +120,7 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
           Expanded(
             child: asyncHistorial.when(
               loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+                  const AppLoadingIndicator.fullScreen(),
               error: (error, _) {
                 if (error is VoluntarioNotFound) {
                   return AppEmptyState(
@@ -237,13 +240,13 @@ class _ResumenCard extends StatelessWidget {
       child: asyncResumen.when(
         loading: () => const SizedBox(
           height: 80,
-          child: Center(child: CircularProgressIndicator()),
+          child: AppLoadingIndicator.fullScreen(),
         ),
         error: (_, _) => Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: theme.colorScheme.errorContainer,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Text(
             'No se pudo cargar el resumen.',
@@ -254,7 +257,7 @@ class _ResumenCard extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: theme.colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -357,7 +360,7 @@ class _ListaContent extends ConsumerWidget {
               if (index >= estado.eventos.length) {
                 return const Padding(
                   padding: EdgeInsets.all(AppSpacing.md),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: AppLoadingIndicator.fullScreen(),
                 );
               }
               return _EventoTile(evento: estado.eventos[index]);

@@ -6,14 +6,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
+import '../../../../core/ui/buttons/app_primary_button.dart';
+import '../../../../core/ui/buttons/app_text_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_dialog.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
-import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/tipo_vehiculo.dart';
@@ -65,7 +70,7 @@ class _VehiculoFichaBody extends ConsumerWidget {
     return asyncState.when(
       loading: () => const AppPageScaffold(
         title: 'Vehículo',
-        body: Center(child: CircularProgressIndicator()),
+        body: AppLoadingIndicator.fullScreen(),
       ),
       error: (error, _) => AppPageScaffold(
         title: 'Vehículo',
@@ -101,16 +106,17 @@ class _LoadedVehiculo extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authServiceProvider).currentUser;
-    final puedeReportar =
-        user?.hasPermission(Permission.inventarioReportarIncidencia) ?? false;
+    // Auditoría RBAC (29-may, hallazgo B3): se migra el check inline
+    // por permiso a `AppPermissionGate` para unificar el patrón con el
+    // resto de pages. El `if` por `estado` se conserva como regla de
+    // dominio (no RBAC).
     return AppPageScaffold(
       title: '${vehiculo.codigoInterno} · ${vehiculo.matricula}',
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('vehiculo_ficha_refresh'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () => ref
               .read(vehiculoFichaViewModelProvider(vehiculo.id).notifier)
               .refresh(),
@@ -158,35 +164,41 @@ class _LoadedVehiculo extends ConsumerWidget {
               value: vehiculo.observacionesIncidencia!,
             ),
           const SizedBox(height: AppSpacing.lg),
-          if (puedeReportar &&
-              vehiculo.estado != EstadoInventario.averiado &&
-              vehiculo.estado != EstadoInventario.perdido) ...[
-            AppDestructiveButton(
-              key: const ValueKey('vehiculo_ficha_averia'),
-              label: 'Reportar avería',
-              icon: Icons.build_outlined,
-              expanded: true,
-              onPressed: () => _abrirIncidencia(
-                context,
-                ref,
-                EstadoInventario.averiado,
-                'Reportar avería',
+          if (vehiculo.estado != EstadoInventario.averiado &&
+              vehiculo.estado != EstadoInventario.perdido)
+            AppPermissionGate(
+              permission: Permission.inventarioReportarIncidencia,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppDestructiveButton(
+                    key: const ValueKey('vehiculo_ficha_averia'),
+                    label: 'Reportar avería',
+                    icon: Icons.build_outlined,
+                    expanded: true,
+                    onPressed: () => _abrirIncidencia(
+                      context,
+                      ref,
+                      EstadoInventario.averiado,
+                      'Reportar avería',
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppDestructiveButton(
+                    key: const ValueKey('vehiculo_ficha_perdida'),
+                    label: 'Reportar pérdida',
+                    icon: Icons.report_outlined,
+                    expanded: true,
+                    onPressed: () => _abrirIncidencia(
+                      context,
+                      ref,
+                      EstadoInventario.perdido,
+                      'Reportar pérdida',
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AppDestructiveButton(
-              key: const ValueKey('vehiculo_ficha_perdida'),
-              label: 'Reportar pérdida',
-              icon: Icons.report_outlined,
-              expanded: true,
-              onPressed: () => _abrirIncidencia(
-                context,
-                ref,
-                EstadoInventario.perdido,
-                'Reportar pérdida',
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -199,29 +211,27 @@ class _LoadedVehiculo extends ConsumerWidget {
     String title,
   ) async {
     final descripcionCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title),
-        content: AppTextField(
-          key: const ValueKey('vehiculo_incidencia_descripcion'),
-          label: 'Descripción de la incidencia',
-          controller: descripcionCtrl,
-          prefixIcon: Icons.notes_outlined,
-          maxLines: 4,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton.tonal(
-            key: const ValueKey('vehiculo_incidencia_confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Registrar'),
-          ),
-        ],
+    final ok = await AppDialog.show<bool>(
+      context,
+      title: title,
+      content: AppTextField(
+        key: const ValueKey('vehiculo_incidencia_descripcion'),
+        label: 'Descripción de la incidencia',
+        controller: descripcionCtrl,
+        prefixIcon: Icons.notes_outlined,
+        maxLines: 4,
       ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        AppPrimaryButton(
+          key: const ValueKey('vehiculo_incidencia_confirm'),
+          label: 'Registrar',
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
     if (ok != true) return;
     if (!context.mounted) return;
@@ -292,25 +302,30 @@ class _EstadoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (estado) {
+    // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
+    final (Color bg, Color fg, IconData icon, String label) = switch (estado) {
       EstadoInventario.operativo => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
+          Icons.check_circle_outline,
           'Operativo',
         ),
       EstadoInventario.averiado => (
           theme.colorScheme.errorContainer,
           theme.colorScheme.onErrorContainer,
+          Icons.build_outlined,
           'Averiado',
         ),
       EstadoInventario.perdido => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.report_outlined,
           'Perdido',
         ),
       EstadoInventario.enUso => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
+          Icons.handyman_outlined,
           'En uso',
         ),
     };
@@ -321,9 +336,16 @@ class _EstadoBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Text(label, style: TextStyle(color: fg)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: fg),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: TextStyle(color: fg)),
+        ],
+      ),
     );
   }
 }

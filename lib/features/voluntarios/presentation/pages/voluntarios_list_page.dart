@@ -22,13 +22,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
+import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/estado_voluntario.dart';
 import '../../domain/entities/voluntario_summary.dart';
@@ -95,6 +100,16 @@ class _VoluntariosListPageBodyState
   @override
   Widget build(BuildContext context) {
     final asyncState = ref.watch(voluntariosListViewModelProvider);
+    // Voluntarios sin permission.voluntariosVerFicha ven la lista pero
+    // sus filas deben quedar no-tap. La auditoría RBAC (29-may, hallazgo
+    // A1) lo formaliza: el rol `voluntario` tiene `voluntariosListar` pero
+    // no `voluntariosVerFicha`; sin este gate, el tap aterrizaba en el
+    // `_ForbiddenScreen` de la ficha.
+    final canViewFicha = ref
+            .watch(authServiceProvider)
+            .currentUser
+            ?.hasPermission(Permission.voluntariosVerFicha) ??
+        false;
 
     ref.listen<AsyncValue<VoluntariosListState>>(
       voluntariosListViewModelProvider,
@@ -114,21 +129,22 @@ class _VoluntariosListPageBodyState
     );
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.listMaxWidth,
       title: 'Voluntarios',
       actions: [
         AppPermissionGate(
           permission: Permission.voluntariosCrear,
-          child: IconButton(
+          child: AppIconButton(
             key: const ValueKey('voluntarios_alta_button'),
             tooltip: 'Alta de voluntario',
-            icon: const Icon(Icons.person_add_alt_1),
+            icon: Icons.person_add_alt_1,
             onPressed: () => context.go('/voluntarios/alta'),
           ),
         ),
-        IconButton(
+        AppIconButton(
           key: const ValueKey('voluntarios_refresh_button'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () =>
               ref.read(voluntariosListViewModelProvider.notifier).refresh(),
         ),
@@ -156,15 +172,18 @@ class _VoluntariosListPageBodyState
                 .filterByEstado(estado),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Expanded(child: _buildBody(asyncState)),
+          Expanded(child: _buildBody(asyncState, canViewFicha: canViewFicha)),
         ],
       ),
     );
   }
 
-  Widget _buildBody(AsyncValue<VoluntariosListState> asyncState) {
+  Widget _buildBody(
+    AsyncValue<VoluntariosListState> asyncState, {
+    required bool canViewFicha,
+  }) {
     return asyncState.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const AppLoadingIndicator.fullScreen(),
       error: (error, _) {
         final message =
             error is Failure ? error.message : 'No se pudo cargar la lista.';
@@ -195,11 +214,11 @@ class _VoluntariosListPageBodyState
             if (index >= state.items.length) {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: Center(child: CircularProgressIndicator()),
+                child: AppLoadingIndicator.fullScreen(),
               );
             }
             final v = state.items[index];
-            return _VoluntarioTile(voluntario: v);
+            return _VoluntarioTile(voluntario: v, canViewFicha: canViewFicha);
           },
         );
       },
@@ -255,8 +274,12 @@ class _EstadoFilterRow extends StatelessWidget {
 
 class _VoluntarioTile extends StatelessWidget {
   final VoluntarioSummary voluntario;
+  final bool canViewFicha;
 
-  const _VoluntarioTile({required this.voluntario});
+  const _VoluntarioTile({
+    required this.voluntario,
+    required this.canViewFicha,
+  });
 
   String get _initials {
     final parts = voluntario.nombre.trim().split(RegExp(r'\s+'));
@@ -277,7 +300,9 @@ class _VoluntarioTile extends StatelessWidget {
       title: Text(voluntario.nombre),
       subtitle: Text('${voluntario.telefono} · ${voluntario.municipio}'),
       trailing: _EstadoBadge(estado: voluntario.estado),
-      onTap: () => context.go('/voluntarios/${voluntario.id}'),
+      onTap: canViewFicha
+          ? () => context.go('/voluntarios/${voluntario.id}')
+          : null,
     );
   }
 }
@@ -290,20 +315,26 @@ class _EstadoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (estado) {
+    // Guía 28 §WCAG 1.4.1 (uso del color): el estado se comunica con
+    // icono + color + texto, no solo color. Aporta robustez frente a
+    // daltonismo y modos de alto contraste.
+    final (Color bg, Color fg, IconData icon, String label) = switch (estado) {
       EstadoVoluntario.activo => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
+          Icons.check_circle_outline,
           'Activo',
         ),
       EstadoVoluntario.baja => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.do_not_disturb_off_outlined,
           'Baja',
         ),
       EstadoVoluntario.suspendido => (
           theme.colorScheme.errorContainer,
           theme.colorScheme.onErrorContainer,
+          Icons.block_outlined,
           'Suspendido',
         ),
     };
@@ -314,9 +345,16 @@ class _EstadoBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Text(label, style: TextStyle(color: fg, fontSize: 12)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: theme.textTheme.labelSmall?.copyWith(color: fg)),
+        ],
+      ),
     );
   }
 }

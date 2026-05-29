@@ -23,14 +23,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_confirm_dialog.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/di/providers.dart';
@@ -80,15 +83,15 @@ class _VoluntarioFichaBody extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Ficha de voluntario',
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('voluntario_ficha_refresh'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () => ref.read(provider.notifier).refresh(),
         ),
       ],
       body: asyncState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) {
           if (error is VoluntarioNotFound) {
             return const AppEmptyState(
@@ -219,7 +222,7 @@ class _BajaSection extends ConsumerWidget {
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
               children: [
@@ -529,15 +532,25 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             validator: (v) => _validateRequired(v, 'Municipio'),
           ),
           const SizedBox(height: AppSpacing.md),
-          GestureDetector(
-            key: const ValueKey('ficha_fecha_nacimiento'),
-            onTap: widget.canEdit && !widget.isMutating ? _pickDate : null,
-            child: AbsorbPointer(
-              child: AppTextField(
-                label: 'Fecha de nacimiento',
-                controller: _fechaCtrl,
-                enabled: widget.canEdit && !widget.isMutating,
-                prefixIcon: Icons.calendar_today_outlined,
+          // Guía 28 §WCAG 4.1.2: el GestureDetector envuelve un campo
+          // que el screen reader leería como TextField editable, pero
+          // su rol real es "botón que abre un date picker".
+          // `Semantics(button: true, label: ...)` fuerza la
+          // interpretación correcta.
+          Semantics(
+            label: 'Fecha de nacimiento',
+            button: true,
+            enabled: widget.canEdit && !widget.isMutating,
+            child: GestureDetector(
+              key: const ValueKey('ficha_fecha_nacimiento'),
+              onTap: widget.canEdit && !widget.isMutating ? _pickDate : null,
+              child: AbsorbPointer(
+                child: AppTextField(
+                  label: 'Fecha de nacimiento',
+                  controller: _fechaCtrl,
+                  enabled: widget.canEdit && !widget.isMutating,
+                  prefixIcon: Icons.calendar_today_outlined,
+                ),
               ),
             ),
           ),

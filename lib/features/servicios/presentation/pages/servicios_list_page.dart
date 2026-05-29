@@ -10,11 +10,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -101,6 +105,7 @@ class _ServiciosListPageBodyState
     );
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.listMaxWidth,
       title: 'Servicios',
       actions: [
         const AppPermissionGate.anyOf(
@@ -110,10 +115,10 @@ class _ServiciosListPageBodyState
           ],
           child: _AltaServicioButton(),
         ),
-        IconButton(
+        AppIconButton(
           key: const ValueKey('servicios_refresh_button'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () =>
               ref.read(serviciosListViewModelProvider.notifier).refresh(),
         ),
@@ -149,7 +154,7 @@ class _ServiciosListPageBodyState
 
   Widget _buildBody(AsyncValue<ServiciosListState> asyncState) {
     return asyncState.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const AppLoadingIndicator.fullScreen(),
       error: (error, _) {
         final message = error is Failure
             ? error.message
@@ -181,7 +186,7 @@ class _ServiciosListPageBodyState
             if (index >= state.items.length) {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: Center(child: CircularProgressIndicator()),
+                child: AppLoadingIndicator.fullScreen(),
               );
             }
             final s = state.items[index];
@@ -198,10 +203,10 @@ class _AltaServicioButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
+    return AppIconButton(
       key: const ValueKey('servicios_alta_button'),
       tooltip: 'Crear servicio',
-      icon: const Icon(Icons.add),
+      icon: Icons.add,
       onPressed: () => context.go('/servicios/alta'),
     );
   }
@@ -240,12 +245,28 @@ class _EstadoFilterRow extends StatelessWidget {
             selected: selected == EstadoServicio.activo,
             onSelected: (_) => onChanged(EstadoServicio.activo),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          ChoiceChip(
-            key: const ValueKey('servicios_filter_borrador'),
-            label: const Text('Borradores'),
-            selected: selected == EstadoServicio.borrador,
-            onSelected: (_) => onChanged(EstadoServicio.borrador),
+          // Auditoría RBAC (29-may, hallazgo A3): el filtro `borrador`
+          // se ofrecía a cualquier rol con `serviciosVerPublicados` pero
+          // el backend no expone borradores ajenos, así que voluntarios
+          // /tesorero/secretario/etc filtraban a vacío siempre. Se
+          // gatea por los dos permisos de creación de servicio.
+          AppPermissionGate.anyOf(
+            anyOf: const [
+              Permission.serviciosCrearPreventivo,
+              Permission.serviciosCrearEmergencia,
+            ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(width: AppSpacing.sm),
+                ChoiceChip(
+                  key: const ValueKey('servicios_filter_borrador'),
+                  label: const Text('Borradores'),
+                  selected: selected == EstadoServicio.borrador,
+                  onSelected: (_) => onChanged(EstadoServicio.borrador),
+                ),
+              ],
+            ),
           ),
           const SizedBox(width: AppSpacing.sm),
           ChoiceChip(
@@ -334,25 +355,30 @@ class _EstadoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (estado) {
+    // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
+    final (Color bg, Color fg, IconData icon, String label) = switch (estado) {
       EstadoServicio.borrador => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.edit_note_outlined,
           'Borrador',
         ),
       EstadoServicio.publicado => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
+          Icons.campaign_outlined,
           'Publicado',
         ),
       EstadoServicio.activo => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
+          Icons.play_circle_outline,
           'Activo',
         ),
       EstadoServicio.cerrado => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.lock_outline,
           'Cerrado',
         ),
     };
@@ -363,9 +389,16 @@ class _EstadoBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Text(label, style: TextStyle(color: fg, fontSize: 12)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: theme.textTheme.labelSmall?.copyWith(color: fg)),
+        ],
+      ),
     );
   }
 }

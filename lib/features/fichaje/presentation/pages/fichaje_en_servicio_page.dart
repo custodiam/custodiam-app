@@ -14,9 +14,11 @@ import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -98,7 +100,7 @@ class _MiFichajeCard extends ConsumerWidget {
     return asyncState.when(
       loading: () => const Padding(
         padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
-        child: Center(child: CircularProgressIndicator()),
+        child: AppLoadingIndicator.fullScreen(),
       ),
       error: (error, _) {
         final message =
@@ -139,7 +141,7 @@ class _MiFichajeContent extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -322,7 +324,7 @@ class _VoluntariosFichadosSection extends ConsumerWidget {
         const SizedBox(height: AppSpacing.sm),
         asyncState.when(
           loading: () =>
-              const Center(child: CircularProgressIndicator()),
+              const AppLoadingIndicator.fullScreen(),
           error: (error, _) {
             final message = error is Failure
                 ? error.message

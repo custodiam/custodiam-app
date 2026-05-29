@@ -14,6 +14,7 @@ import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/di/providers.dart';
@@ -24,23 +25,31 @@ import '../viewmodels/alta_servicio_view_model.dart';
 import '../viewmodels/servicios_list_view_model.dart';
 
 class AltaServicioPage extends ConsumerWidget {
-  const AltaServicioPage({super.key});
+  /// Tipo preseleccionado al abrir la página. Si `null`, arranca en
+  /// `preventivo`. Se propaga desde el query param `?tipo=` del router
+  /// para que la quick action "Crear emergencia" del home aterrice ya
+  /// con `emergencia` marcado.
+  final TipoServicio? tipoInicial;
+
+  const AltaServicioPage({super.key, this.tipoInicial});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const AppPermissionGate.anyOf(
-      anyOf: [
+    return AppPermissionGate.anyOf(
+      anyOf: const [
         Permission.serviciosCrearPreventivo,
         Permission.serviciosCrearEmergencia,
       ],
-      fallback: _ForbiddenScreen(),
-      child: _AltaServicioForm(),
+      fallback: const _ForbiddenScreen(),
+      child: _AltaServicioForm(tipoInicial: tipoInicial),
     );
   }
 }
 
 class _AltaServicioForm extends ConsumerStatefulWidget {
-  const _AltaServicioForm();
+  final TipoServicio? tipoInicial;
+
+  const _AltaServicioForm({this.tipoInicial});
 
   @override
   ConsumerState<_AltaServicioForm> createState() => _AltaServicioFormState();
@@ -56,7 +65,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
   final _notasVehiculosCtrl = TextEditingController();
   final _fechaInicioCtrl = TextEditingController();
   final _fechaFinCtrl = TextEditingController();
-  TipoServicio _tipo = TipoServicio.preventivo;
+  late TipoServicio _tipo = widget.tipoInicial ?? TipoServicio.preventivo;
   DateTime? _fechaInicio;
   DateTime? _fechaFin;
 
@@ -205,6 +214,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
     });
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.formMaxWidth,
       title: 'Crear servicio',
       body: Form(
         key: _formKey,
@@ -243,16 +253,23 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               validator: (v) => _validateRequired(v, 'Ubicación'),
             ),
             const SizedBox(height: AppSpacing.md),
-            GestureDetector(
-              key: const ValueKey('alta_servicio_fecha_inicio'),
-              onTap: _pickFechaInicio,
-              child: AbsorbPointer(
-                child: AppTextField(
-                  label: 'Fecha y hora de inicio',
-                  controller: _fechaInicioCtrl,
-                  prefixIcon: Icons.calendar_today_outlined,
-                  validator: (_) =>
-                      _fechaInicio == null ? 'Fecha obligatoria' : null,
+            // Guía 28 §WCAG 4.1.2: rol real = botón que abre date+time
+            // picker, no TextField. Semantics fuerza la interpretación
+            // para el screen reader.
+            Semantics(
+              label: 'Fecha y hora de inicio',
+              button: true,
+              child: GestureDetector(
+                key: const ValueKey('alta_servicio_fecha_inicio'),
+                onTap: _pickFechaInicio,
+                child: AbsorbPointer(
+                  child: AppTextField(
+                    label: 'Fecha y hora de inicio',
+                    controller: _fechaInicioCtrl,
+                    prefixIcon: Icons.calendar_today_outlined,
+                    validator: (_) =>
+                        _fechaInicio == null ? 'Fecha obligatoria' : null,
+                  ),
                 ),
               ),
             ),
@@ -270,14 +287,18 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               maxLines: 3,
             ),
             const SizedBox(height: AppSpacing.md),
-            GestureDetector(
-              key: const ValueKey('alta_servicio_fecha_fin'),
-              onTap: _pickFechaFin,
-              child: AbsorbPointer(
-                child: AppTextField(
-                  label: 'Fecha y hora de fin',
-                  controller: _fechaFinCtrl,
-                  prefixIcon: Icons.event_outlined,
+            Semantics(
+              label: 'Fecha y hora de fin',
+              button: true,
+              child: GestureDetector(
+                key: const ValueKey('alta_servicio_fecha_fin'),
+                onTap: _pickFechaFin,
+                child: AbsorbPointer(
+                  child: AppTextField(
+                    label: 'Fecha y hora de fin',
+                    controller: _fechaFinCtrl,
+                    prefixIcon: Icons.event_outlined,
+                  ),
                 ),
               ),
             ),
@@ -335,18 +356,32 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
   }
 }
 
-class _TipoSelector extends StatelessWidget {
+class _TipoSelector extends ConsumerWidget {
   final TipoServicio selected;
   final ValueChanged<TipoServicio> onChanged;
 
   const _TipoSelector({required this.selected, required this.onChanged});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Auditoría RBAC (29-may, hallazgo A4): `secretario` entra al alta
+    // por tener `serviciosCrearPreventivo` (gate `anyOf` exterior) pero
+    // no tiene `serviciosCrearEmergencia` (Decisión 4 RBAC). El selector
+    // ofrecía los cuatro tipos y al pulsar "Crear emergencia" recibía
+    // un snackbar danger (defensa en profundidad correcta, ver
+    // _AltaServicioFormState._submit). Mejor UX: no surfacear la
+    // opción inválida en origen. El snackbar se conserva por si el
+    // JWT cambia mid-sesión.
+    final user = ref.watch(authServiceProvider).currentUser;
+    final canEmergencia =
+        user?.hasPermission(Permission.serviciosCrearEmergencia) ?? false;
+    final tipos = TipoServicio.values
+        .where((t) => t != TipoServicio.emergencia || canEmergencia)
+        .toList(growable: false);
     return Wrap(
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
-      children: TipoServicio.values.map((t) {
+      children: tipos.map((t) {
         return ChoiceChip(
           key: ValueKey('alta_servicio_tipo_${t.wire}'),
           label: Text(_label(t)),

@@ -16,16 +16,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
+import '../../../../core/ui/buttons/app_text_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_dialog.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
-import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/material_item.dart';
@@ -78,7 +82,7 @@ class _MaterialFichaBody extends ConsumerWidget {
     return asyncState.when(
       loading: () => const AppPageScaffold(
         title: 'Material',
-        body: Center(child: CircularProgressIndicator()),
+        body: AppLoadingIndicator.fullScreen(),
       ),
       error: (error, _) => AppPageScaffold(
         title: 'Material',
@@ -107,24 +111,23 @@ class _LoadedMaterial extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authServiceProvider).currentUser;
-    final puedeReportar =
-        user?.hasPermission(Permission.inventarioReportarIncidencia) ?? false;
-    final puedeAsignarPersonal = (user?.hasPermission(
-            Permission.inventarioAsignarEquipamientoPersonal) ??
-        false);
-    final puedePrestar =
-        user?.hasPermission(Permission.inventarioPrestarTemporal) ?? false;
-    final puedeDevolver =
-        user?.hasPermission(Permission.inventarioRegistrarDevolucion) ?? false;
+    // Auditoría RBAC (29-may, hallazgo B3): la ficha leía los permisos
+    // con `user.hasPermission` y los inlineaba en `if`s. Funciona pero
+    // rompe la convención del repo (resto de pages envuelven en
+    // `AppPermissionGate`). Migramos a `AppPermissionGate` para que un
+    // grep por `AppPermissionGate` localice todas las superficies
+    // gateadas, y que los tests genéricos por rol funcionen igual aquí
+    // que en otras pages. El `if` por `estado`/`tipo` se conserva como
+    // regla de dominio (no RBAC) — decide si el botón aparece en
+    // absoluto; el `AppPermissionGate` decide si el usuario lo ve.
 
     return AppPageScaffold(
       title: material.nombre,
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('material_ficha_refresh'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () => ref
               .read(materialFichaViewModelProvider(material.id).notifier)
               .refresh(),
@@ -186,79 +189,104 @@ class _LoadedMaterial extends ConsumerWidget {
 
           // — Acciones de asignación / devolución (solo si operativo) —
           if (material.estado == EstadoInventario.operativo) ...[
-            if (puedeAsignarPersonal &&
-                material.tipo == TipoMaterial.personal) ...[
-              AppPrimaryButton(
-                key: const ValueKey('material_ficha_asignar_personal'),
-                label: 'Asignar como equipamiento personal',
-                icon: Icons.person_add_alt_1,
-                expanded: true,
-                onPressed: () => _abrirDialogAsignar(
-                  context,
-                  ref,
-                  tipo: TipoAsignacion.personal,
+            if (material.tipo == TipoMaterial.personal)
+              AppPermissionGate(
+                permission:
+                    Permission.inventarioAsignarEquipamientoPersonal,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppPrimaryButton(
+                      key: const ValueKey('material_ficha_asignar_personal'),
+                      label: 'Asignar como equipamiento personal',
+                      icon: Icons.person_add_alt_1,
+                      expanded: true,
+                      onPressed: () => _abrirDialogAsignar(
+                        context,
+                        ref,
+                        tipo: TipoAsignacion.personal,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-            ],
-            if (puedePrestar &&
-                material.tipo == TipoMaterial.prestable) ...[
-              AppPrimaryButton(
-                key: const ValueKey('material_ficha_prestar'),
-                label: 'Prestar a un voluntario',
-                icon: Icons.swap_horiz,
-                expanded: true,
-                onPressed: () => _abrirDialogAsignar(
-                  context,
-                  ref,
-                  tipo: TipoAsignacion.prestamo,
+            if (material.tipo == TipoMaterial.prestable)
+              AppPermissionGate(
+                permission: Permission.inventarioPrestarTemporal,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppPrimaryButton(
+                      key: const ValueKey('material_ficha_prestar'),
+                      label: 'Prestar a un voluntario',
+                      icon: Icons.swap_horiz,
+                      expanded: true,
+                      onPressed: () => _abrirDialogAsignar(
+                        context,
+                        ref,
+                        tipo: TipoAsignacion.prestamo,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-            ],
-            if (puedeDevolver) ...[
-              AppSecondaryButton(
-                key: const ValueKey('material_ficha_devolver'),
-                label: 'Registrar devolución',
-                icon: Icons.assignment_return_outlined,
-                expanded: true,
-                onPressed: () => _abrirDialogDevolver(context, ref),
+            AppPermissionGate(
+              permission: Permission.inventarioRegistrarDevolucion,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppSecondaryButton(
+                    key: const ValueKey('material_ficha_devolver'),
+                    label: 'Registrar devolución',
+                    icon: Icons.assignment_return_outlined,
+                    expanded: true,
+                    onPressed: () => _abrirDialogDevolver(context, ref),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
               ),
-              const SizedBox(height: AppSpacing.sm),
-            ],
+            ),
           ],
 
           // — Acciones de incidencia (siempre que el material no
           //   esté ya en estado final) —
-          if (puedeReportar &&
-              material.estado != EstadoInventario.averiado &&
-              material.estado != EstadoInventario.perdido) ...[
-            AppDestructiveButton(
-              key: const ValueKey('material_ficha_averia'),
-              label: 'Reportar avería',
-              icon: Icons.build_outlined,
-              expanded: true,
-              onPressed: () => _abrirDialogIncidencia(
-                context,
-                ref,
-                EstadoInventario.averiado,
-                'Reportar avería',
+          if (material.estado != EstadoInventario.averiado &&
+              material.estado != EstadoInventario.perdido)
+            AppPermissionGate(
+              permission: Permission.inventarioReportarIncidencia,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppDestructiveButton(
+                    key: const ValueKey('material_ficha_averia'),
+                    label: 'Reportar avería',
+                    icon: Icons.build_outlined,
+                    expanded: true,
+                    onPressed: () => _abrirDialogIncidencia(
+                      context,
+                      ref,
+                      EstadoInventario.averiado,
+                      'Reportar avería',
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppDestructiveButton(
+                    key: const ValueKey('material_ficha_perdida'),
+                    label: 'Reportar pérdida',
+                    icon: Icons.report_outlined,
+                    expanded: true,
+                    onPressed: () => _abrirDialogIncidencia(
+                      context,
+                      ref,
+                      EstadoInventario.perdido,
+                      'Reportar pérdida',
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AppDestructiveButton(
-              key: const ValueKey('material_ficha_perdida'),
-              label: 'Reportar pérdida',
-              icon: Icons.report_outlined,
-              expanded: true,
-              onPressed: () => _abrirDialogIncidencia(
-                context,
-                ref,
-                EstadoInventario.perdido,
-                'Reportar pérdida',
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -271,45 +299,41 @@ class _LoadedMaterial extends ConsumerWidget {
   }) async {
     final voluntarioCtrl = TextEditingController();
     final cantidadCtrl = TextEditingController(text: '1');
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(
-          tipo == TipoAsignacion.personal
-              ? 'Asignar equipamiento personal'
-              : 'Prestar material',
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              key: const ValueKey('material_asignar_voluntario_id'),
-              label: 'ID del voluntario (UUID)',
-              controller: voluntarioCtrl,
-              prefixIcon: Icons.person_outline,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: const ValueKey('material_asignar_cantidad'),
-              label: 'Cantidad',
-              controller: cantidadCtrl,
-              keyboardType: TextInputType.number,
-              prefixIcon: Icons.numbers,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+    final ok = await AppDialog.show<bool>(
+      context,
+      title: tipo == TipoAsignacion.personal
+          ? 'Asignar equipamiento personal'
+          : 'Prestar material',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppTextField(
+            key: const ValueKey('material_asignar_voluntario_id'),
+            label: 'ID del voluntario (UUID)',
+            controller: voluntarioCtrl,
+            prefixIcon: Icons.person_outline,
           ),
-          FilledButton(
-            key: const ValueKey('material_asignar_confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Asignar'),
+          const SizedBox(height: AppSpacing.md),
+          AppTextField(
+            key: const ValueKey('material_asignar_cantidad'),
+            label: 'Cantidad',
+            controller: cantidadCtrl,
+            keyboardType: TextInputType.number,
+            prefixIcon: Icons.numbers,
           ),
         ],
       ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        AppPrimaryButton(
+          key: const ValueKey('material_asignar_confirm'),
+          label: 'Asignar',
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
     if (ok != true) return;
     if (!context.mounted) return;
@@ -347,41 +371,39 @@ class _LoadedMaterial extends ConsumerWidget {
   ) async {
     final voluntarioCtrl = TextEditingController();
     final observacionesCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Registrar devolución'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              key: const ValueKey('material_devolver_voluntario_id'),
-              label: 'ID del voluntario que devuelve',
-              controller: voluntarioCtrl,
-              prefixIcon: Icons.person_outline,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: const ValueKey('material_devolver_observaciones'),
-              label: 'Observaciones (opcional)',
-              controller: observacionesCtrl,
-              prefixIcon: Icons.notes_outlined,
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+    final ok = await AppDialog.show<bool>(
+      context,
+      title: 'Registrar devolución',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppTextField(
+            key: const ValueKey('material_devolver_voluntario_id'),
+            label: 'ID del voluntario que devuelve',
+            controller: voluntarioCtrl,
+            prefixIcon: Icons.person_outline,
           ),
-          FilledButton(
-            key: const ValueKey('material_devolver_confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Devolver'),
+          const SizedBox(height: AppSpacing.md),
+          AppTextField(
+            key: const ValueKey('material_devolver_observaciones'),
+            label: 'Observaciones (opcional)',
+            controller: observacionesCtrl,
+            prefixIcon: Icons.notes_outlined,
+            maxLines: 3,
           ),
         ],
       ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        AppPrimaryButton(
+          key: const ValueKey('material_devolver_confirm'),
+          label: 'Devolver',
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
     if (ok != true) return;
     if (!context.mounted) return;
@@ -420,29 +442,27 @@ class _LoadedMaterial extends ConsumerWidget {
     String title,
   ) async {
     final descripcionCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title),
-        content: AppTextField(
-          key: const ValueKey('material_incidencia_descripcion'),
-          label: 'Descripción de la incidencia',
-          controller: descripcionCtrl,
-          prefixIcon: Icons.notes_outlined,
-          maxLines: 4,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton.tonal(
-            key: const ValueKey('material_incidencia_confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Registrar'),
-          ),
-        ],
+    final ok = await AppDialog.show<bool>(
+      context,
+      title: title,
+      content: AppTextField(
+        key: const ValueKey('material_incidencia_descripcion'),
+        label: 'Descripción de la incidencia',
+        controller: descripcionCtrl,
+        prefixIcon: Icons.notes_outlined,
+        maxLines: 4,
       ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        AppPrimaryButton(
+          key: const ValueKey('material_incidencia_confirm'),
+          label: 'Registrar',
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
     if (ok != true) return;
     if (!context.mounted) return;
@@ -513,25 +533,30 @@ class _EstadoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (estado) {
+    // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
+    final (Color bg, Color fg, IconData icon, String label) = switch (estado) {
       EstadoInventario.operativo => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
+          Icons.check_circle_outline,
           'Operativo',
         ),
       EstadoInventario.averiado => (
           theme.colorScheme.errorContainer,
           theme.colorScheme.onErrorContainer,
+          Icons.build_outlined,
           'Averiado',
         ),
       EstadoInventario.perdido => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.report_outlined,
           'Perdido',
         ),
       EstadoInventario.enUso => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
+          Icons.handyman_outlined,
           'En uso',
         ),
     };
@@ -542,9 +567,16 @@ class _EstadoBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Text(label, style: TextStyle(color: fg)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: fg),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: TextStyle(color: fg)),
+        ],
+      ),
     );
   }
 }

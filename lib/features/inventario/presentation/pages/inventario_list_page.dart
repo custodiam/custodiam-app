@@ -8,12 +8,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
+import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/material_summary.dart';
@@ -73,11 +76,11 @@ class _InventarioListBody extends ConsumerWidget {
   }
 }
 
-class _AltaMenuButton extends StatelessWidget {
+class _AltaMenuButton extends ConsumerWidget {
   const _AltaMenuButton();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AppPermissionGate.anyOf(
       anyOf: const [
         Permission.inventarioRegistrarMaterial,
@@ -88,22 +91,42 @@ class _AltaMenuButton extends StatelessWidget {
         tooltip: 'Registrar nuevo',
         icon: const Icon(Icons.add),
         onSelected: (target) => context.go('/inventario/$target'),
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: 'material/alta',
-            child: ListTile(
-              leading: Icon(Icons.inventory_2_outlined),
-              title: Text('Nuevo material'),
-            ),
-          ),
-          const PopupMenuItem(
-            value: 'vehiculos/alta',
-            child: ListTile(
-              leading: Icon(Icons.directions_car_outlined),
-              title: Text('Nuevo vehículo'),
-            ),
-          ),
-        ],
+        // La auditoría RBAC (29-may, hallazgo A2) detectó que el gate
+        // exterior `anyOf` oculta el icono cuando faltan ambos permisos,
+        // pero los items no se filtran individualmente. jefe_equipo
+        // (con `inventarioRegistrarMaterial` pero NO
+        // `inventarioRegistrarVehiculo` por Decisión 9 del RBAC) veía
+        // "Nuevo vehículo" y comía 403 silencioso del backend.
+        // `AppPermissionGate` no puede envolver `PopupMenuItem` porque
+        // el menú no se reconstruye con `ref.watch`; filtramos en el
+        // itemBuilder leyendo el user en `ref.read`.
+        itemBuilder: (context) {
+          final user = ref.read(authServiceProvider).currentUser;
+          final canMaterial =
+              user?.hasPermission(Permission.inventarioRegistrarMaterial) ??
+                  false;
+          final canVehiculo =
+              user?.hasPermission(Permission.inventarioRegistrarVehiculo) ??
+                  false;
+          return <PopupMenuEntry<String>>[
+            if (canMaterial)
+              const PopupMenuItem<String>(
+                value: 'material/alta',
+                child: ListTile(
+                  leading: Icon(Icons.inventory_2_outlined),
+                  title: Text('Nuevo material'),
+                ),
+              ),
+            if (canVehiculo)
+              const PopupMenuItem<String>(
+                value: 'vehiculos/alta',
+                child: ListTile(
+                  leading: Icon(Icons.directions_car_outlined),
+                  title: Text('Nuevo vehículo'),
+                ),
+              ),
+          ];
+        },
       ),
     );
   }
@@ -237,7 +260,7 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
         Expanded(
           child: asyncState.when(
             loading: () =>
-                const Center(child: CircularProgressIndicator()),
+                const AppLoadingIndicator.fullScreen(),
             error: (error, _) => AppErrorState(
               title: 'No se pudo cargar el material',
               description: error is Failure ? error.message : null,
@@ -265,7 +288,7 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
                     return const Padding(
                       padding:
                           EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: AppLoadingIndicator.fullScreen(),
                     );
                   }
                   return _MaterialTile(material: state.items[index]);
@@ -382,7 +405,7 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
         Expanded(
           child: asyncState.when(
             loading: () =>
-                const Center(child: CircularProgressIndicator()),
+                const AppLoadingIndicator.fullScreen(),
             error: (error, _) => AppErrorState(
               title: 'No se pudieron cargar los vehículos',
               description: error is Failure ? error.message : null,
@@ -411,7 +434,7 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
                     return const Padding(
                       padding:
                           EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: AppLoadingIndicator.fullScreen(),
                     );
                   }
                   return _VehiculoTile(vehiculo: state.items[index]);
@@ -479,25 +502,30 @@ class _EstadoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (estado) {
+    // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
+    final (Color bg, Color fg, IconData icon, String label) = switch (estado) {
       EstadoInventario.operativo => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
+          Icons.check_circle_outline,
           'Operativo',
         ),
       EstadoInventario.averiado => (
           theme.colorScheme.errorContainer,
           theme.colorScheme.onErrorContainer,
+          Icons.build_outlined,
           'Averiado',
         ),
       EstadoInventario.perdido => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.report_outlined,
           'Perdido',
         ),
       EstadoInventario.enUso => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
+          Icons.handyman_outlined,
           'En uso',
         ),
     };
@@ -508,9 +536,16 @@ class _EstadoBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Text(label, style: TextStyle(color: fg, fontSize: 12)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: theme.textTheme.labelSmall?.copyWith(color: fg)),
+        ],
+      ),
     );
   }
 }

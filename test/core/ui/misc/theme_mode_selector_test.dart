@@ -15,10 +15,10 @@ void main() {
         ),
       );
 
-      expect(find.text('Sistema (automático)'), findsOneWidget);
+      expect(find.text('Sistema'), findsOneWidget);
       expect(find.text('Claro'), findsOneWidget);
       expect(find.text('Oscuro'), findsOneWidget);
-      expect(find.byType(RadioListTile<ThemeMode>), findsNWidgets(3));
+      expect(find.byType(SegmentedButton<ThemeMode>), findsOneWidget);
     });
 
     testWidgets('invokes onChanged with selected ThemeMode', (tester) async {
@@ -39,7 +39,7 @@ void main() {
       expect(captured, ThemeMode.light);
     });
 
-    testWidgets('reflects currently selected mode via RadioGroup',
+    testWidgets('reflects currently selected mode via SegmentedButton',
         (tester) async {
       await pumpRiverpod(
         tester,
@@ -49,10 +49,10 @@ void main() {
         ),
       );
 
-      final group = tester.widget<RadioGroup<ThemeMode>>(
-        find.byType(RadioGroup<ThemeMode>),
+      final segmented = tester.widget<SegmentedButton<ThemeMode>>(
+        find.byType(SegmentedButton<ThemeMode>),
       );
-      expect(group.groupValue, ThemeMode.dark);
+      expect(segmented.selected, {ThemeMode.dark});
     });
   });
 }

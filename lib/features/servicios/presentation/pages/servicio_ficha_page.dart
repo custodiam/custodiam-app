@@ -14,14 +14,19 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
+import '../../../../core/ui/buttons/app_text_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_confirm_dialog.dart';
+import '../../../../core/ui/feedback/app_dialog.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/di/providers.dart';
@@ -80,7 +85,7 @@ class _ServicioFichaBody extends ConsumerWidget {
     return asyncState.when(
       loading: () => const AppPageScaffold(
         title: 'Servicio',
-        body: Center(child: CircularProgressIndicator()),
+        body: AppLoadingIndicator.fullScreen(),
       ),
       error: (error, _) => AppPageScaffold(
         title: 'Servicio',
@@ -118,10 +123,10 @@ class _LoadedFicha extends ConsumerWidget {
     return AppPageScaffold(
       title: servicio.titulo,
       actions: [
-        IconButton(
+        AppIconButton(
           key: const ValueKey('servicio_ficha_refresh'),
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Icons.refresh,
           onPressed: () => ref
               .read(servicioFichaViewModelProvider(servicio.id).notifier)
               .refresh(),
@@ -262,6 +267,17 @@ class _SelfServiceActions extends ConsumerWidget {
     // publicado o activo (CU-04 / EN-03-04). En cerrado/borrador no.
     final puedeApuntarse = servicio.estado == EstadoServicio.publicado ||
         servicio.estado == EstadoServicio.activo;
+
+    // TODO(rbac-d3): hide "Apuntarme" when aforo is reached. Blocked
+    // by backend: the Servicio entity exposes capacity (numeroVoluntarios)
+    // but not the current inscritos count. Two options pending decision
+    // with PO/backend:
+    //   (a) include inscritosCount in ServicioResponse (preferred, no
+    //       extra round-trip).
+    //   (b) call GET /servicios/{id}/voluntarios on ficha load and
+    //       count locally.
+    // Defense-in-depth at backend already returns 4xx when full, so
+    // the worst current UX is a snackbar after the tap.
 
     return Column(
       children: [
@@ -416,38 +432,36 @@ class _AdminActions extends ConsumerWidget {
     String servicioId,
   ) async {
     final controller = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Cerrar servicio'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'El servicio quedará cerrado y se sellarán automáticamente '
-              'los fichajes que sigan abiertos.',
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: const ValueKey('servicio_ficha_cerrar_observaciones'),
-              label: 'Observaciones (opcional)',
-              controller: controller,
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+    final ok = await AppDialog.show<bool>(
+      context,
+      title: 'Cerrar servicio',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'El servicio quedará cerrado y se sellarán automáticamente '
+            'los fichajes que sigan abiertos.',
           ),
-          FilledButton.tonal(
-            key: const ValueKey('servicio_ficha_cerrar_confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Cerrar'),
+          const SizedBox(height: AppSpacing.md),
+          AppTextField(
+            key: const ValueKey('servicio_ficha_cerrar_observaciones'),
+            label: 'Observaciones (opcional)',
+            controller: controller,
+            maxLines: 3,
           ),
         ],
       ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        AppPrimaryButton(
+          key: const ValueKey('servicio_ficha_cerrar_confirm'),
+          label: 'Cerrar',
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
     if (ok != true) return;
     final observaciones =
@@ -509,25 +523,30 @@ class _EstadoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (estado) {
+    // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
+    final (Color bg, Color fg, IconData icon, String label) = switch (estado) {
       EstadoServicio.borrador => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.edit_note_outlined,
           'Borrador',
         ),
       EstadoServicio.publicado => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
+          Icons.campaign_outlined,
           'Publicado',
         ),
       EstadoServicio.activo => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
+          Icons.play_circle_outline,
           'Activo',
         ),
       EstadoServicio.cerrado => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.lock_outline,
           'Cerrado',
         ),
     };
@@ -538,9 +557,16 @@ class _EstadoBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Text(label, style: TextStyle(color: fg)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: fg),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: TextStyle(color: fg)),
+        ],
+      ),
     );
   }
 }
@@ -552,25 +578,30 @@ class _TipoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (tipo) {
+    // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
+    final (Color bg, Color fg, IconData icon, String label) = switch (tipo) {
       TipoServicio.emergencia => (
           theme.colorScheme.errorContainer,
           theme.colorScheme.onErrorContainer,
+          Icons.warning_amber_outlined,
           'Emergencia',
         ),
       TipoServicio.preventivo => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
+          Icons.shield_outlined,
           'Preventivo',
         ),
       TipoServicio.formacion => (
           theme.colorScheme.secondaryContainer,
           theme.colorScheme.onSecondaryContainer,
+          Icons.school_outlined,
           'Formación',
         ),
       TipoServicio.otro => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Icons.event_outlined,
           'Otro',
         ),
     };
@@ -581,9 +612,16 @@ class _TipoBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Text(label, style: TextStyle(color: fg)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: fg),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: TextStyle(color: fg)),
+        ],
+      ),
     );
   }
 }

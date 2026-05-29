@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/misc/theme_mode_selector.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
@@ -55,7 +56,7 @@ class SettingsPage extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Ajustes',
       body: prefsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (_, _) => const Center(child: Text('Error cargando ajustes')),
         data: (prefs) => Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
