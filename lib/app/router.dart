@@ -57,6 +57,7 @@ import '../features/voluntarios/presentation/pages/editar_mi_perfil_page.dart';
 import '../features/voluntarios/presentation/pages/mi_perfil_page.dart';
 import '../features/voluntarios/presentation/pages/voluntario_ficha_page.dart';
 import '../features/voluntarios/presentation/pages/voluntarios_list_page.dart';
+import '../core/ui/feedback/app_loading_indicator.dart';
 import '../infrastructure/auth/keycloak_web_auth_service.dart';
 import '../infrastructure/di/providers.dart';
 import 'widgets/app_shell.dart';
@@ -293,7 +294,7 @@ class _CallbackHandlerState extends ConsumerState<_CallbackHandler> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+      body: AppLoadingIndicator.fullScreen(),
     );
   }
 }

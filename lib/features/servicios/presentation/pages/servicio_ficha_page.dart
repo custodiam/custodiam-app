@@ -20,6 +20,7 @@ import '../../../../core/ui/buttons/app_text_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_confirm_dialog.dart';
 import '../../../../core/ui/feedback/app_dialog.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
@@ -82,7 +83,7 @@ class _ServicioFichaBody extends ConsumerWidget {
     return asyncState.when(
       loading: () => const AppPageScaffold(
         title: 'Servicio',
-        body: Center(child: CircularProgressIndicator()),
+        body: AppLoadingIndicator.fullScreen(),
       ),
       error: (error, _) => AppPageScaffold(
         title: 'Servicio',

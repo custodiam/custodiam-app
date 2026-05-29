@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
@@ -258,7 +259,7 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
         Expanded(
           child: asyncState.when(
             loading: () =>
-                const Center(child: CircularProgressIndicator()),
+                const AppLoadingIndicator.fullScreen(),
             error: (error, _) => AppErrorState(
               title: 'No se pudo cargar el material',
               description: error is Failure ? error.message : null,
@@ -286,7 +287,7 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
                     return const Padding(
                       padding:
                           EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: AppLoadingIndicator.fullScreen(),
                     );
                   }
                   return _MaterialTile(material: state.items[index]);
@@ -403,7 +404,7 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
         Expanded(
           child: asyncState.when(
             loading: () =>
-                const Center(child: CircularProgressIndicator()),
+                const AppLoadingIndicator.fullScreen(),
             error: (error, _) => AppErrorState(
               title: 'No se pudieron cargar los vehículos',
               description: error is Failure ? error.message : null,
@@ -432,7 +433,7 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
                     return const Padding(
                       padding:
                           EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: AppLoadingIndicator.fullScreen(),
                     );
                   }
                   return _VehiculoTile(vehiculo: state.items[index]);

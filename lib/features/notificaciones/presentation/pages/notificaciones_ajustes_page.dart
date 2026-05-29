@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
@@ -56,7 +57,7 @@ class _AjustesBody extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Notificaciones',
       body: asyncState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) => AppErrorState(
           title: 'No se pudieron cargar los ajustes',
           description: error is Failure ? error.message : null,

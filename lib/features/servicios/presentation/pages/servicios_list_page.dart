@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
@@ -151,7 +152,7 @@ class _ServiciosListPageBodyState
 
   Widget _buildBody(AsyncValue<ServiciosListState> asyncState) {
     return asyncState.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const AppLoadingIndicator.fullScreen(),
       error: (error, _) {
         final message = error is Failure
             ? error.message
@@ -183,7 +184,7 @@ class _ServiciosListPageBodyState
             if (index >= state.items.length) {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: Center(child: CircularProgressIndicator()),
+                child: AppLoadingIndicator.fullScreen(),
               );
             }
             final s = state.items[index];

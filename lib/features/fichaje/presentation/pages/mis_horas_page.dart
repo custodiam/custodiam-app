@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
@@ -46,7 +47,7 @@ class _MisHorasBody extends ConsumerWidget {
         ),
       ],
       body: asyncState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) => AppErrorState(
           title: 'No se pudieron cargar tus horas',
           description: error is Failure ? error.message : null,

@@ -16,6 +16,7 @@ import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
@@ -53,7 +54,7 @@ class _EditarMiPerfilPageBody extends ConsumerWidget {
       maxContentWidth: AppBreakpoints.formMaxWidth,
       title: 'Editar mis datos',
       body: asyncProfile.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) => AppErrorState(
           title: 'No se pudo cargar tu perfil',
           description: error is Failure ? error.message : null,

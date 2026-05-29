@@ -16,6 +16,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
@@ -58,7 +59,7 @@ class _MiPerfilPageBody extends ConsumerWidget {
         ),
       ],
       body: asyncProfile.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) {
           if (error is VoluntarioNotFound) {
             return AppEmptyState(

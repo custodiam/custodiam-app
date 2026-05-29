@@ -18,6 +18,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_date_range_picker.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
@@ -117,7 +118,7 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
           Expanded(
             child: asyncHistorial.when(
               loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+                  const AppLoadingIndicator.fullScreen(),
               error: (error, _) {
                 if (error is VoluntarioNotFound) {
                   return AppEmptyState(
@@ -237,7 +238,7 @@ class _ResumenCard extends StatelessWidget {
       child: asyncResumen.when(
         loading: () => const SizedBox(
           height: 80,
-          child: Center(child: CircularProgressIndicator()),
+          child: AppLoadingIndicator.fullScreen(),
         ),
         error: (_, _) => Container(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -357,7 +358,7 @@ class _ListaContent extends ConsumerWidget {
               if (index >= estado.eventos.length) {
                 return const Padding(
                   padding: EdgeInsets.all(AppSpacing.md),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: AppLoadingIndicator.fullScreen(),
                 );
               }
               return _EventoTile(evento: estado.eventos[index]);
