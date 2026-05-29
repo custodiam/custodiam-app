@@ -33,6 +33,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/disponibilidad/presentation/pages/mi_disponibilidad_page.dart';
@@ -58,6 +59,7 @@ import '../features/voluntarios/presentation/pages/mi_perfil_page.dart';
 import '../features/voluntarios/presentation/pages/voluntario_ficha_page.dart';
 import '../features/voluntarios/presentation/pages/voluntarios_list_page.dart';
 import '../core/ui/feedback/app_loading_indicator.dart';
+import '../core/ui/pages/app_coming_soon_page.dart';
 import '../infrastructure/auth/keycloak_web_auth_service.dart';
 import '../infrastructure/di/providers.dart';
 import 'widgets/app_shell.dart';
@@ -253,6 +255,48 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/ajustes/notificaciones',
                 name: 'ajustes-notificaciones',
                 builder: (_, _) => const NotificacionesAjustesPage(),
+              ),
+              // Capacidades transversales con permiso RBAC pero sin
+              // pantalla propia todavía. Viven en esta branch (la de
+              // accesos solo-drawer, junto a Ajustes y Notificaciones)
+              // para conservar shell, bottom bar y drawer sin añadir un
+              // 5º item a la barra inferior ni una branch nueva que
+              // desalinee los índices de `CustodiamBranchIndex`.
+              GoRoute(
+                path: '/administracion',
+                name: 'administracion',
+                builder: (_, _) => const AppComingSoonPage(
+                  title: 'Administración',
+                  phase: 'Fase 3',
+                  icon: Symbols.admin_panel_settings,
+                ),
+              ),
+              GoRoute(
+                path: '/exportar-rgpd',
+                name: 'exportar-rgpd',
+                builder: (_, _) => const AppComingSoonPage(
+                  title: 'Exportar datos (RGPD)',
+                  phase: 'Fase 3',
+                  icon: Symbols.privacy_tip,
+                ),
+              ),
+              GoRoute(
+                path: '/gestion-documental',
+                name: 'gestion-documental',
+                builder: (_, _) => const AppComingSoonPage(
+                  title: 'Gestión documental',
+                  phase: 'Fase 2',
+                  icon: Symbols.folder,
+                ),
+              ),
+              GoRoute(
+                path: '/gestion-economica',
+                name: 'gestion-economica',
+                builder: (_, _) => const AppComingSoonPage(
+                  title: 'Gestión económica',
+                  phase: 'Fase 2',
+                  icon: Symbols.payments,
+                ),
               ),
             ],
           ),
