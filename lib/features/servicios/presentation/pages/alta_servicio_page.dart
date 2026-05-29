@@ -337,18 +337,32 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
   }
 }
 
-class _TipoSelector extends StatelessWidget {
+class _TipoSelector extends ConsumerWidget {
   final TipoServicio selected;
   final ValueChanged<TipoServicio> onChanged;
 
   const _TipoSelector({required this.selected, required this.onChanged});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Auditoría RBAC (29-may, hallazgo A4): `secretario` entra al alta
+    // por tener `serviciosCrearPreventivo` (gate `anyOf` exterior) pero
+    // no tiene `serviciosCrearEmergencia` (Decisión 4 RBAC). El selector
+    // ofrecía los cuatro tipos y al pulsar "Crear emergencia" recibía
+    // un snackbar danger (defensa en profundidad correcta, ver
+    // _AltaServicioFormState._submit). Mejor UX: no surfacear la
+    // opción inválida en origen. El snackbar se conserva por si el
+    // JWT cambia mid-sesión.
+    final user = ref.watch(authServiceProvider).currentUser;
+    final canEmergencia =
+        user?.hasPermission(Permission.serviciosCrearEmergencia) ?? false;
+    final tipos = TipoServicio.values
+        .where((t) => t != TipoServicio.emergencia || canEmergencia)
+        .toList(growable: false);
     return Wrap(
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
-      children: TipoServicio.values.map((t) {
+      children: tipos.map((t) {
         return ChoiceChip(
           key: ValueKey('alta_servicio_tipo_${t.wire}'),
           label: Text(_label(t)),
