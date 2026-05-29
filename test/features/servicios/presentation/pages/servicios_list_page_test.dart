@@ -31,6 +31,7 @@ ServicioSummary _s(String id, String titulo,
     estado: estado,
     fechaInicio: DateTime.utc(2026, 6, 10, 8),
     ubicacion: 'Zuera',
+    inscritosCount: 0,
   );
 }
 

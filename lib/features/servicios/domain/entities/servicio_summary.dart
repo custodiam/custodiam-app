@@ -15,6 +15,10 @@ class ServicioSummary {
   final String ubicacion;
   final int? numeroVoluntarios;
 
+  /// Voluntarios actualmente inscritos (inscritos_count del backend,
+  /// no nullable, default 0). Permite reflejar el aforo en el listado.
+  final int inscritosCount;
+
   const ServicioSummary({
     required this.id,
     required this.titulo,
@@ -22,6 +26,7 @@ class ServicioSummary {
     required this.estado,
     required this.fechaInicio,
     required this.ubicacion,
+    required this.inscritosCount,
     this.fechaFin,
     this.numeroVoluntarios,
   });
@@ -37,7 +42,8 @@ class ServicioSummary {
         other.fechaInicio == fechaInicio &&
         other.fechaFin == fechaFin &&
         other.ubicacion == ubicacion &&
-        other.numeroVoluntarios == numeroVoluntarios;
+        other.numeroVoluntarios == numeroVoluntarios &&
+        other.inscritosCount == inscritosCount;
   }
 
   @override
@@ -50,5 +56,6 @@ class ServicioSummary {
         fechaFin,
         ubicacion,
         numeroVoluntarios,
+        inscritosCount,
       );
 }

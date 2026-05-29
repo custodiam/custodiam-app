@@ -56,6 +56,7 @@ void main() {
       estado: EstadoServicio.borrador,
       fechaInicio: DateTime.utc(2026, 6, 10),
       ubicacion: 'Zuera',
+      inscritosCount: 0,
     );
     when(() => repo.create(any())).thenAnswer((_) async => Success(created));
     final container = _container(repo);

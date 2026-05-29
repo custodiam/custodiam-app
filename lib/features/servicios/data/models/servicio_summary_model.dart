@@ -29,6 +29,7 @@ class ServicioSummaryModel {
           : null,
       ubicacion: json['ubicacion'] as String,
       numeroVoluntarios: json['numero_voluntarios'] as int?,
+      inscritosCount: json['inscritos_count'] as int,
     );
   }
 }

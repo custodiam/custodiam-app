@@ -22,6 +22,7 @@ ServicioSummary _s(String id, {String titulo = 'Servicio'}) {
     estado: EstadoServicio.publicado,
     fechaInicio: DateTime.utc(2026, 6, 10, 8),
     ubicacion: 'Zuera',
+    inscritosCount: 0,
   );
 }
 

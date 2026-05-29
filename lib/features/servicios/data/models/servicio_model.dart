@@ -30,6 +30,7 @@ class ServicioModel {
           : null,
       ubicacion: json['ubicacion'] as String,
       numeroVoluntarios: json['numero_voluntarios'] as int?,
+      inscritosCount: json['inscritos_count'] as int,
       notasMaterial: json['notas_material'] as String?,
       notasVehiculos: json['notas_vehiculos'] as String?,
       observacionesCierre: json['observaciones_cierre'] as String?,

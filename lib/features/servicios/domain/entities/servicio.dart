@@ -14,6 +14,11 @@ class Servicio {
   final DateTime? fechaFin;
   final String ubicacion;
   final int? numeroVoluntarios;
+
+  /// Número de voluntarios actualmente inscritos. Lo aporta el backend
+  /// (inscritos_count, no nullable, default 0) para que la UI pueda
+  /// bloquear "Apuntarme" cuando se alcanza el aforo.
+  final int inscritosCount;
   final String? notasMaterial;
   final String? notasVehiculos;
   final String? observacionesCierre;
@@ -29,6 +34,7 @@ class Servicio {
     required this.estado,
     required this.fechaInicio,
     required this.ubicacion,
+    required this.inscritosCount,
     this.descripcion,
     this.fechaFin,
     this.numeroVoluntarios,

@@ -21,6 +21,8 @@ class _MockRepo extends Mock implements ServiciosRepository {}
 Servicio _servicio({
   String id = 'id-1',
   EstadoServicio estado = EstadoServicio.publicado,
+  int? numeroVoluntarios,
+  int inscritosCount = 0,
 }) {
   return Servicio(
     id: id,
@@ -29,6 +31,8 @@ Servicio _servicio({
     estado: estado,
     fechaInicio: DateTime.utc(2026, 6, 10, 8),
     ubicacion: 'Zuera',
+    numeroVoluntarios: numeroVoluntarios,
+    inscritosCount: inscritosCount,
   );
 }
 
@@ -104,6 +108,24 @@ void main() {
     verify(() => repo.inscribirse('id-1')).called(1);
     final state = container.read(servicioFichaViewModelProvider('id-1'));
     expect(state, isA<AsyncData<Servicio>>());
+  });
+
+  test('apuntarse() no aplica gate de aforo: llama al repo aun lleno',
+      () async {
+    // La puerta de aforo es UI-only (R3). El VM debe invocar siempre al
+    // repo; el backend es la autoridad final sobre la capacidad.
+    final lleno = _servicio(numeroVoluntarios: 5, inscritosCount: 5);
+    when(() => repo.getById('id-1')).thenAnswer((_) async => Success(lleno));
+    when(() => repo.inscribirse('id-1'))
+        .thenAnswer((_) async => Success(lleno));
+    final container = _container(repo);
+    await container.read(servicioFichaViewModelProvider('id-1').future);
+
+    await container
+        .read(servicioFichaViewModelProvider('id-1').notifier)
+        .apuntarse();
+
+    verify(() => repo.inscribirse('id-1')).called(1);
   });
 
   test('publicar() surfaces TransicionInvalida as AsyncError', () async {
