@@ -9,6 +9,7 @@ import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -83,7 +84,7 @@ class _MisHorasContent extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
               color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Column(
               children: [

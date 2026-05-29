@@ -29,6 +29,7 @@ import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_breakpoints.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/di/providers.dart';
@@ -343,7 +344,7 @@ class _EstadoBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

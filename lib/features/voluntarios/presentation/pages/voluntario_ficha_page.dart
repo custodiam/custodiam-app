@@ -32,6 +32,7 @@ import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/di/providers.dart';
@@ -220,7 +221,7 @@ class _BajaSection extends ConsumerWidget {
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
               children: [

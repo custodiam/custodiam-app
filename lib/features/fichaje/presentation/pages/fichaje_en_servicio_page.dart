@@ -18,6 +18,7 @@ import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -140,7 +141,7 @@ class _MiFichajeContent extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

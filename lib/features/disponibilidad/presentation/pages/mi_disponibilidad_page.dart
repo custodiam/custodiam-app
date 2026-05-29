@@ -23,6 +23,7 @@ import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -328,12 +329,12 @@ class _CeldaDia extends StatelessWidget {
         child: Material(
           color: background,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             side: border?.top ?? BorderSide.none,
           ),
           child: InkWell(
             key: ValueKey('mi_disponibilidad_dia_$dia'),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             onTap: tappable ? () => onTap(fecha) : null,
             child: Center(
               child: Text(
