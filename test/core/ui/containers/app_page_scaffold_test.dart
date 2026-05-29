@@ -1,6 +1,7 @@
 import 'package:custodiam/core/ui/containers/app_page_scaffold.dart';
 import 'package:custodiam/core/ui/tokens/app_breakpoints.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../test_utils/test_app.dart';
@@ -31,7 +32,7 @@ void main() {
             IconButton(
               tooltip: 'Buscar',
               onPressed: () {},
-              icon: const Icon(Icons.search),
+              icon: const Icon(Symbols.search),
             ),
           ],
           body: const Text('contenido'),
@@ -39,7 +40,7 @@ void main() {
       );
 
       expect(find.text('Voluntarios'), findsOneWidget);
-      expect(find.byIcon(Icons.search), findsOneWidget);
+      expect(find.byIcon(Symbols.search), findsOneWidget);
       expect(find.byType(AppBar), findsOneWidget);
     });
 
@@ -73,7 +74,7 @@ void main() {
           bottomNavigationBar: const BottomAppBar(child: SizedBox(height: 48)),
           floatingActionButton: FloatingActionButton(
             onPressed: () {},
-            child: const Icon(Icons.add),
+            child: const Icon(Symbols.add),
           ),
         ),
       );

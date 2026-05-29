@@ -2,6 +2,7 @@
 // incidencia" (US-05-08/09 para vehículos).
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
@@ -116,7 +117,7 @@ class _LoadedVehiculo extends ConsumerWidget {
         AppIconButton(
           key: const ValueKey('vehiculo_ficha_refresh'),
           tooltip: 'Recargar',
-          icon: Icons.refresh,
+          icon: Symbols.refresh,
           onPressed: () => ref
               .read(vehiculoFichaViewModelProvider(vehiculo.id).notifier)
               .refresh(),
@@ -128,38 +129,38 @@ class _LoadedVehiculo extends ConsumerWidget {
           _EstadoBadge(estado: vehiculo.estado),
           const SizedBox(height: AppSpacing.md),
           _InfoRow(
-            icon: Icons.commute_outlined,
+            icon: Symbols.commute,
             label: 'Tipo',
             value: _tipoLabel(vehiculo.tipo),
           ),
           if (vehiculo.marcaModelo != null)
             _InfoRow(
-              icon: Icons.directions_car_outlined,
+              icon: Symbols.directions_car,
               label: 'Marca y modelo',
               value: vehiculo.marcaModelo!,
             ),
           if (vehiculo.fechaItv != null)
             _InfoRow(
-              icon: Icons.event_outlined,
+              icon: Symbols.event,
               label: 'Próxima ITV',
               value: _formatDate(vehiculo.fechaItv!),
             ),
           _InfoRow(
-            icon: Icons.location_on_outlined,
+            icon: Symbols.location_on,
             label: 'Ubicación',
             value: vehiculo.ubicacionBase,
           ),
           if (vehiculo.observaciones != null &&
               vehiculo.observaciones!.isNotEmpty)
             _InfoRow(
-              icon: Icons.notes_outlined,
+              icon: Symbols.notes,
               label: 'Observaciones',
               value: vehiculo.observaciones!,
             ),
           if (vehiculo.observacionesIncidencia != null &&
               vehiculo.observacionesIncidencia!.isNotEmpty)
             _InfoRow(
-              icon: Icons.warning_amber_outlined,
+              icon: Symbols.warning_amber,
               label: 'Incidencia registrada',
               value: vehiculo.observacionesIncidencia!,
             ),
@@ -174,7 +175,7 @@ class _LoadedVehiculo extends ConsumerWidget {
                   AppDestructiveButton(
                     key: const ValueKey('vehiculo_ficha_averia'),
                     label: 'Reportar avería',
-                    icon: Icons.build_outlined,
+                    icon: Symbols.build,
                     expanded: true,
                     onPressed: () => _abrirIncidencia(
                       context,
@@ -187,7 +188,7 @@ class _LoadedVehiculo extends ConsumerWidget {
                   AppDestructiveButton(
                     key: const ValueKey('vehiculo_ficha_perdida'),
                     label: 'Reportar pérdida',
-                    icon: Icons.report_outlined,
+                    icon: Symbols.report,
                     expanded: true,
                     onPressed: () => _abrirIncidencia(
                       context,
@@ -218,7 +219,7 @@ class _LoadedVehiculo extends ConsumerWidget {
         key: const ValueKey('vehiculo_incidencia_descripcion'),
         label: 'Descripción de la incidencia',
         controller: descripcionCtrl,
-        prefixIcon: Icons.notes_outlined,
+        prefixIcon: Symbols.notes,
         maxLines: 4,
       ),
       actions: [
@@ -307,25 +308,25 @@ class _EstadoBadge extends StatelessWidget {
       EstadoInventario.operativo => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
-          Icons.check_circle_outline,
+          Symbols.check_circle,
           'Operativo',
         ),
       EstadoInventario.averiado => (
           theme.colorScheme.errorContainer,
           theme.colorScheme.onErrorContainer,
-          Icons.build_outlined,
+          Symbols.build,
           'Averiado',
         ),
       EstadoInventario.perdido => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
-          Icons.report_outlined,
+          Symbols.report,
           'Perdido',
         ),
       EstadoInventario.enUso => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
-          Icons.handyman_outlined,
+          Symbols.handyman,
           'En uso',
         ),
     };
@@ -360,7 +361,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar el inventario.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

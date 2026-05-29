@@ -3,6 +3,7 @@
 // y comparte el patrón de búsqueda + filtros + scroll paginado.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -55,9 +56,9 @@ class _InventarioListBody extends ConsumerWidget {
           ],
           bottom: const TabBar(
             tabs: [
-              Tab(icon: Icon(Icons.inventory_2_outlined), text: 'Material'),
+              Tab(icon: Icon(Symbols.inventory_2), text: 'Material'),
               Tab(
-                icon: Icon(Icons.directions_car_outlined),
+                icon: Icon(Symbols.directions_car),
                 text: 'Vehículos',
               ),
             ],
@@ -89,7 +90,7 @@ class _AltaMenuButton extends ConsumerWidget {
       child: PopupMenuButton<String>(
         key: const ValueKey('inventario_alta_menu'),
         tooltip: 'Registrar nuevo',
-        icon: const Icon(Icons.add),
+        icon: const Icon(Symbols.add),
         onSelected: (target) => context.go('/inventario/$target'),
         // La auditoría RBAC (29-may, hallazgo A2) detectó que el gate
         // exterior `anyOf` oculta el icono cuando faltan ambos permisos,
@@ -113,7 +114,7 @@ class _AltaMenuButton extends ConsumerWidget {
               const PopupMenuItem<String>(
                 value: 'material/alta',
                 child: ListTile(
-                  leading: Icon(Icons.inventory_2_outlined),
+                  leading: Icon(Symbols.inventory_2),
                   title: Text('Nuevo material'),
                 ),
               ),
@@ -121,7 +122,7 @@ class _AltaMenuButton extends ConsumerWidget {
               const PopupMenuItem<String>(
                 value: 'vehiculos/alta',
                 child: ListTile(
-                  leading: Icon(Icons.directions_car_outlined),
+                  leading: Icon(Symbols.directions_car),
                   title: Text('Nuevo vehículo'),
                 ),
               ),
@@ -197,7 +198,7 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
             key: const ValueKey('inventario_material_search'),
             label: 'Buscar por nombre o código',
             controller: _searchController,
-            prefixIcon: Icons.search,
+            prefixIcon: Symbols.search,
             textInputAction: TextInputAction.search,
             onEditingComplete: () => ref
                 .read(materialesListViewModelProvider.notifier)
@@ -273,7 +274,7 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
                 return const AppEmptyState(
                   title: 'Sin material',
                   description: 'No hay resultados para los filtros aplicados.',
-                  icon: Icons.inventory_2_outlined,
+                  icon: Symbols.inventory_2,
                 );
               }
               return ListView.separated(
@@ -316,7 +317,7 @@ class _MaterialTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       key: ValueKey('inventario_material_item_${material.id}'),
-      leading: const CircleAvatar(child: Icon(Icons.inventory_2_outlined)),
+      leading: const CircleAvatar(child: Icon(Symbols.inventory_2)),
       title: Text(material.nombre),
       subtitle: Text(
         '${_tipoLabel(material.tipo)} · ${material.ubicacionBase}'
@@ -394,7 +395,7 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
             key: const ValueKey('inventario_vehiculo_search'),
             label: 'Buscar por código o matrícula',
             controller: _searchController,
-            prefixIcon: Icons.search,
+            prefixIcon: Symbols.search,
             textInputAction: TextInputAction.search,
             onEditingComplete: () => ref
                 .read(vehiculosListViewModelProvider.notifier)
@@ -419,7 +420,7 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
                   title: 'Sin vehículos',
                   description:
                       'No hay vehículos registrados con esos filtros.',
-                  icon: Icons.directions_car_outlined,
+                  icon: Symbols.directions_car,
                 );
               }
               return ListView.separated(
@@ -463,7 +464,7 @@ class _VehiculoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       key: ValueKey('inventario_vehiculo_item_${vehiculo.id}'),
-      leading: const CircleAvatar(child: Icon(Icons.directions_car_outlined)),
+      leading: const CircleAvatar(child: Icon(Symbols.directions_car)),
       title: Text('${vehiculo.codigoInterno} · ${vehiculo.matricula}'),
       subtitle: Text('${_tipoLabel(vehiculo.tipo)} · ${vehiculo.ubicacionBase}'),
       trailing: _EstadoBadge(estado: vehiculo.estado),
@@ -507,25 +508,25 @@ class _EstadoBadge extends StatelessWidget {
       EstadoInventario.operativo => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
-          Icons.check_circle_outline,
+          Symbols.check_circle,
           'Operativo',
         ),
       EstadoInventario.averiado => (
           theme.colorScheme.errorContainer,
           theme.colorScheme.onErrorContainer,
-          Icons.build_outlined,
+          Symbols.build,
           'Averiado',
         ),
       EstadoInventario.perdido => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
-          Icons.report_outlined,
+          Symbols.report,
           'Perdido',
         ),
       EstadoInventario.enUso => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
-          Icons.handyman_outlined,
+          Symbols.handyman,
           'En uso',
         ),
     };
@@ -560,7 +561,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar el inventario.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

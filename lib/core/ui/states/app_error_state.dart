@@ -2,7 +2,7 @@
 // optional retry CTA wired to AppPrimaryButton. See guide 27 §5.9.
 
 import 'package:flutter/material.dart';
-
+import 'package:material_symbols_icons/symbols.dart';
 import '../buttons/app_primary_button.dart';
 import '../tokens/app_spacing.dart';
 
@@ -17,7 +17,7 @@ class AppErrorState extends StatelessWidget {
     super.key,
     this.title = 'Algo ha ido mal',
     this.description,
-    this.icon = Icons.error_outline,
+    this.icon = Symbols.error,
     this.onRetry,
     this.retryLabel = 'Reintentar',
   });
@@ -51,7 +51,7 @@ class AppErrorState extends StatelessWidget {
               AppPrimaryButton(
                 label: retryLabel,
                 onPressed: onRetry,
-                icon: Icons.refresh,
+                icon: Symbols.refresh,
               ),
             ],
           ],

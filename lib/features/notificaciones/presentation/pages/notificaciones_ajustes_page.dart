@@ -7,6 +7,7 @@
 // v0.1.0 (incluido el voluntario en prácticas).
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
@@ -102,7 +103,7 @@ class _AjustesContent extends ConsumerWidget {
           value: true,
           onChanged: null,
           secondary: Icon(
-            Icons.warning_amber_rounded,
+            Symbols.warning_amber,
             color: theme.colorScheme.error,
           ),
         ),
@@ -118,7 +119,7 @@ class _AjustesContent extends ConsumerWidget {
           onChanged: (v) => ref
               .read(notificacionesAjustesViewModelProvider.notifier)
               .setNuevosServicios(v),
-          secondary: const Icon(Icons.event_available_outlined),
+          secondary: const Icon(Symbols.event_available),
         ),
         const Divider(height: 1),
         SwitchListTile(
@@ -132,7 +133,7 @@ class _AjustesContent extends ConsumerWidget {
           onChanged: (v) => ref
               .read(notificacionesAjustesViewModelProvider.notifier)
               .setRecordatorios(v),
-          secondary: const Icon(Icons.alarm_outlined),
+          secondary: const Icon(Symbols.alarm),
         ),
       ],
     );
@@ -149,7 +150,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite configurar las notificaciones.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

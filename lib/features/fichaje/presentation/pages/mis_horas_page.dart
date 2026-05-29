@@ -2,6 +2,7 @@
 // de fichajes cerrados y abiertos. Accesible desde /mi-perfil/horas.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
@@ -43,7 +44,7 @@ class _MisHorasBody extends ConsumerWidget {
         AppIconButton(
           key: const ValueKey('mis_horas_refresh'),
           tooltip: 'Recargar',
-          icon: Icons.refresh,
+          icon: Symbols.refresh,
           onPressed: () =>
               ref.read(misHorasViewModelProvider.notifier).refresh(),
         ),
@@ -108,17 +109,17 @@ class _MisHorasContent extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
           _MetricRow(
-            icon: Icons.check_circle_outline,
+            icon: Symbols.check_circle,
             label: 'Fichajes cerrados',
             value: horas.fichajesCerrados.toString(),
           ),
           _MetricRow(
-            icon: Icons.timer_outlined,
+            icon: Symbols.timer,
             label: 'Fichajes abiertos',
             value: horas.fichajesAbiertos.toString(),
           ),
           _MetricRow(
-            icon: Icons.functions_outlined,
+            icon: Symbols.functions,
             label: 'Horas (decimal)',
             value: horas.totalHoras.toStringAsFixed(2),
           ),
@@ -171,7 +172,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar tus horas.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

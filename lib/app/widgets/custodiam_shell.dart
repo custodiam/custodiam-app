@@ -19,10 +19,9 @@
 // "primary destination" behaviour de Gmail / Calendar / Drive.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-
 import '../../core/ui/auth/app_permission_gate.dart';
 import '../../core/ui/feedback/app_confirm_dialog.dart';
 import '../../core/ui/navigation/app_bottom_nav_bar.dart';
@@ -119,7 +118,7 @@ class _CustodiamBottomBar extends ConsumerWidget {
           builder: (innerContext) => AppNavBarIconButton(
             key: K.shellDrawerButton,
             tooltip: 'Menú',
-            icon: Icons.menu,
+            icon: Symbols.menu,
             onPressed: () => Scaffold.of(innerContext).openDrawer(),
           ),
         ),
@@ -127,8 +126,8 @@ class _CustodiamBottomBar extends ConsumerWidget {
         AppNavBarIconButton(
           key: K.shellHomeButton,
           tooltip: 'Inicio',
-          icon: Icons.home_outlined,
-          iconSelected: Icons.home,
+          icon: Symbols.home,
+          iconSelected: Symbols.home,
           isSelected: currentIndex == CustodiamBranchIndex.home,
           onPressed: () => _goBranch(CustodiamBranchIndex.home),
         ),
@@ -138,8 +137,8 @@ class _CustodiamBottomBar extends ConsumerWidget {
           child: AppNavBarIconButton(
             key: K.shellServiciosButton,
             tooltip: 'Servicios',
-            icon: MdiIcons.alarmLightOutline,
-            iconSelected: MdiIcons.alarmLight,
+            icon: Symbols.emergency,
+            iconSelected: Symbols.emergency,
             isSelected: currentIndex == CustodiamBranchIndex.servicios,
             onPressed: () => _goBranch(CustodiamBranchIndex.servicios),
           ),
@@ -150,8 +149,8 @@ class _CustodiamBottomBar extends ConsumerWidget {
           child: AppNavBarIconButton(
             key: K.shellInventarioButton,
             tooltip: 'Inventario',
-            icon: MdiIcons.toolboxOutline,
-            iconSelected: MdiIcons.toolbox,
+            icon: Symbols.inventory_2,
+            iconSelected: Symbols.inventory_2,
             isSelected: currentIndex == CustodiamBranchIndex.inventario,
             onPressed: () => _goBranch(CustodiamBranchIndex.inventario),
           ),
@@ -203,7 +202,7 @@ class _AvatarButton extends StatelessWidget {
             foregroundColor: AppColors.brand,
             child: initial != null
                 ? Text(initial)
-                : const Icon(Icons.person, color: AppColors.brand),
+                : const Icon(Symbols.person, color: AppColors.brand),
           ),
         ),
       ),
@@ -234,7 +233,7 @@ class _CustodiamDrawer extends ConsumerWidget {
       destinations: [
         _DrawerTile(
           tileKey: K.drawerHomeTile,
-          icon: Icons.home_outlined,
+          icon: Symbols.home,
           label: 'Inicio',
           onTap: () => _goAndCloseDrawer(context, '/home'),
         ),
@@ -242,7 +241,7 @@ class _CustodiamDrawer extends ConsumerWidget {
           permission: Permission.voluntariosListar,
           child: _DrawerTile(
             tileKey: K.drawerVoluntariosTile,
-            icon: Icons.people_outline,
+            icon: Symbols.people,
             label: 'Voluntarios',
             onTap: () => _goAndCloseDrawer(context, '/voluntarios'),
           ),
@@ -251,7 +250,7 @@ class _CustodiamDrawer extends ConsumerWidget {
           permission: Permission.voluntariosVerPropio,
           child: _DrawerTile(
             tileKey: K.drawerMiPerfilTile,
-            icon: Icons.person_outline,
+            icon: Symbols.person,
             label: 'Mi perfil',
             onTap: () => _goAndCloseDrawer(context, '/mi-perfil'),
           ),
@@ -260,7 +259,7 @@ class _CustodiamDrawer extends ConsumerWidget {
           permission: Permission.serviciosVerPublicados,
           child: _DrawerTile(
             tileKey: K.drawerServiciosTile,
-            icon: MdiIcons.alarmLightOutline,
+            icon: Symbols.emergency,
             label: 'Servicios',
             onTap: () => _goAndCloseDrawer(context, '/servicios'),
           ),
@@ -269,7 +268,7 @@ class _CustodiamDrawer extends ConsumerWidget {
           permission: Permission.inventarioVer,
           child: _DrawerTile(
             tileKey: K.drawerInventarioTile,
-            icon: MdiIcons.toolboxOutline,
+            icon: Symbols.inventory_2,
             label: 'Inventario',
             onTap: () => _goAndCloseDrawer(context, '/inventario'),
           ),
@@ -278,7 +277,7 @@ class _CustodiamDrawer extends ConsumerWidget {
           permission: Permission.notificacionesConfigurarPropias,
           child: _DrawerTile(
             tileKey: K.drawerNotificacionesTile,
-            icon: Icons.notifications_outlined,
+            icon: Symbols.notifications,
             label: 'Notificaciones',
             onTap: () =>
                 _goAndCloseDrawer(context, '/ajustes/notificaciones'),
@@ -290,14 +289,14 @@ class _CustodiamDrawer extends ConsumerWidget {
         // auditorías futuras no la marquen como falso positivo.
         _DrawerTile(
           tileKey: K.drawerSettingsTile,
-          icon: Icons.settings_outlined,
+          icon: Symbols.settings,
           label: 'Ajustes',
           onTap: () => _goAndCloseDrawer(context, '/settings'),
         ),
       ],
       footer: _DrawerTile(
         tileKey: K.drawerLogoutTile,
-        icon: Icons.logout,
+        icon: Symbols.logout,
         label: 'Cerrar sesión',
         trailing: authState.isLoading
             ? const SizedBox(

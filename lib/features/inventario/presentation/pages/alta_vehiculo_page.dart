@@ -1,6 +1,7 @@
 // AltaVehiculoPage (US-05-02).
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -174,7 +175,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
               label: 'Código interno',
               controller: _codigoCtrl,
               autofocus: true,
-              prefixIcon: Icons.qr_code_2,
+              prefixIcon: Symbols.qr_code_2,
               validator: (v) => _validateRequired(v, 'Código'),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -182,7 +183,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
               key: const ValueKey('alta_vehiculo_matricula'),
               label: 'Matrícula',
               controller: _matriculaCtrl,
-              prefixIcon: Icons.directions_car_outlined,
+              prefixIcon: Symbols.directions_car,
               validator: (v) => _validateRequired(v, 'Matrícula'),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -190,7 +191,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
               key: const ValueKey('alta_vehiculo_ubicacion'),
               label: 'Ubicación base',
               controller: _ubicacionCtrl,
-              prefixIcon: Icons.location_on_outlined,
+              prefixIcon: Symbols.location_on,
               validator: (v) => _validateRequired(v, 'Ubicación'),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -203,7 +204,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
               key: const ValueKey('alta_vehiculo_marca_modelo'),
               label: 'Marca y modelo',
               controller: _marcaModeloCtrl,
-              prefixIcon: Icons.commute_outlined,
+              prefixIcon: Symbols.commute,
             ),
             const SizedBox(height: AppSpacing.md),
             // Guía 28 §WCAG 4.1.2: rol real = botón que abre date
@@ -219,7 +220,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
                   child: AppTextField(
                     label: 'Próxima ITV',
                     controller: _itvCtrl,
-                    prefixIcon: Icons.event_outlined,
+                    prefixIcon: Symbols.event,
                   ),
                 ),
               ),
@@ -229,14 +230,14 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
               key: const ValueKey('alta_vehiculo_observaciones'),
               label: 'Observaciones',
               controller: _observacionesCtrl,
-              prefixIcon: Icons.notes_outlined,
+              prefixIcon: Symbols.notes,
               maxLines: 3,
             ),
             const SizedBox(height: AppSpacing.xl),
             AppPrimaryButton(
               key: const ValueKey('alta_vehiculo_submit'),
               label: 'Registrar vehículo',
-              icon: Icons.directions_car_filled_outlined,
+              icon: Symbols.directions_car_filled,
               expanded: true,
               isLoading: asyncSubmit.isLoading,
               onPressed: asyncSubmit.isLoading ? null : _onSubmit,
@@ -267,7 +268,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite registrar vehículos.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

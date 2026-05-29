@@ -12,6 +12,7 @@
 // llegar a tocar la red.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -90,7 +91,7 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
         AppIconButton(
           key: const ValueKey('mi_historial_filtro_fechas'),
           tooltip: 'Filtrar por fechas',
-          icon: Icons.date_range,
+          icon: Symbols.date_range,
           onPressed: estadoActual == null
               ? null
               : () => _abrirDateRangePicker(context, estadoActual),
@@ -98,7 +99,7 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
         AppIconButton(
           key: const ValueKey('mi_historial_refresh'),
           tooltip: 'Recargar',
-          icon: Icons.refresh,
+          icon: Symbols.refresh,
           onPressed: () {
             ref.read(miHistorialViewModelProvider.notifier).refresh();
             ref.read(miResumenViewModelProvider.notifier).refresh();
@@ -126,7 +127,7 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
                   return AppEmptyState(
                     title: 'Sin perfil',
                     description: error.message,
-                    icon: Icons.person_outline,
+                    icon: Symbols.person,
                   );
                 }
                 final message = error is Failure
@@ -214,11 +215,11 @@ class _RangoActivoChip extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: InputChip(
           key: const ValueKey('mi_historial_chip_rango_activo'),
-          avatar: Icon(Icons.date_range,
+          avatar: Icon(Symbols.date_range,
               size: 18, color: theme.colorScheme.onSecondaryContainer),
           label: Text(label),
           backgroundColor: theme.colorScheme.secondaryContainer,
-          deleteIcon: const Icon(Icons.close, size: 18),
+          deleteIcon: const Icon(Symbols.close, size: 18),
           deleteButtonTooltipMessage: 'Quitar filtro de fechas',
           onDeleted: onLimpiar,
         ),
@@ -340,7 +341,7 @@ class _ListaContent extends ConsumerWidget {
       return const AppEmptyState(
         title: 'Sin actividad registrada',
         description: 'Aún no has generado eventos en tu historial.',
-        icon: Icons.history,
+        icon: Symbols.history,
       );
     }
 
@@ -450,7 +451,7 @@ class _EventoTile extends StatelessWidget {
       trailing: evento.actorKeycloakId != null
           ? Tooltip(
               message: 'Actor: ${evento.actorKeycloakId}',
-              child: const Icon(Icons.person_outline, size: 18),
+              child: const Icon(Symbols.person, size: 18),
             )
           : null,
     );
@@ -459,27 +460,27 @@ class _EventoTile extends StatelessWidget {
   IconData _iconoDe(TipoEventoVoluntario tipo) {
     switch (tipo) {
       case TipoEventoVoluntario.alta:
-        return Icons.person_add_alt;
+        return Symbols.person_add_alt;
       case TipoEventoVoluntario.baja:
-        return Icons.person_off_outlined;
+        return Symbols.person_off;
       case TipoEventoVoluntario.anonimizacion:
-        return Icons.privacy_tip_outlined;
+        return Symbols.privacy_tip;
       case TipoEventoVoluntario.cambioRolAsignado:
-        return Icons.badge_outlined;
+        return Symbols.badge;
       case TipoEventoVoluntario.cambioRolRevocado:
-        return Icons.no_accounts_outlined;
+        return Symbols.no_accounts;
       case TipoEventoVoluntario.fichajeEntrada:
-        return Icons.login;
+        return Symbols.login;
       case TipoEventoVoluntario.fichajeSalida:
-        return Icons.logout;
+        return Symbols.logout;
       case TipoEventoVoluntario.inscripcionServicio:
-        return Icons.event_available_outlined;
+        return Symbols.event_available;
       case TipoEventoVoluntario.bajaInscripcion:
-        return Icons.event_busy_outlined;
+        return Symbols.event_busy;
       case TipoEventoVoluntario.asignacionMaterial:
-        return Icons.inventory_2_outlined;
+        return Symbols.inventory_2;
       case TipoEventoVoluntario.devolucionMaterial:
-        return Icons.assignment_return_outlined;
+        return Symbols.assignment_return;
     }
   }
 }
@@ -494,7 +495,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar el historial propio.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

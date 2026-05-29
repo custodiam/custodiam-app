@@ -1,5 +1,6 @@
 import 'package:custodiam/core/ui/buttons/app_primary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../test_utils/test_app.dart';
@@ -55,11 +56,11 @@ void main() {
         AppPrimaryButton(
           label: 'Guardar',
           onPressed: () {},
-          icon: Icons.save,
+          icon: Symbols.save,
         ),
       );
 
-      expect(find.byIcon(Icons.save), findsOneWidget);
+      expect(find.byIcon(Symbols.save), findsOneWidget);
     });
 
     testWidgets('expanded variant stretches to parent width', (tester) async {

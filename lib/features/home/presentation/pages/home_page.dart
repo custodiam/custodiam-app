@@ -15,10 +15,9 @@
 // definido — se aborda como User Story propia, no aquí.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-
 import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/cards/app_quick_action_card.dart';
@@ -46,7 +45,7 @@ class HomePage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
               const SizedBox(height: AppSpacing.md),
-              const Icon(Icons.shield, size: 64),
+              const Icon(Symbols.shield, size: 64),
               const SizedBox(height: AppSpacing.md),
               Text(
                 'Custodiam',
@@ -87,7 +86,7 @@ class HomePage extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: AppQuickActionCard(
                     key: K.homeQuickActionEmergencia,
-                    icon: MdiIcons.alarmLight,
+                    icon: Symbols.emergency,
                     title: 'Crear emergencia',
                     subtitle:
                         'Genera un servicio de emergencia y convoca al equipo.',
@@ -100,7 +99,7 @@ class HomePage extends ConsumerWidget {
                 permission: Permission.voluntariosDisponibilidadPropia,
                 child: AppQuickActionCard(
                   key: K.homeQuickActionDisponibilidad,
-                  icon: Icons.event_available_outlined,
+                  icon: Symbols.event_available,
                   title: 'Editar mi disponibilidad',
                   subtitle: 'Marca las fechas en las que estás disponible.',
                   onTap: () => context.go('/mi-perfil/disponibilidad'),
@@ -111,7 +110,7 @@ class HomePage extends ConsumerWidget {
                 permission: Permission.serviciosVerPublicados,
                 child: AppQuickActionCard(
                   key: K.homeQuickActionServicios,
-                  icon: MdiIcons.alarmLightOutline,
+                  icon: Symbols.emergency,
                   title: 'Ver próximos servicios',
                   subtitle: 'Servicios publicados a los que puedes apuntarte.',
                   onTap: () => context.go('/servicios'),
@@ -141,7 +140,7 @@ class _ComandoOperativoBanner extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.notifications_active_outlined,
+            Symbols.notifications_active,
             color: scheme.onPrimaryContainer,
           ),
           const SizedBox(width: AppSpacing.smMd),

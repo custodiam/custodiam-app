@@ -9,6 +9,7 @@
 //   el cliente reúna el catálogo paginado en un selector.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -126,7 +127,7 @@ class _LoadedFicha extends ConsumerWidget {
         AppIconButton(
           key: const ValueKey('servicio_ficha_refresh'),
           tooltip: 'Recargar',
-          icon: Icons.refresh,
+          icon: Symbols.refresh,
           onPressed: () => ref
               .read(servicioFichaViewModelProvider(servicio.id).notifier)
               .refresh(),
@@ -150,51 +151,51 @@ class _LoadedFicha extends ConsumerWidget {
           ],
           const Divider(height: 1),
           _InfoRow(
-            icon: Icons.location_on_outlined,
+            icon: Symbols.location_on,
             label: 'Ubicación',
             value: servicio.ubicacion,
           ),
           _InfoRow(
-            icon: Icons.calendar_today_outlined,
+            icon: Symbols.calendar_today,
             label: 'Inicio',
             value: _formatDateTime(servicio.fechaInicio),
           ),
           if (servicio.fechaFin != null)
             _InfoRow(
-              icon: Icons.event_outlined,
+              icon: Symbols.event,
               label: 'Fin previsto',
               value: _formatDateTime(servicio.fechaFin!),
             ),
           if (servicio.numeroVoluntarios != null)
             _InfoRow(
-              icon: Icons.groups_outlined,
+              icon: Symbols.groups,
               label: 'Voluntarios necesarios',
               value: servicio.numeroVoluntarios!.toString(),
             ),
           if (servicio.notasMaterial != null &&
               servicio.notasMaterial!.isNotEmpty)
             _InfoRow(
-              icon: Icons.inventory_2_outlined,
+              icon: Symbols.inventory_2,
               label: 'Material',
               value: servicio.notasMaterial!,
             ),
           if (servicio.notasVehiculos != null &&
               servicio.notasVehiculos!.isNotEmpty)
             _InfoRow(
-              icon: Icons.directions_car_outlined,
+              icon: Symbols.directions_car,
               label: 'Vehículos',
               value: servicio.notasVehiculos!,
             ),
           if (servicio.fechaCierre != null)
             _InfoRow(
-              icon: Icons.lock_clock_outlined,
+              icon: Symbols.lock_clock,
               label: 'Cerrado el',
               value: _formatDateTime(servicio.fechaCierre!),
             ),
           if (servicio.observacionesCierre != null &&
               servicio.observacionesCierre!.isNotEmpty)
             _InfoRow(
-              icon: Icons.notes_outlined,
+              icon: Symbols.notes,
               label: 'Observaciones',
               value: servicio.observacionesCierre!,
             ),
@@ -289,7 +290,7 @@ class _SelfServiceActions extends ConsumerWidget {
               child: AppPrimaryButton(
                 key: const ValueKey('servicio_ficha_apuntarse_button'),
                 label: 'Apuntarme',
-                icon: Icons.check_circle_outline,
+                icon: Symbols.check_circle,
                 expanded: true,
                 isLoading: loading,
                 onPressed: loading
@@ -309,7 +310,7 @@ class _SelfServiceActions extends ConsumerWidget {
               child: AppSecondaryButton(
                 key: const ValueKey('servicio_ficha_desapuntarse_button'),
                 label: 'Darme de baja',
-                icon: Icons.cancel_outlined,
+                icon: Symbols.cancel,
                 expanded: true,
                 onPressed: loading
                     ? null
@@ -358,7 +359,7 @@ class _AdminActions extends ConsumerWidget {
           child: AppPrimaryButton(
             key: const ValueKey('servicio_ficha_publicar_button'),
             label: 'Publicar servicio',
-            icon: Icons.public,
+            icon: Symbols.public,
             expanded: true,
             isLoading: loading,
             onPressed: loading
@@ -381,7 +382,7 @@ class _AdminActions extends ConsumerWidget {
           child: AppSecondaryButton(
             key: const ValueKey('servicio_ficha_convocar_button'),
             label: 'Convocar voluntarios disponibles',
-            icon: Icons.campaign_outlined,
+            icon: Symbols.campaign,
             expanded: true,
             onPressed: loading
                 ? null
@@ -413,7 +414,7 @@ class _AdminActions extends ConsumerWidget {
           child: AppDestructiveButton(
             key: const ValueKey('servicio_ficha_cerrar_button'),
             label: 'Cerrar servicio',
-            icon: Icons.lock_outline,
+            icon: Symbols.lock,
             expanded: true,
             onPressed: loading
                 ? null
@@ -505,7 +506,7 @@ class _FichajeShortcut extends ConsumerWidget {
             label: puedeFichar
                 ? 'Fichar entrada / salida'
                 : 'Ver voluntarios fichados',
-            icon: puedeFichar ? Icons.fingerprint : Icons.list_alt_outlined,
+            icon: puedeFichar ? Symbols.fingerprint : Symbols.list_alt,
             expanded: true,
             onPressed: () =>
                 context.go('/servicios/${servicio.id}/fichaje'),
@@ -528,25 +529,25 @@ class _EstadoBadge extends StatelessWidget {
       EstadoServicio.borrador => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
-          Icons.edit_note_outlined,
+          Symbols.edit_note,
           'Borrador',
         ),
       EstadoServicio.publicado => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
-          Icons.campaign_outlined,
+          Symbols.campaign,
           'Publicado',
         ),
       EstadoServicio.activo => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
-          Icons.play_circle_outline,
+          Symbols.play_circle,
           'Activo',
         ),
       EstadoServicio.cerrado => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
-          Icons.lock_outline,
+          Symbols.lock,
           'Cerrado',
         ),
     };
@@ -583,25 +584,25 @@ class _TipoBadge extends StatelessWidget {
       TipoServicio.emergencia => (
           theme.colorScheme.errorContainer,
           theme.colorScheme.onErrorContainer,
-          Icons.warning_amber_outlined,
+          Symbols.warning_amber,
           'Emergencia',
         ),
       TipoServicio.preventivo => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
-          Icons.shield_outlined,
+          Symbols.shield,
           'Preventivo',
         ),
       TipoServicio.formacion => (
           theme.colorScheme.secondaryContainer,
           theme.colorScheme.onSecondaryContainer,
-          Icons.school_outlined,
+          Symbols.school,
           'Formación',
         ),
       TipoServicio.otro => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
-          Icons.event_outlined,
+          Symbols.event,
           'Otro',
         ),
     };
@@ -636,7 +637,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar este servicio.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

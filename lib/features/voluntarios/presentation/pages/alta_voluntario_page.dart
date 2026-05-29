@@ -9,6 +9,7 @@
 //     dedicated endpoints in later iterations).
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -186,7 +187,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               label: 'Nombre completo',
               controller: _nombreCtrl,
               autofocus: true,
-              prefixIcon: Icons.person_outline,
+              prefixIcon: Symbols.person,
               validator: (v) => _validateRequired(v, 'Nombre'),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -195,7 +196,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               label: 'Teléfono',
               controller: _telefonoCtrl,
               keyboardType: TextInputType.phone,
-              prefixIcon: Icons.phone_outlined,
+              prefixIcon: Symbols.phone,
               validator: (v) => _validateRequired(v, 'Teléfono'),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -203,7 +204,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               key: const ValueKey('alta_municipio'),
               label: 'Municipio',
               controller: _municipioCtrl,
-              prefixIcon: Icons.location_city_outlined,
+              prefixIcon: Symbols.location_city,
               validator: (v) => _validateRequired(v, 'Municipio'),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -220,7 +221,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
                   child: AppTextField(
                     label: 'Fecha de nacimiento',
                     controller: _fechaCtrl,
-                    prefixIcon: Icons.calendar_today_outlined,
+                    prefixIcon: Symbols.calendar_today,
                     validator: (_) => _fechaNacimiento == null
                         ? 'Fecha obligatoria'
                         : null,
@@ -238,7 +239,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               key: const ValueKey('alta_dni'),
               label: 'DNI',
               controller: _dniCtrl,
-              prefixIcon: Icons.badge_outlined,
+              prefixIcon: Symbols.badge,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
@@ -246,7 +247,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               label: 'Email',
               controller: _emailCtrl,
               keyboardType: TextInputType.emailAddress,
-              prefixIcon: Icons.email_outlined,
+              prefixIcon: Symbols.email,
               validator: _validateEmail,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -254,7 +255,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               key: const ValueKey('alta_direccion'),
               label: 'Dirección',
               controller: _direccionCtrl,
-              prefixIcon: Icons.home_outlined,
+              prefixIcon: Symbols.home,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
@@ -262,7 +263,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               label: 'URL de foto',
               controller: _fotoCtrl,
               keyboardType: TextInputType.url,
-              prefixIcon: Icons.image_outlined,
+              prefixIcon: Symbols.image,
             ),
             const SizedBox(height: AppSpacing.md),
             SwitchListTile(
@@ -278,7 +279,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
             AppPrimaryButton(
               key: const ValueKey('alta_submit'),
               label: 'Crear voluntario',
-              icon: Icons.person_add_alt_1,
+              icon: Symbols.person_add,
               expanded: true,
               isLoading: asyncSubmit.isLoading,
               onPressed: asyncSubmit.isLoading ? null : _onSubmit,
@@ -309,7 +310,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite dar de alta voluntarios.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

@@ -18,6 +18,7 @@
 //     caro. El diálogo se limita a recordarlo en el copy.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -86,7 +87,7 @@ class _VoluntarioFichaBody extends ConsumerWidget {
         AppIconButton(
           key: const ValueKey('voluntario_ficha_refresh'),
           tooltip: 'Recargar',
-          icon: Icons.refresh,
+          icon: Symbols.refresh,
           onPressed: () => ref.read(provider.notifier).refresh(),
         ),
       ],
@@ -97,7 +98,7 @@ class _VoluntarioFichaBody extends ConsumerWidget {
             return const AppEmptyState(
               title: 'Voluntario no encontrado',
               description: 'Es posible que haya sido eliminado.',
-              icon: Icons.person_off_outlined,
+              icon: Symbols.person_off,
             );
           }
           return AppErrorState(
@@ -211,7 +212,7 @@ class _BajaSection extends ConsumerWidget {
           AppDestructiveButton(
             key: const ValueKey('ficha_dar_baja'),
             label: 'Dar de baja',
-            icon: Icons.person_off_outlined,
+            icon: Symbols.person_off,
             expanded: true,
             onPressed: isMutating
                 ? null
@@ -227,7 +228,7 @@ class _BajaSection extends ConsumerWidget {
             child: Row(
               children: [
                 Icon(
-                  Icons.info_outline,
+                  Symbols.info,
                   size: 18,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -247,7 +248,7 @@ class _BajaSection extends ConsumerWidget {
         AppDestructiveButton(
           key: const ValueKey('ficha_anonimizar'),
           label: 'Anonimizar (RGPD, irreversible)',
-          icon: Icons.privacy_tip_outlined,
+          icon: Symbols.privacy_tip,
           expanded: true,
           onPressed: isMutating ? null : () => _onAnonimizar(context, ref),
         ),
@@ -509,7 +510,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             label: 'Nombre completo',
             controller: _nombreCtrl,
             enabled: widget.canEdit && !widget.isMutating,
-            prefixIcon: Icons.person_outline,
+            prefixIcon: Symbols.person,
             validator: (v) => _validateRequired(v, 'Nombre'),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -519,7 +520,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             controller: _telefonoCtrl,
             enabled: widget.canEdit && !widget.isMutating,
             keyboardType: TextInputType.phone,
-            prefixIcon: Icons.phone_outlined,
+            prefixIcon: Symbols.phone,
             validator: (v) => _validateRequired(v, 'Teléfono'),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -528,7 +529,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             label: 'Municipio',
             controller: _municipioCtrl,
             enabled: widget.canEdit && !widget.isMutating,
-            prefixIcon: Icons.location_city_outlined,
+            prefixIcon: Symbols.location_city,
             validator: (v) => _validateRequired(v, 'Municipio'),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -549,7 +550,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
                   label: 'Fecha de nacimiento',
                   controller: _fechaCtrl,
                   enabled: widget.canEdit && !widget.isMutating,
-                  prefixIcon: Icons.calendar_today_outlined,
+                  prefixIcon: Symbols.calendar_today,
                 ),
               ),
             ),
@@ -560,7 +561,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             label: 'DNI',
             controller: _dniCtrl,
             enabled: widget.canEdit && !widget.isMutating,
-            prefixIcon: Icons.badge_outlined,
+            prefixIcon: Symbols.badge,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -569,7 +570,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             controller: _emailCtrl,
             enabled: widget.canEdit && !widget.isMutating,
             keyboardType: TextInputType.emailAddress,
-            prefixIcon: Icons.email_outlined,
+            prefixIcon: Symbols.email,
             validator: _validateEmail,
           ),
           const SizedBox(height: AppSpacing.md),
@@ -578,7 +579,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             label: 'Dirección',
             controller: _direccionCtrl,
             enabled: widget.canEdit && !widget.isMutating,
-            prefixIcon: Icons.home_outlined,
+            prefixIcon: Symbols.home,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -587,7 +588,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             controller: _fotoCtrl,
             enabled: widget.canEdit && !widget.isMutating,
             keyboardType: TextInputType.url,
-            prefixIcon: Icons.image_outlined,
+            prefixIcon: Symbols.image,
           ),
           const SizedBox(height: AppSpacing.md),
           SwitchListTile(
@@ -604,7 +605,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             initialValue: _estado,
             decoration: const InputDecoration(
               labelText: 'Estado',
-              prefixIcon: Icon(Icons.flag_outlined),
+              prefixIcon: Icon(Symbols.flag),
             ),
             items: const [
               DropdownMenuItem(
@@ -631,7 +632,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             AppPrimaryButton(
               key: const ValueKey('ficha_save'),
               label: 'Guardar cambios',
-              icon: Icons.save_outlined,
+              icon: Symbols.save,
               expanded: true,
               isLoading: widget.isMutating,
               onPressed: widget.isMutating ? null : _onSave,
@@ -720,7 +721,7 @@ class _RolesSectionState extends ConsumerState<_RolesSection> {
             initialValue: _seleccionado,
             decoration: const InputDecoration(
               labelText: 'Asignar nuevo rol',
-              prefixIcon: Icon(Icons.add_moderator_outlined),
+              prefixIcon: Icon(Symbols.add_moderator),
             ),
             items: [
               for (final r in disponibles)
@@ -732,7 +733,7 @@ class _RolesSectionState extends ConsumerState<_RolesSection> {
           AppSecondaryButton(
             key: const ValueKey('ficha_rol_asignar'),
             label: 'Asignar rol',
-            icon: Icons.add,
+            icon: Symbols.add,
             expanded: true,
             onPressed: _seleccionado == null ? null : _onAsignar,
           ),
@@ -758,7 +759,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar la ficha de otros voluntarios.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

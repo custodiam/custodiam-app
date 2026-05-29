@@ -1,6 +1,7 @@
 // AltaMaterialPage (US-05-01). Form completo del catálogo de material.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -164,7 +165,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
               label: 'Nombre',
               controller: _nombreCtrl,
               autofocus: true,
-              prefixIcon: Icons.label_outline,
+              prefixIcon: Symbols.label,
               validator: (v) => _validateRequired(v, 'Nombre'),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -173,7 +174,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
               label: 'Cantidad',
               controller: _cantidadCtrl,
               keyboardType: TextInputType.number,
-              prefixIcon: Icons.numbers,
+              prefixIcon: Symbols.numbers,
               validator: _validateCantidad,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -181,7 +182,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
               key: const ValueKey('alta_material_ubicacion'),
               label: 'Ubicación base',
               controller: _ubicacionCtrl,
-              prefixIcon: Icons.location_on_outlined,
+              prefixIcon: Symbols.location_on,
               validator: (v) => _validateRequired(v, 'Ubicación'),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -194,7 +195,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
               key: const ValueKey('alta_material_descripcion'),
               label: 'Descripción',
               controller: _descripcionCtrl,
-              prefixIcon: Icons.description_outlined,
+              prefixIcon: Symbols.description,
               maxLines: 3,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -202,27 +203,27 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
               key: const ValueKey('alta_material_codigo'),
               label: 'Código (se genera automático si lo dejas vacío)',
               controller: _codigoCtrl,
-              prefixIcon: Icons.tag,
+              prefixIcon: Symbols.tag,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
               key: const ValueKey('alta_material_numero_serie'),
               label: 'Número de serie',
               controller: _numeroSerieCtrl,
-              prefixIcon: Icons.confirmation_number_outlined,
+              prefixIcon: Symbols.confirmation_number,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
               key: const ValueKey('alta_material_categoria'),
               label: 'Categoría (ej. uniformidad, hidráulica…)',
               controller: _categoriaCtrl,
-              prefixIcon: Icons.category_outlined,
+              prefixIcon: Symbols.category,
             ),
             const SizedBox(height: AppSpacing.xl),
             AppPrimaryButton(
               key: const ValueKey('alta_material_submit'),
               label: 'Registrar material',
-              icon: Icons.add_box_outlined,
+              icon: Symbols.add_box,
               expanded: true,
               isLoading: asyncSubmit.isLoading,
               onPressed: asyncSubmit.isLoading ? null : _onSubmit,
@@ -253,7 +254,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite registrar material.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

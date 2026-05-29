@@ -4,7 +4,7 @@
 // See guide 27 §5.13.
 
 import 'package:flutter/material.dart';
-
+import 'package:material_symbols_icons/symbols.dart';
 import '../theme/extensions/app_semantic_colors.dart';
 import '../tokens/app_spacing.dart';
 
@@ -25,22 +25,22 @@ class AppSnackbar {
       AppSnackbarVariant.info => (
           semantic.info,
           semantic.onInfo,
-          Icons.info_outline,
+          Symbols.info,
         ),
       AppSnackbarVariant.success => (
           semantic.success,
           semantic.onSuccess,
-          Icons.check_circle_outline,
+          Symbols.check_circle,
         ),
       AppSnackbarVariant.warning => (
           semantic.warning,
           semantic.onWarning,
-          Icons.warning_amber_outlined,
+          Symbols.warning_amber,
         ),
       AppSnackbarVariant.danger => (
           semantic.danger,
           semantic.onDanger,
-          Icons.error_outline,
+          Symbols.error,
         ),
     };
 

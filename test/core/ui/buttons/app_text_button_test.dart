@@ -1,5 +1,6 @@
 import 'package:custodiam/core/ui/buttons/app_text_button.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../test_utils/test_app.dart';
@@ -37,11 +38,11 @@ void main() {
         AppTextButton(
           label: 'Ver más',
           onPressed: () {},
-          icon: Icons.expand_more,
+          icon: Symbols.expand_more,
         ),
       );
 
-      expect(find.byIcon(Icons.expand_more), findsOneWidget);
+      expect(find.byIcon(Symbols.expand_more), findsOneWidget);
     });
   });
 }

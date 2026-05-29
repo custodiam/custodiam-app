@@ -8,6 +8,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
@@ -160,7 +161,7 @@ class _MiFichajeContent extends ConsumerWidget {
             AppSecondaryButton(
               key: const ValueKey('fichaje_salida_button'),
               label: 'Fichar salida',
-              icon: Icons.logout_outlined,
+              icon: Symbols.logout,
               expanded: true,
               onPressed: loading
                   ? null
@@ -175,7 +176,7 @@ class _MiFichajeContent extends ConsumerWidget {
               label: state.yaFichadoYCerrado
                   ? 'Fichar entrada de nuevo'
                   : 'Fichar entrada',
-              icon: Icons.login,
+              icon: Symbols.login,
               expanded: true,
               isLoading: loading,
               onPressed: loading
@@ -246,7 +247,7 @@ class _DetalleFichajeState extends State<_DetalleFichaje> {
       children: [
         Row(
           children: [
-            Icon(Icons.login,
+            Icon(Symbols.login,
                 size: 18, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(width: AppSpacing.sm),
             Text(
@@ -259,7 +260,7 @@ class _DetalleFichajeState extends State<_DetalleFichaje> {
           const SizedBox(height: 4),
           Row(
             children: [
-              Icon(Icons.logout_outlined,
+              Icon(Symbols.logout,
                   size: 18, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: AppSpacing.sm),
               Text(
@@ -273,7 +274,7 @@ class _DetalleFichajeState extends State<_DetalleFichaje> {
         const SizedBox(height: 4),
         Row(
           children: [
-            Icon(Icons.timer_outlined,
+            Icon(Symbols.timer,
                 size: 18, color: theme.colorScheme.primary),
             const SizedBox(width: AppSpacing.sm),
             Text(
@@ -313,7 +314,7 @@ class _VoluntariosFichadosSection extends ConsumerWidget {
             IconButton(
               key: const ValueKey('voluntarios_fichados_refresh'),
               tooltip: 'Recargar',
-              icon: const Icon(Icons.refresh, size: 20),
+              icon: const Icon(Symbols.refresh, size: 20),
               onPressed: () => ref
                   .read(voluntariosFichadosViewModelProvider(servicioId)
                       .notifier)
@@ -343,7 +344,7 @@ class _VoluntariosFichadosSection extends ConsumerWidget {
               return const AppEmptyState(
                 title: 'Aún no hay voluntarios fichados',
                 description: 'Cuando alguno fiche entrada aparecerá aquí.',
-                icon: Icons.people_outline,
+                icon: Symbols.people,
               );
             }
             return Column(
@@ -389,7 +390,7 @@ class _VoluntarioFichadoTile extends StatelessWidget {
             ? Theme.of(context).colorScheme.tertiaryContainer
             : Theme.of(context).colorScheme.surfaceContainerHighest,
         child: Icon(
-          abierto ? Icons.timer : Icons.check,
+          abierto ? Symbols.timer : Symbols.check,
           color: abierto
               ? Theme.of(context).colorScheme.onTertiaryContainer
               : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -421,7 +422,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite fichar en este servicio.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

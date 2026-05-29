@@ -12,6 +12,7 @@
 // (TODO US-05-03 paso 2: integrar selector con catálogo /voluntarios).
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
@@ -127,7 +128,7 @@ class _LoadedMaterial extends ConsumerWidget {
         AppIconButton(
           key: const ValueKey('material_ficha_refresh'),
           tooltip: 'Recargar',
-          icon: Icons.refresh,
+          icon: Symbols.refresh,
           onPressed: () => ref
               .read(materialFichaViewModelProvider(material.id).notifier)
               .refresh(),
@@ -139,49 +140,49 @@ class _LoadedMaterial extends ConsumerWidget {
           _EstadoBadge(estado: material.estado),
           const SizedBox(height: AppSpacing.md),
           _InfoRow(
-            icon: Icons.category_outlined,
+            icon: Symbols.category,
             label: 'Tipo',
             value: _tipoLabel(material.tipo),
           ),
           if (material.codigo != null)
             _InfoRow(
-              icon: Icons.tag,
+              icon: Symbols.tag,
               label: 'Código',
               value: material.codigo!,
             ),
           if (material.numeroSerie != null)
             _InfoRow(
-              icon: Icons.confirmation_number_outlined,
+              icon: Symbols.confirmation_number,
               label: 'Nº de serie',
               value: material.numeroSerie!,
             ),
           if (material.categoria != null)
             _InfoRow(
-              icon: Icons.label_outline,
+              icon: Symbols.label,
               label: 'Categoría',
               value: material.categoria!,
             ),
           _InfoRow(
-            icon: Icons.numbers,
+            icon: Symbols.numbers,
             label: 'Cantidad',
             value: material.cantidad.toString(),
           ),
           _InfoRow(
-            icon: Icons.location_on_outlined,
+            icon: Symbols.location_on,
             label: 'Ubicación',
             value: material.ubicacionBase,
           ),
           if (material.descripcion != null &&
               material.descripcion!.isNotEmpty)
             _InfoRow(
-              icon: Icons.description_outlined,
+              icon: Symbols.description,
               label: 'Descripción',
               value: material.descripcion!,
             ),
           if (material.observacionesIncidencia != null &&
               material.observacionesIncidencia!.isNotEmpty)
             _InfoRow(
-              icon: Icons.warning_amber_outlined,
+              icon: Symbols.warning_amber,
               label: 'Incidencia registrada',
               value: material.observacionesIncidencia!,
             ),
@@ -199,7 +200,7 @@ class _LoadedMaterial extends ConsumerWidget {
                     AppPrimaryButton(
                       key: const ValueKey('material_ficha_asignar_personal'),
                       label: 'Asignar como equipamiento personal',
-                      icon: Icons.person_add_alt_1,
+                      icon: Symbols.person_add,
                       expanded: true,
                       onPressed: () => _abrirDialogAsignar(
                         context,
@@ -220,7 +221,7 @@ class _LoadedMaterial extends ConsumerWidget {
                     AppPrimaryButton(
                       key: const ValueKey('material_ficha_prestar'),
                       label: 'Prestar a un voluntario',
-                      icon: Icons.swap_horiz,
+                      icon: Symbols.swap_horiz,
                       expanded: true,
                       onPressed: () => _abrirDialogAsignar(
                         context,
@@ -240,7 +241,7 @@ class _LoadedMaterial extends ConsumerWidget {
                   AppSecondaryButton(
                     key: const ValueKey('material_ficha_devolver'),
                     label: 'Registrar devolución',
-                    icon: Icons.assignment_return_outlined,
+                    icon: Symbols.assignment_return,
                     expanded: true,
                     onPressed: () => _abrirDialogDevolver(context, ref),
                   ),
@@ -262,7 +263,7 @@ class _LoadedMaterial extends ConsumerWidget {
                   AppDestructiveButton(
                     key: const ValueKey('material_ficha_averia'),
                     label: 'Reportar avería',
-                    icon: Icons.build_outlined,
+                    icon: Symbols.build,
                     expanded: true,
                     onPressed: () => _abrirDialogIncidencia(
                       context,
@@ -275,7 +276,7 @@ class _LoadedMaterial extends ConsumerWidget {
                   AppDestructiveButton(
                     key: const ValueKey('material_ficha_perdida'),
                     label: 'Reportar pérdida',
-                    icon: Icons.report_outlined,
+                    icon: Symbols.report,
                     expanded: true,
                     onPressed: () => _abrirDialogIncidencia(
                       context,
@@ -311,7 +312,7 @@ class _LoadedMaterial extends ConsumerWidget {
             key: const ValueKey('material_asignar_voluntario_id'),
             label: 'ID del voluntario (UUID)',
             controller: voluntarioCtrl,
-            prefixIcon: Icons.person_outline,
+            prefixIcon: Symbols.person,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -319,7 +320,7 @@ class _LoadedMaterial extends ConsumerWidget {
             label: 'Cantidad',
             controller: cantidadCtrl,
             keyboardType: TextInputType.number,
-            prefixIcon: Icons.numbers,
+            prefixIcon: Symbols.numbers,
           ),
         ],
       ),
@@ -381,14 +382,14 @@ class _LoadedMaterial extends ConsumerWidget {
             key: const ValueKey('material_devolver_voluntario_id'),
             label: 'ID del voluntario que devuelve',
             controller: voluntarioCtrl,
-            prefixIcon: Icons.person_outline,
+            prefixIcon: Symbols.person,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
             key: const ValueKey('material_devolver_observaciones'),
             label: 'Observaciones (opcional)',
             controller: observacionesCtrl,
-            prefixIcon: Icons.notes_outlined,
+            prefixIcon: Symbols.notes,
             maxLines: 3,
           ),
         ],
@@ -449,7 +450,7 @@ class _LoadedMaterial extends ConsumerWidget {
         key: const ValueKey('material_incidencia_descripcion'),
         label: 'Descripción de la incidencia',
         controller: descripcionCtrl,
-        prefixIcon: Icons.notes_outlined,
+        prefixIcon: Symbols.notes,
         maxLines: 4,
       ),
       actions: [
@@ -538,25 +539,25 @@ class _EstadoBadge extends StatelessWidget {
       EstadoInventario.operativo => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
-          Icons.check_circle_outline,
+          Symbols.check_circle,
           'Operativo',
         ),
       EstadoInventario.averiado => (
           theme.colorScheme.errorContainer,
           theme.colorScheme.onErrorContainer,
-          Icons.build_outlined,
+          Symbols.build,
           'Averiado',
         ),
       EstadoInventario.perdido => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
-          Icons.report_outlined,
+          Symbols.report,
           'Perdido',
         ),
       EstadoInventario.enUso => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
-          Icons.handyman_outlined,
+          Symbols.handyman,
           'En uso',
         ),
     };
@@ -591,7 +592,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar el inventario.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

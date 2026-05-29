@@ -15,7 +15,7 @@
 // Ver guía 27 §5 y ADR-018.
 
 import 'package:flutter/material.dart';
-
+import 'package:material_symbols_icons/symbols.dart';
 import '../theme/app_colors.dart';
 import '../tokens/app_spacing.dart';
 
@@ -64,7 +64,7 @@ class AppDrawerHeader extends StatelessWidget {
                       color: Colors.black,
                     ),
                   )
-                : const Icon(Icons.person, color: Colors.black),
+                : const Icon(Symbols.person, color: Colors.black),
           ),
           const SizedBox(height: AppSpacing.smMd),
           Text(
