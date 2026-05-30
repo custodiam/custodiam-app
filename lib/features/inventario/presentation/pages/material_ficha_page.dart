@@ -28,7 +28,6 @@ import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
-import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -38,6 +37,8 @@ import '../../domain/entities/tipo_asignacion.dart';
 import '../../domain/entities/tipo_material.dart';
 import '../viewmodels/material_ficha_view_model.dart';
 import '../viewmodels/materiales_list_view_model.dart';
+import '../widgets/asignacion_actual_section.dart';
+import '../widgets/inventario_estado_badge.dart';
 
 class MaterialFichaPage extends ConsumerWidget {
   final String materialId;
@@ -137,7 +138,7 @@ class _LoadedMaterial extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          _EstadoBadge(estado: material.estado),
+          InventarioEstadoBadge(estado: material.estado),
           const SizedBox(height: AppSpacing.md),
           _InfoRow(
             icon: Symbols.category,
@@ -186,6 +187,7 @@ class _LoadedMaterial extends ConsumerWidget {
               label: 'Incidencia registrada',
               value: material.observacionesIncidencia!,
             ),
+          AsignacionActualSection(asignaciones: material.asignacionesActivas),
           const SizedBox(height: AppSpacing.lg),
 
           // — Acciones de asignación / devolución (solo si operativo) —
@@ -521,61 +523,6 @@ class _InfoRow extends StatelessWidget {
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EstadoBadge extends StatelessWidget {
-  final EstadoInventario estado;
-  const _EstadoBadge({required this.estado});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
-    final (Color bg, Color fg, IconData icon, String label) = switch (estado) {
-      EstadoInventario.operativo => (
-          theme.colorScheme.primaryContainer,
-          theme.colorScheme.onPrimaryContainer,
-          Symbols.check_circle,
-          'Operativo',
-        ),
-      EstadoInventario.averiado => (
-          theme.colorScheme.errorContainer,
-          theme.colorScheme.onErrorContainer,
-          Symbols.build,
-          'Averiado',
-        ),
-      EstadoInventario.perdido => (
-          theme.colorScheme.surfaceContainerHighest,
-          theme.colorScheme.onSurfaceVariant,
-          Symbols.report,
-          'Perdido',
-        ),
-      EstadoInventario.enUso => (
-          theme.colorScheme.tertiaryContainer,
-          theme.colorScheme.onTertiaryContainer,
-          Symbols.handyman,
-          'En uso',
-        ),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: fg),
-          const SizedBox(width: AppSpacing.xs),
-          Text(label, style: TextStyle(color: fg)),
         ],
       ),
     );
