@@ -220,45 +220,49 @@ class _LoadedVehiculo extends ConsumerWidget {
     String title,
   ) async {
     final descripcionCtrl = TextEditingController();
-    final ok = await AppDialog.show<bool>(
-      context,
-      title: title,
-      content: AppTextField(
-        key: const ValueKey('vehiculo_incidencia_descripcion'),
-        label: 'Descripción de la incidencia',
-        controller: descripcionCtrl,
-        prefixIcon: Symbols.notes,
-        maxLines: 4,
-      ),
-      actions: [
-        AppTextButton(
-          label: 'Cancelar',
-          onPressed: () => Navigator.of(context).pop(false),
-        ),
-        AppPrimaryButton(
-          key: const ValueKey('vehiculo_incidencia_confirm'),
-          label: 'Registrar',
-          onPressed: () => Navigator.of(context).pop(true),
-        ),
-      ],
-    );
-    if (ok != true) return;
-    if (!context.mounted) return;
-    final descripcion = descripcionCtrl.text.trim();
-    if (descripcion.isEmpty) {
-      AppSnackbar.show(
+    try {
+      final ok = await AppDialog.show<bool>(
         context,
-        message: 'La descripción es obligatoria.',
-        variant: AppSnackbarVariant.warning,
+        title: title,
+        content: AppTextField(
+          key: const ValueKey('vehiculo_incidencia_descripcion'),
+          label: 'Descripción de la incidencia',
+          controller: descripcionCtrl,
+          prefixIcon: Symbols.notes,
+          maxLines: 4,
+        ),
+        actions: [
+          AppTextButton(
+            label: 'Cancelar',
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          AppPrimaryButton(
+            key: const ValueKey('vehiculo_incidencia_confirm'),
+            label: 'Registrar',
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
       );
-      return;
-    }
-    await ref
-        .read(vehiculoFichaViewModelProvider(vehiculo.id).notifier)
-        .reportarIncidencia(
-          nuevoEstado: nuevoEstado,
-          descripcion: descripcion,
+      if (ok != true) return;
+      if (!context.mounted) return;
+      final descripcion = descripcionCtrl.text.trim();
+      if (descripcion.isEmpty) {
+        AppSnackbar.show(
+          context,
+          message: 'La descripción es obligatoria.',
+          variant: AppSnackbarVariant.warning,
         );
+        return;
+      }
+      await ref
+          .read(vehiculoFichaViewModelProvider(vehiculo.id).notifier)
+          .reportarIncidencia(
+            nuevoEstado: nuevoEstado,
+            descripcion: descripcion,
+          );
+    } finally {
+      descripcionCtrl.dispose();
+    }
   }
 }
 
