@@ -2,7 +2,9 @@ import 'package:custodiam/core/ui/buttons/app_primary_button.dart';
 import 'package:custodiam/features/servicios/domain/entities/estado_servicio.dart';
 import 'package:custodiam/features/servicios/domain/entities/servicio.dart';
 import 'package:custodiam/features/servicios/domain/entities/tipo_servicio.dart';
+import 'package:custodiam/features/servicios/domain/entities/servicio_inventario.dart';
 import 'package:custodiam/features/servicios/domain/repositories/servicios_repository.dart';
+import 'package:custodiam/features/servicios/domain/usecases/get_inventario_servicio.dart';
 import 'package:custodiam/features/servicios/domain/usecases/get_servicio_by_id.dart';
 import 'package:custodiam/features/servicios/presentation/pages/servicio_ficha_page.dart';
 import 'package:custodiam/features/servicios/presentation/viewmodels/servicios_di.dart';
@@ -50,6 +52,14 @@ void main() {
   Future<void> pumpFicha(WidgetTester tester, Servicio servicio) async {
     when(() => repo.getById(servicio.id))
         .thenAnswer((_) async => Success(servicio));
+    when(() => repo.getInventario(servicio.id)).thenAnswer(
+      (_) async => const Success(
+        ServicioInventario(
+          material: <MaterialAsignadoServicio>[],
+          vehiculos: <VehiculoAsignadoServicio>[],
+        ),
+      ),
+    );
     await pumpRiverpod(
       tester,
       ServicioFichaPage(servicioId: servicio.id),
@@ -57,6 +67,8 @@ void main() {
       currentUser: _voluntario,
       overrides: [
         getServicioByIdProvider.overrideWithValue(GetServicioById(repo)),
+        getInventarioServicioProvider
+            .overrideWithValue(GetInventarioServicio(repo)),
       ],
     );
   }

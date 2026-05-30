@@ -37,6 +37,7 @@ import '../../domain/entities/servicio.dart';
 import '../../domain/entities/tipo_servicio.dart';
 import '../viewmodels/servicio_ficha_view_model.dart';
 import '../viewmodels/servicios_list_view_model.dart';
+import '../widgets/recursos_asignados_section.dart';
 
 class ServicioFichaPage extends ConsumerWidget {
   final String servicioId;
@@ -200,6 +201,8 @@ class _LoadedFicha extends ConsumerWidget {
               label: 'Observaciones',
               value: servicio.observacionesCierre!,
             ),
+          // — Recursos asignados al servicio (R1 / Opción 1B) —
+          RecursosAsignadosSection(servicioId: servicio.id),
           const SizedBox(height: AppSpacing.lg),
           // — Acciones para voluntarios (self-service) —
           _SelfServiceActions(servicio: servicio),
