@@ -82,4 +82,24 @@ class ServiciosApi {
   Future<ApiResponse<List<dynamic>>> listVoluntarios(String id) {
     return _client.getList('/servicios/$id/voluntarios');
   }
+
+  /// GET /servicios/{id}/inventario — recursos asignados (R1). Cuerpo objeto
+  /// {material: [...], vehiculos: [...]}.
+  Future<Map<String, dynamic>> getInventario(String id) {
+    return _client.get('/servicios/$id/inventario');
+  }
+
+  Future<Map<String, dynamic>> asignarMaterial(
+    String id,
+    Map<String, dynamic> body,
+  ) {
+    return _client.post('/servicios/$id/inventario/material', body);
+  }
+
+  Future<Map<String, dynamic>> asignarVehiculo(
+    String id,
+    Map<String, dynamic> body,
+  ) {
+    return _client.post('/servicios/$id/inventario/vehiculo', body);
+  }
 }

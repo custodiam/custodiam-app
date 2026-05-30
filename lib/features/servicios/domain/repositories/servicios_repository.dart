@@ -5,6 +5,7 @@ import '../../../../infrastructure/error/result.dart';
 import '../entities/estado_servicio.dart';
 import '../entities/servicio.dart';
 import '../entities/servicio_create.dart';
+import '../entities/servicio_inventario.dart';
 import '../entities/servicios_page.dart';
 import '../entities/tipo_servicio.dart';
 import '../entities/voluntario_inscrito.dart';
@@ -52,4 +53,19 @@ abstract class ServiciosRepository {
 
   /// GET /servicios/{id}/voluntarios — list of inscritos/convocados.
   Future<Result<List<VoluntarioInscrito>>> listVoluntarios(String id);
+
+  /// GET /servicios/{id}/inventario — recursos asignados al servicio (R1).
+  Future<Result<ServicioInventario>> getInventario(String id);
+
+  /// POST /servicios/{id}/inventario/material (CU-22 / US-05-06). El 409 de
+  /// solape temporal → InventarioFailure.recursoSolapado.
+  Future<Result<void>> asignarMaterial(
+    String id, {
+    required String materialId,
+    int cantidad,
+  });
+
+  /// POST /servicios/{id}/inventario/vehiculo (CU-22 / US-05-07). El 409 de
+  /// solape temporal → InventarioFailure.recursoSolapado.
+  Future<Result<void>> asignarVehiculo(String id, {required String vehiculoId});
 }
