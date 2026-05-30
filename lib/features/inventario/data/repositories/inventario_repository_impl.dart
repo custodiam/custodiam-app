@@ -344,6 +344,15 @@ class InventarioRepositoryImpl implements InventarioRepository {
   /// repartimos best-effort por el detail.
   Failure _mapAsignacion409(ApiException e) {
     final detail = e.message.toLowerCase();
+    // Solape temporal (PR6 / Política A): el backend lo serializa como
+    // {"mensaje": ..., "conflictos": [...]}, el único 409 con esa clave; el
+    // resto son detail planos. Preparado para la futura asignación a
+    // servicio, que reutilizará este dispatcher.
+    if (detail.contains('conflictos') ||
+        detail.contains('solapad') ||
+        detail.contains('ocupado')) {
+      return const InventarioFailure.recursoSolapado();
+    }
     if (detail.contains('no operativo') ||
         detail.contains('no está operativo')) {
       return const InventarioFailure.materialNoOperativo();

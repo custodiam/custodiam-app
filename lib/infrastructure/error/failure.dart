@@ -227,6 +227,7 @@ sealed class InventarioFailure extends Failure {
       EstadoIncidenciaInvalido;
   const factory InventarioFailure.asignacionNoEncontrada() =
       AsignacionNoEncontrada;
+  const factory InventarioFailure.recursoSolapado() = RecursoSolapado;
 }
 
 final class InventarioNotFound extends InventarioFailure {
@@ -270,6 +271,12 @@ final class EstadoIncidenciaInvalido extends InventarioFailure {
 final class AsignacionNoEncontrada extends InventarioFailure {
   const AsignacionNoEncontrada()
       : super('No hay una asignación activa para devolver.');
+}
+
+final class RecursoSolapado extends InventarioFailure {
+  const RecursoSolapado()
+      : super('El recurso ya está reservado por otro servicio en ese '
+            'intervalo de fechas.');
 }
 
 // ── Disponibilidad ───────────────────────────────────────────────────

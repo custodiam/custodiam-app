@@ -273,6 +273,29 @@ void main() {
 
       expectFailure<AsignacionMaterial>(result, CantidadInsuficiente);
     });
+
+    test('maps 409 overlap (conflictos payload) to recursoSolapado', () async {
+      // El dispatcher compartido _mapAsignacion409 reconoce el 409 de solape
+      // temporal (PR6 / Política A), que el backend devuelve como
+      // {"mensaje": ..., "conflictos": [...]}. La superficie que lo dispara
+      // (asignar un recurso a un servicio) aún no existe en cliente; este
+      // test fija el contrato del mapeo para cuando llegue.
+      when(() => api.asignarMaterialAVoluntario('m-1', any())).thenThrow(
+        ApiException(
+          statusCode: 409,
+          message: '{"detail":{"mensaje":"El recurso ya está reservado en ese '
+              'intervalo","conflictos":[{"servicio_id":"s-1"}]}}',
+        ),
+      );
+
+      final result = await repo.asignarMaterialAVoluntario(
+        'm-1',
+        voluntarioId: 'v-1',
+        tipo: TipoAsignacion.personal,
+      );
+
+      expectFailure<AsignacionMaterial>(result, RecursoSolapado);
+    });
   });
 
   group('devolverMaterial', () {
