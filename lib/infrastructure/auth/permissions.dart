@@ -58,6 +58,9 @@ enum Permission {
   offlineFicharPropio('offline.fichar_propio'),
   offlineVerEstadoConexion('offline.ver_estado_conexion'),
 
+  // E10 — Ubicaciones / Geolocalización
+  ubicacionesCrear('ubicaciones.crear'),
+
   // Administración del sistema
   sistemaPanelAdmin('sistema.panel_admin'),
   sistemaConfiguracion('sistema.configuracion'),
@@ -128,6 +131,7 @@ const _baseJefeSeccion = <Permission>{
   ..._baseJefeEquipo,
   Permission.inventarioAsignarEquipamientoPersonal,
   Permission.inventarioGestionarDotacionVehiculo,
+  Permission.ubicacionesCrear,
 };
 
 const _baseJefeUnidad = <Permission>{

@@ -10,7 +10,10 @@ class MaterialCreate {
   final TipoMaterial tipo;
   final String? categoria;
   final int cantidad;
-  final String ubicacionBase;
+  // Ubicación: el texto es legacy opcional; la referencia canónica es el FK
+  // al catálogo `ubicaciones` (PR2).
+  final String? ubicacionBase;
+  final String? ubicacionBaseId;
   final DateTime? fechaAdquisicion;
   final DateTime? fechaProximaRevision;
   final String? fotoUrl;
@@ -18,7 +21,8 @@ class MaterialCreate {
   const MaterialCreate({
     required this.nombre,
     required this.tipo,
-    required this.ubicacionBase,
+    this.ubicacionBase,
+    this.ubicacionBaseId,
     this.descripcion,
     this.codigo,
     this.numeroSerie,
@@ -34,8 +38,9 @@ class MaterialCreate {
       'nombre': nombre,
       'tipo': tipo.wire,
       'cantidad': cantidad,
-      'ubicacion_base': ubicacionBase,
     };
+    if (ubicacionBase != null) json['ubicacion_base'] = ubicacionBase;
+    if (ubicacionBaseId != null) json['ubicacion_base_id'] = ubicacionBaseId;
     if (descripcion != null) json['descripcion'] = descripcion;
     if (codigo != null) json['codigo'] = codigo;
     if (numeroSerie != null) json['numero_serie'] = numeroSerie;

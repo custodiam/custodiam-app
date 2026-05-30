@@ -15,11 +15,13 @@ import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
+import '../../../../infrastructure/catalogo/catalogo_recurso.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/material_create.dart';
 import '../../domain/entities/tipo_material.dart';
 import '../viewmodels/alta_material_view_model.dart';
 import '../viewmodels/materiales_list_view_model.dart';
+import '../widgets/ubicacion_selector_field.dart';
 
 class AltaMaterialPage extends ConsumerWidget {
   const AltaMaterialPage({super.key});
@@ -50,8 +52,8 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
   final _numeroSerieCtrl = TextEditingController();
   final _categoriaCtrl = TextEditingController();
   final _cantidadCtrl = TextEditingController(text: '1');
-  final _ubicacionCtrl = TextEditingController();
   TipoMaterial _tipo = TipoMaterial.prestable;
+  CatalogoRecurso? _ubicacion;
 
   @override
   void dispose() {
@@ -61,7 +63,6 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
     _numeroSerieCtrl.dispose();
     _categoriaCtrl.dispose();
     _cantidadCtrl.dispose();
-    _ubicacionCtrl.dispose();
     super.dispose();
   }
 
@@ -88,7 +89,8 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
       nombre: _nombreCtrl.text.trim(),
       tipo: _tipo,
       cantidad: int.parse(_cantidadCtrl.text.trim()),
-      ubicacionBase: _ubicacionCtrl.text.trim(),
+      ubicacionBase: _ubicacion?.label,
+      ubicacionBaseId: _ubicacion?.id,
       descripcion: _normalize(_descripcionCtrl.text),
       codigo: _normalize(_codigoCtrl.text),
       numeroSerie: _normalize(_numeroSerieCtrl.text),
@@ -178,12 +180,11 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
               validator: _validateCantidad,
             ),
             const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: const ValueKey('alta_material_ubicacion'),
-              label: 'Ubicación base',
-              controller: _ubicacionCtrl,
-              prefixIcon: Symbols.location_on,
-              validator: (v) => _validateRequired(v, 'Ubicación'),
+            UbicacionSelectorField(
+              fieldKey: const ValueKey('alta_material_ubicacion'),
+              value: _ubicacion,
+              onChanged: (u) => setState(() => _ubicacion = u),
+              validator: (v) => v == null ? 'Ubicación obligatoria' : null,
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(

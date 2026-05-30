@@ -7,7 +7,7 @@ class VehiculoSummary {
   final String matricula;
   final TipoVehiculo tipo;
   final EstadoInventario estado;
-  final String ubicacionBase;
+  final String? ubicacionBase;
 
   const VehiculoSummary({
     required this.id,
@@ -15,6 +15,6 @@ class VehiculoSummary {
     required this.matricula,
     required this.tipo,
     required this.estado,
-    required this.ubicacionBase,
+    this.ubicacionBase,
   });
 }

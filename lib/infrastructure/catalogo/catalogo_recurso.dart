@@ -30,4 +30,14 @@ class CatalogoRecurso {
       label: '${json['codigo_interno']} · ${json['matricula']}',
     );
   }
+
+  /// Construye desde una fila de `GET /ubicaciones` (UbicacionSummary) o desde
+  /// la respuesta de `POST /ubicaciones` (UbicacionResponse): en ambas el
+  /// nombre es la etiqueta visible (PR2).
+  factory CatalogoRecurso.ubicacion(Map<String, dynamic> json) {
+    return CatalogoRecurso(
+      id: json['id'] as String,
+      label: json['nombre'] as String,
+    );
+  }
 }

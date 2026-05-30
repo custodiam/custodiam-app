@@ -11,7 +11,7 @@ class MaterialSummary {
   final String? categoria;
   final EstadoInventario estado;
   final int cantidad;
-  final String ubicacionBase;
+  final String? ubicacionBase;
 
   const MaterialSummary({
     required this.id,
@@ -19,7 +19,7 @@ class MaterialSummary {
     required this.tipo,
     required this.estado,
     required this.cantidad,
-    required this.ubicacionBase,
+    this.ubicacionBase,
     this.codigo,
     this.categoria,
   });
