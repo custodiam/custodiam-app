@@ -101,9 +101,12 @@ class _DotacionBody extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: Text(
-                'Material asignado al vehículo',
-                style: theme.textTheme.titleSmall,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  'Material asignado al vehículo',
+                  style: theme.textTheme.titleSmall,
+                ),
               ),
             ),
             if (canManage)
@@ -140,62 +143,67 @@ class _DotacionBody extends ConsumerWidget {
   Future<void> _abrirAlta(BuildContext context, WidgetRef ref) async {
     final materialCtrl = TextEditingController();
     final cantidadCtrl = TextEditingController(text: '1');
-    final ok = await AppDialog.show<bool>(
-      context,
-      title: 'Añadir material a la dotación',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppTextField(
-            key: const ValueKey('dotacion_material_id'),
-            label: 'ID del material (UUID)',
-            controller: materialCtrl,
-            prefixIcon: Symbols.inventory_2,
+    try {
+      final ok = await AppDialog.show<bool>(
+        context,
+        title: 'Añadir material a la dotación',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppTextField(
+              key: const ValueKey('dotacion_material_id'),
+              label: 'ID del material (UUID)',
+              controller: materialCtrl,
+              prefixIcon: Symbols.inventory_2,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(
+              key: const ValueKey('dotacion_cantidad'),
+              label: 'Cantidad',
+              controller: cantidadCtrl,
+              keyboardType: TextInputType.number,
+              prefixIcon: Symbols.numbers,
+            ),
+          ],
+        ),
+        actions: [
+          AppTextButton(
+            label: 'Cancelar',
+            onPressed: () => Navigator.of(context).pop(false),
           ),
-          const SizedBox(height: AppSpacing.md),
-          AppTextField(
-            key: const ValueKey('dotacion_cantidad'),
-            label: 'Cantidad',
-            controller: cantidadCtrl,
-            keyboardType: TextInputType.number,
-            prefixIcon: Symbols.numbers,
+          AppPrimaryButton(
+            key: const ValueKey('dotacion_anadir_confirm'),
+            label: 'Añadir',
+            onPressed: () => Navigator.of(context).pop(true),
           ),
         ],
-      ),
-      actions: [
-        AppTextButton(
-          label: 'Cancelar',
-          onPressed: () => Navigator.of(context).pop(false),
-        ),
-        AppPrimaryButton(
-          key: const ValueKey('dotacion_anadir_confirm'),
-          label: 'Añadir',
-          onPressed: () => Navigator.of(context).pop(true),
-        ),
-      ],
-    );
-    if (ok != true) return;
-    if (!context.mounted) return;
-    final materialId = materialCtrl.text.trim();
-    final cantidad = int.tryParse(cantidadCtrl.text.trim()) ?? 1;
-    if (materialId.isEmpty) {
-      AppSnackbar.show(
-        context,
-        message: 'Indica el ID del material.',
-        variant: AppSnackbarVariant.warning,
       );
-      return;
-    }
-    final exito = await ref
-        .read(dotacionVehiculoViewModelProvider(vehiculoId).notifier)
-        .asignar(materialId: materialId, cantidad: cantidad);
-    if (!context.mounted) return;
-    if (exito) {
-      AppSnackbar.show(
-        context,
-        message: 'Material añadido a la dotación.',
-        variant: AppSnackbarVariant.success,
-      );
+      if (ok != true) return;
+      if (!context.mounted) return;
+      final materialId = materialCtrl.text.trim();
+      final cantidad = int.tryParse(cantidadCtrl.text.trim()) ?? 1;
+      if (materialId.isEmpty) {
+        AppSnackbar.show(
+          context,
+          message: 'Indica el ID del material.',
+          variant: AppSnackbarVariant.warning,
+        );
+        return;
+      }
+      final exito = await ref
+          .read(dotacionVehiculoViewModelProvider(vehiculoId).notifier)
+          .asignar(materialId: materialId, cantidad: cantidad);
+      if (!context.mounted) return;
+      if (exito) {
+        AppSnackbar.show(
+          context,
+          message: 'Material añadido a la dotación.',
+          variant: AppSnackbarVariant.success,
+        );
+      }
+    } finally {
+      materialCtrl.dispose();
+      cantidadCtrl.dispose();
     }
   }
 

@@ -302,69 +302,74 @@ class _LoadedMaterial extends ConsumerWidget {
   }) async {
     final voluntarioCtrl = TextEditingController();
     final cantidadCtrl = TextEditingController(text: '1');
-    final ok = await AppDialog.show<bool>(
-      context,
-      title: tipo == TipoAsignacion.personal
-          ? 'Asignar equipamiento personal'
-          : 'Prestar material',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppTextField(
-            key: const ValueKey('material_asignar_voluntario_id'),
-            label: 'ID del voluntario (UUID)',
-            controller: voluntarioCtrl,
-            prefixIcon: Symbols.person,
+    try {
+      final ok = await AppDialog.show<bool>(
+        context,
+        title: tipo == TipoAsignacion.personal
+            ? 'Asignar equipamiento personal'
+            : 'Prestar material',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppTextField(
+              key: const ValueKey('material_asignar_voluntario_id'),
+              label: 'ID del voluntario (UUID)',
+              controller: voluntarioCtrl,
+              prefixIcon: Symbols.person,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(
+              key: const ValueKey('material_asignar_cantidad'),
+              label: 'Cantidad',
+              controller: cantidadCtrl,
+              keyboardType: TextInputType.number,
+              prefixIcon: Symbols.numbers,
+            ),
+          ],
+        ),
+        actions: [
+          AppTextButton(
+            label: 'Cancelar',
+            onPressed: () => Navigator.of(context).pop(false),
           ),
-          const SizedBox(height: AppSpacing.md),
-          AppTextField(
-            key: const ValueKey('material_asignar_cantidad'),
-            label: 'Cantidad',
-            controller: cantidadCtrl,
-            keyboardType: TextInputType.number,
-            prefixIcon: Symbols.numbers,
+          AppPrimaryButton(
+            key: const ValueKey('material_asignar_confirm'),
+            label: 'Asignar',
+            onPressed: () => Navigator.of(context).pop(true),
           ),
         ],
-      ),
-      actions: [
-        AppTextButton(
-          label: 'Cancelar',
-          onPressed: () => Navigator.of(context).pop(false),
-        ),
-        AppPrimaryButton(
-          key: const ValueKey('material_asignar_confirm'),
-          label: 'Asignar',
-          onPressed: () => Navigator.of(context).pop(true),
-        ),
-      ],
-    );
-    if (ok != true) return;
-    if (!context.mounted) return;
-    final voluntarioId = voluntarioCtrl.text.trim();
-    final cantidad = int.tryParse(cantidadCtrl.text.trim()) ?? 1;
-    if (voluntarioId.isEmpty) {
-      AppSnackbar.show(
-        context,
-        message: 'Indica el ID del voluntario.',
-        variant: AppSnackbarVariant.warning,
       );
-      return;
-    }
-    final notifier =
-        ref.read(materialFichaViewModelProvider(material.id).notifier);
-    final success = await notifier.asignarAVoluntario(
-      voluntarioId: voluntarioId,
-      tipo: tipo,
-      cantidad: cantidad,
-    );
-    if (!context.mounted) return;
-    if (success) {
-      AppSnackbar.show(
-        context,
-        message: 'Asignación registrada.',
-        variant: AppSnackbarVariant.success,
+      if (ok != true) return;
+      if (!context.mounted) return;
+      final voluntarioId = voluntarioCtrl.text.trim();
+      final cantidad = int.tryParse(cantidadCtrl.text.trim()) ?? 1;
+      if (voluntarioId.isEmpty) {
+        AppSnackbar.show(
+          context,
+          message: 'Indica el ID del voluntario.',
+          variant: AppSnackbarVariant.warning,
+        );
+        return;
+      }
+      final notifier =
+          ref.read(materialFichaViewModelProvider(material.id).notifier);
+      final success = await notifier.asignarAVoluntario(
+        voluntarioId: voluntarioId,
+        tipo: tipo,
+        cantidad: cantidad,
       );
-      await notifier.refresh();
+      if (!context.mounted) return;
+      if (success) {
+        AppSnackbar.show(
+          context,
+          message: 'Asignación registrada.',
+          variant: AppSnackbarVariant.success,
+        );
+        await notifier.refresh();
+      }
+    } finally {
+      voluntarioCtrl.dispose();
+      cantidadCtrl.dispose();
     }
   }
 
@@ -374,67 +379,72 @@ class _LoadedMaterial extends ConsumerWidget {
   ) async {
     final voluntarioCtrl = TextEditingController();
     final observacionesCtrl = TextEditingController();
-    final ok = await AppDialog.show<bool>(
-      context,
-      title: 'Registrar devolución',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppTextField(
-            key: const ValueKey('material_devolver_voluntario_id'),
-            label: 'ID del voluntario que devuelve',
-            controller: voluntarioCtrl,
-            prefixIcon: Symbols.person,
+    try {
+      final ok = await AppDialog.show<bool>(
+        context,
+        title: 'Registrar devolución',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppTextField(
+              key: const ValueKey('material_devolver_voluntario_id'),
+              label: 'ID del voluntario que devuelve',
+              controller: voluntarioCtrl,
+              prefixIcon: Symbols.person,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(
+              key: const ValueKey('material_devolver_observaciones'),
+              label: 'Observaciones (opcional)',
+              controller: observacionesCtrl,
+              prefixIcon: Symbols.notes,
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          AppTextButton(
+            label: 'Cancelar',
+            onPressed: () => Navigator.of(context).pop(false),
           ),
-          const SizedBox(height: AppSpacing.md),
-          AppTextField(
-            key: const ValueKey('material_devolver_observaciones'),
-            label: 'Observaciones (opcional)',
-            controller: observacionesCtrl,
-            prefixIcon: Symbols.notes,
-            maxLines: 3,
+          AppPrimaryButton(
+            key: const ValueKey('material_devolver_confirm'),
+            label: 'Devolver',
+            onPressed: () => Navigator.of(context).pop(true),
           ),
         ],
-      ),
-      actions: [
-        AppTextButton(
-          label: 'Cancelar',
-          onPressed: () => Navigator.of(context).pop(false),
-        ),
-        AppPrimaryButton(
-          key: const ValueKey('material_devolver_confirm'),
-          label: 'Devolver',
-          onPressed: () => Navigator.of(context).pop(true),
-        ),
-      ],
-    );
-    if (ok != true) return;
-    if (!context.mounted) return;
-    final voluntarioId = voluntarioCtrl.text.trim();
-    if (voluntarioId.isEmpty) {
-      AppSnackbar.show(
-        context,
-        message: 'Indica el ID del voluntario.',
-        variant: AppSnackbarVariant.warning,
       );
-      return;
-    }
-    final notifier =
-        ref.read(materialFichaViewModelProvider(material.id).notifier);
-    final success = await notifier.devolver(
-      voluntarioId: voluntarioId,
-      observaciones: observacionesCtrl.text.trim().isEmpty
-          ? null
-          : observacionesCtrl.text.trim(),
-    );
-    if (!context.mounted) return;
-    if (success) {
-      AppSnackbar.show(
-        context,
-        message: 'Devolución registrada.',
-        variant: AppSnackbarVariant.success,
+      if (ok != true) return;
+      if (!context.mounted) return;
+      final voluntarioId = voluntarioCtrl.text.trim();
+      if (voluntarioId.isEmpty) {
+        AppSnackbar.show(
+          context,
+          message: 'Indica el ID del voluntario.',
+          variant: AppSnackbarVariant.warning,
+        );
+        return;
+      }
+      final notifier =
+          ref.read(materialFichaViewModelProvider(material.id).notifier);
+      final success = await notifier.devolver(
+        voluntarioId: voluntarioId,
+        observaciones: observacionesCtrl.text.trim().isEmpty
+            ? null
+            : observacionesCtrl.text.trim(),
       );
-      await notifier.refresh();
+      if (!context.mounted) return;
+      if (success) {
+        AppSnackbar.show(
+          context,
+          message: 'Devolución registrada.',
+          variant: AppSnackbarVariant.success,
+        );
+        await notifier.refresh();
+      }
+    } finally {
+      voluntarioCtrl.dispose();
+      observacionesCtrl.dispose();
     }
   }
 
@@ -445,45 +455,49 @@ class _LoadedMaterial extends ConsumerWidget {
     String title,
   ) async {
     final descripcionCtrl = TextEditingController();
-    final ok = await AppDialog.show<bool>(
-      context,
-      title: title,
-      content: AppTextField(
-        key: const ValueKey('material_incidencia_descripcion'),
-        label: 'Descripción de la incidencia',
-        controller: descripcionCtrl,
-        prefixIcon: Symbols.notes,
-        maxLines: 4,
-      ),
-      actions: [
-        AppTextButton(
-          label: 'Cancelar',
-          onPressed: () => Navigator.of(context).pop(false),
-        ),
-        AppPrimaryButton(
-          key: const ValueKey('material_incidencia_confirm'),
-          label: 'Registrar',
-          onPressed: () => Navigator.of(context).pop(true),
-        ),
-      ],
-    );
-    if (ok != true) return;
-    if (!context.mounted) return;
-    final descripcion = descripcionCtrl.text.trim();
-    if (descripcion.isEmpty) {
-      AppSnackbar.show(
+    try {
+      final ok = await AppDialog.show<bool>(
         context,
-        message: 'La descripción es obligatoria.',
-        variant: AppSnackbarVariant.warning,
+        title: title,
+        content: AppTextField(
+          key: const ValueKey('material_incidencia_descripcion'),
+          label: 'Descripción de la incidencia',
+          controller: descripcionCtrl,
+          prefixIcon: Symbols.notes,
+          maxLines: 4,
+        ),
+        actions: [
+          AppTextButton(
+            label: 'Cancelar',
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          AppPrimaryButton(
+            key: const ValueKey('material_incidencia_confirm'),
+            label: 'Registrar',
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
       );
-      return;
-    }
-    await ref
-        .read(materialFichaViewModelProvider(material.id).notifier)
-        .reportarIncidencia(
-          nuevoEstado: nuevoEstado,
-          descripcion: descripcion,
+      if (ok != true) return;
+      if (!context.mounted) return;
+      final descripcion = descripcionCtrl.text.trim();
+      if (descripcion.isEmpty) {
+        AppSnackbar.show(
+          context,
+          message: 'La descripción es obligatoria.',
+          variant: AppSnackbarVariant.warning,
         );
+        return;
+      }
+      await ref
+          .read(materialFichaViewModelProvider(material.id).notifier)
+          .reportarIncidencia(
+            nuevoEstado: nuevoEstado,
+            descripcion: descripcion,
+          );
+    } finally {
+      descripcionCtrl.dispose();
+    }
   }
 }
 

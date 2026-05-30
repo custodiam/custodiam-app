@@ -29,7 +29,10 @@ class AsignacionActualSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: AppSpacing.sm),
-        Text('Asignación actual', style: theme.textTheme.titleSmall),
+        Semantics(
+          header: true,
+          child: Text('Asignación actual', style: theme.textTheme.titleSmall),
+        ),
         for (final asignacion in asignaciones)
           _AsignacionTile(asignacion: asignacion),
       ],
