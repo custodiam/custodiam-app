@@ -43,6 +43,7 @@ enum Permission {
   inventarioPrestarTemporal('inventario.prestar_temporal'),
   inventarioRegistrarDevolucion('inventario.registrar_devolucion'),
   inventarioAsignarAServicio('inventario.asignar_a_servicio'),
+  inventarioGestionarDotacionVehiculo('inventario.gestionar_dotacion_vehiculo'),
   inventarioReportarIncidencia('inventario.reportar_incidencia'),
   inventarioVer('inventario.ver'),
 
@@ -126,6 +127,7 @@ const _baseJefeEquipo = <Permission>{
 const _baseJefeSeccion = <Permission>{
   ..._baseJefeEquipo,
   Permission.inventarioAsignarEquipamientoPersonal,
+  Permission.inventarioGestionarDotacionVehiculo,
 };
 
 const _baseJefeUnidad = <Permission>{
