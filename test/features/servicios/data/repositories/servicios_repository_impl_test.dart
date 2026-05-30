@@ -177,6 +177,32 @@ void main() {
           )).called(1);
     });
 
+    test('forwards the date range to the data source', () async {
+      when(() => api.list(
+            skip: any(named: 'skip'),
+            limit: any(named: 'limit'),
+            query: any(named: 'query'),
+            estado: any(named: 'estado'),
+            tipo: any(named: 'tipo'),
+            desde: any(named: 'desde'),
+            hasta: any(named: 'hasta'),
+          )).thenAnswer((_) async => _envelope([], total: 0));
+
+      final desde = DateTime(2026, 6, 1);
+      final hasta = DateTime(2026, 6, 30);
+      await repo.list(desde: desde, hasta: hasta);
+
+      verify(() => api.list(
+            skip: any(named: 'skip'),
+            limit: any(named: 'limit'),
+            query: any(named: 'query'),
+            estado: any(named: 'estado'),
+            tipo: any(named: 'tipo'),
+            desde: desde,
+            hasta: hasta,
+          )).called(1);
+    });
+
     test('maps 401 to AuthFailure.sessionExpired', () async {
       when(() => api.list(
             skip: any(named: 'skip'),

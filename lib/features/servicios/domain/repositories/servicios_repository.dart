@@ -12,13 +12,16 @@ import '../entities/voluntario_inscrito.dart';
 
 abstract class ServiciosRepository {
   /// GET /servicios — paginated listing (US-03-07). Backend caps
-  /// limit at 200.
+  /// limit at 200. `desde`/`hasta` acotan por `fecha_inicio` (rango
+  /// inclusivo de día completo en ambos extremos).
   Future<Result<ServiciosPage>> list({
     int skip,
     int limit,
     String? query,
     EstadoServicio? estado,
     TipoServicio? tipo,
+    DateTime? desde,
+    DateTime? hasta,
   });
 
   /// GET /servicios/{id} — full detail.
