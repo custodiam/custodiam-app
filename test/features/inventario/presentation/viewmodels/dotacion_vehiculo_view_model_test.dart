@@ -95,5 +95,46 @@ void main() {
         isA<AsyncError<List<DotacionVehiculo>>>(),
       );
     });
+
+    test('liberar success returns true and reloads the list', () async {
+      final repo = _MockRepo();
+      when(() => repo.listarDotacionVehiculo('v-1'))
+          .thenAnswer((_) async => Success([_dotacion()]));
+      when(() => repo.liberarDotacionVehiculo(
+            'v-1',
+            asignacionId: any(named: 'asignacionId'),
+          )).thenAnswer((_) async => const Success<void>(null));
+      final container = _container(repo);
+      await container.read(dotacionVehiculoViewModelProvider('v-1').future);
+
+      final ok = await container
+          .read(dotacionVehiculoViewModelProvider('v-1').notifier)
+          .liberar(asignacionId: 'a-1');
+
+      expect(ok, isTrue);
+      verify(() => repo.listarDotacionVehiculo('v-1')).called(2);
+    });
+
+    test('liberar failure returns false and surfaces an error', () async {
+      final repo = _MockRepo();
+      when(() => repo.listarDotacionVehiculo('v-1'))
+          .thenAnswer((_) async => Success([_dotacion()]));
+      when(() => repo.liberarDotacionVehiculo(
+            'v-1',
+            asignacionId: any(named: 'asignacionId'),
+          )).thenAnswer((_) async => const Fail(InventarioFailure.notFound()));
+      final container = _container(repo);
+      await container.read(dotacionVehiculoViewModelProvider('v-1').future);
+
+      final ok = await container
+          .read(dotacionVehiculoViewModelProvider('v-1').notifier)
+          .liberar(asignacionId: 'a-1');
+
+      expect(ok, isFalse);
+      expect(
+        container.read(dotacionVehiculoViewModelProvider('v-1')),
+        isA<AsyncError<List<DotacionVehiculo>>>(),
+      );
+    });
   });
 }
