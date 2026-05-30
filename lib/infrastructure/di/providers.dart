@@ -18,6 +18,7 @@ import '../auth/keycloak_mobile_auth_service.dart';
 import '../auth/keycloak_web_auth_service.dart';
 import '../auth/token_store.dart';
 import '../catalogo/inventario_catalogo_service.dart';
+import '../catalogo/ubicaciones_catalogo_service.dart';
 import '../network/api_client.dart';
 // Conditional import: on web targets we get the real
 // WebSessionStorageGateway backed by package:web; on VM (unit tests)
@@ -47,4 +48,10 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 /// (lo consume `servicios` al asignar recursos a un servicio — R1).
 final inventarioCatalogoServiceProvider = Provider<InventarioCatalogoService>(
   (ref) => InventarioCatalogoService(ref.watch(apiClientProvider)),
+);
+
+/// Catálogo de ubicaciones para el picker de las altas de inventario (PR2).
+final ubicacionesCatalogoServiceProvider =
+    Provider<UbicacionesCatalogoService>(
+  (ref) => UbicacionesCatalogoService(ref.watch(apiClientProvider)),
 );

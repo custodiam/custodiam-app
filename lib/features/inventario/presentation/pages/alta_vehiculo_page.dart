@@ -15,11 +15,13 @@ import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
+import '../../../../infrastructure/catalogo/catalogo_recurso.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/tipo_vehiculo.dart';
 import '../../domain/entities/vehiculo_create.dart';
 import '../viewmodels/alta_vehiculo_view_model.dart';
 import '../viewmodels/vehiculos_list_view_model.dart';
+import '../widgets/ubicacion_selector_field.dart';
 
 class AltaVehiculoPage extends ConsumerWidget {
   const AltaVehiculoPage({super.key});
@@ -47,18 +49,17 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
   final _codigoCtrl = TextEditingController();
   final _matriculaCtrl = TextEditingController();
   final _marcaModeloCtrl = TextEditingController();
-  final _ubicacionCtrl = TextEditingController();
   final _observacionesCtrl = TextEditingController();
   final _itvCtrl = TextEditingController();
   TipoVehiculo _tipo = TipoVehiculo.furgoneta;
   DateTime? _fechaItv;
+  CatalogoRecurso? _ubicacion;
 
   @override
   void dispose() {
     _codigoCtrl.dispose();
     _matriculaCtrl.dispose();
     _marcaModeloCtrl.dispose();
-    _ubicacionCtrl.dispose();
     _observacionesCtrl.dispose();
     _itvCtrl.dispose();
     super.dispose();
@@ -98,7 +99,8 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
       codigoInterno: _codigoCtrl.text.trim(),
       matricula: _matriculaCtrl.text.trim(),
       tipo: _tipo,
-      ubicacionBase: _ubicacionCtrl.text.trim(),
+      ubicacionBase: _ubicacion?.label,
+      ubicacionBaseId: _ubicacion?.id,
       marcaModelo: _normalize(_marcaModeloCtrl.text),
       fechaItv: _fechaItv,
       observaciones: _normalize(_observacionesCtrl.text),
@@ -187,12 +189,11 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
               validator: (v) => _validateRequired(v, 'Matrícula'),
             ),
             const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: const ValueKey('alta_vehiculo_ubicacion'),
-              label: 'Ubicación base',
-              controller: _ubicacionCtrl,
-              prefixIcon: Symbols.location_on,
-              validator: (v) => _validateRequired(v, 'Ubicación'),
+            UbicacionSelectorField(
+              fieldKey: const ValueKey('alta_vehiculo_ubicacion'),
+              value: _ubicacion,
+              onChanged: (u) => setState(() => _ubicacion = u),
+              validator: (v) => v == null ? 'Ubicación obligatoria' : null,
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(

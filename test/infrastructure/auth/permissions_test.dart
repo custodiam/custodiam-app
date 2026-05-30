@@ -118,6 +118,41 @@ void main() {
       );
     });
 
+    test('crear ubicación requiere jefe_seccion o superior (PR2)', () {
+      // Lockstep con el backend: `ubicaciones.crear` vive en
+      // `_baseJefeSeccion` y lo heredan jefe_unidad / subjefe /
+      // jefe_agrupacion / coordinador. No lo tienen los jefes de
+      // equipo/grupo ni los roles administrativos (admin/secretario/tesorero).
+      for (final rol in [
+        'voluntario',
+        'voluntario_practicas',
+        'jefe_equipo',
+        'jefe_grupo',
+        'secretario',
+        'tesorero',
+        'admin',
+      ]) {
+        expect(
+          kRolePermissions[rol]!.contains(Permission.ubicacionesCrear),
+          isFalse,
+          reason: '$rol no debería poder crear ubicaciones',
+        );
+      }
+      for (final rol in [
+        'jefe_seccion',
+        'jefe_unidad',
+        'subjefe_agrupacion',
+        'jefe_agrupacion',
+        'coordinador',
+      ]) {
+        expect(
+          kRolePermissions[rol]!.contains(Permission.ubicacionesCrear),
+          isTrue,
+          reason: '$rol debería poder crear ubicaciones',
+        );
+      }
+    });
+
     test('reportar incidencia lo puede hacer cualquier rol humano (decisión 11)', () {
       for (final entry in kRolePermissions.entries) {
         if (entry.key == 'admin') continue;
@@ -154,6 +189,7 @@ void main() {
         Permission.inventarioAsignarEquipamientoPersonal.value,
         'inventario.asignar_equipamiento_personal',
       );
+      expect(Permission.ubicacionesCrear.value, 'ubicaciones.crear');
     });
 
     test('fromString redondea valores conocidos y null en desconocidos', () {
