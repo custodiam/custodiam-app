@@ -101,9 +101,12 @@ class _DotacionBody extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: Text(
-                'Material asignado al vehículo',
-                style: theme.textTheme.titleSmall,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  'Material asignado al vehículo',
+                  style: theme.textTheme.titleSmall,
+                ),
               ),
             ),
             if (canManage)
