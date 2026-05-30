@@ -7,6 +7,7 @@ import '../../../../infrastructure/error/failure.dart';
 import '../../../../infrastructure/error/result.dart';
 import '../../../../infrastructure/network/api_client.dart';
 import '../../domain/entities/asignacion_material.dart';
+import '../../domain/entities/dotacion_vehiculo.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/material_create.dart';
 import '../../domain/entities/material_item.dart';
@@ -20,6 +21,7 @@ import '../../domain/entities/vehiculos_page.dart';
 import '../../domain/repositories/inventario_repository.dart';
 import '../datasources/inventario_api.dart';
 import '../models/asignacion_material_model.dart';
+import '../models/dotacion_vehiculo_model.dart';
 import '../models/material_item_model.dart';
 import '../models/material_summary_model.dart';
 import '../models/vehiculo_item_model.dart';
@@ -266,6 +268,67 @@ class InventarioRepositoryImpl implements InventarioRepository {
       return Fail(_mapApiException(e));
     } catch (e, stack) {
       dev.log('inventario.incidenciaVehiculo failed: $e',
+          name: 'API', error: e, stackTrace: stack);
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<List<DotacionVehiculo>>> listarDotacionVehiculo(
+    String vehiculoId,
+  ) async {
+    try {
+      final res = await _api.listarDotacionVehiculo(vehiculoId);
+      final items = res
+          .cast<Map<String, dynamic>>()
+          .map(DotacionVehiculoModel.fromJson)
+          .toList(growable: false);
+      return Success(items);
+    } on ApiException catch (e) {
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log('inventario.listarDotacion failed: $e',
+          name: 'API', error: e, stackTrace: stack);
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<DotacionVehiculo>> asignarDotacionVehiculo(
+    String vehiculoId, {
+    required String materialId,
+    int cantidad = 1,
+  }) async {
+    try {
+      final json = await _api.asignarDotacionVehiculo(vehiculoId, {
+        'material_id': materialId,
+        'cantidad': cantidad,
+      });
+      return Success(DotacionVehiculoModel.fromJson(json));
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        return Fail(_mapAsignacion409(e));
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log('inventario.asignarDotacion failed: $e',
+          name: 'API', error: e, stackTrace: stack);
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<void>> liberarDotacionVehiculo(
+    String vehiculoId, {
+    required String asignacionId,
+  }) async {
+    try {
+      await _api.liberarDotacionVehiculo(vehiculoId, asignacionId);
+      return const Success(null);
+    } on ApiException catch (e) {
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log('inventario.liberarDotacion failed: $e',
           name: 'API', error: e, stackTrace: stack);
       return const Fail(NetworkFailure.unknown());
     }

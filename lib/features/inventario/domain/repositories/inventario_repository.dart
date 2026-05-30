@@ -5,6 +5,7 @@
 
 import '../../../../infrastructure/error/result.dart';
 import '../entities/asignacion_material.dart';
+import '../entities/dotacion_vehiculo.dart';
 import '../entities/estado_inventario.dart';
 import '../entities/material_create.dart';
 import '../entities/material_item.dart';
@@ -59,5 +60,19 @@ abstract class InventarioRepository {
     String id, {
     required EstadoInventario nuevoEstado,
     required String descripcion,
+  });
+
+  // Dotación fija de vehículo (PR3)
+  Future<Result<List<DotacionVehiculo>>> listarDotacionVehiculo(
+    String vehiculoId,
+  );
+  Future<Result<DotacionVehiculo>> asignarDotacionVehiculo(
+    String vehiculoId, {
+    required String materialId,
+    int cantidad,
+  });
+  Future<Result<void>> liberarDotacionVehiculo(
+    String vehiculoId, {
+    required String asignacionId,
   });
 }

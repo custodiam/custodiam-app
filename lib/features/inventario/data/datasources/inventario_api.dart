@@ -95,4 +95,36 @@ class InventarioApi {
   ) {
     return _client.post('/inventario/vehiculos/$id/incidencia', body);
   }
+
+  // — Dotación fija de vehículo (PR3) —
+
+  Future<List<dynamic>> listarDotacionVehiculo(String vehiculoId) async {
+    final res =
+        await _client.getList('/inventario/vehiculos/$vehiculoId/dotacion');
+    return res.body;
+  }
+
+  Future<Map<String, dynamic>> asignarDotacionVehiculo(
+    String vehiculoId,
+    Map<String, dynamic> body,
+  ) {
+    return _client.post('/inventario/vehiculos/$vehiculoId/dotacion', body);
+  }
+
+  Future<void> liberarDotacionVehiculo(
+    String vehiculoId,
+    String asignacionId,
+  ) async {
+    try {
+      await _client.delete(
+        '/inventario/vehiculos/$vehiculoId/dotacion/$asignacionId',
+      );
+    } on FormatException {
+      // El backend devuelve 204 No Content (cuerpo vacío). ApiClient.delete
+      // pasa por jsonDecode, que lanza FormatException sobre el cuerpo vacío
+      // aunque la operación haya tenido éxito; lo absorbemos aquí. Un fallo
+      // real (no-2xx) llega como ApiException y sí se propaga.
+      return;
+    }
+  }
 }
