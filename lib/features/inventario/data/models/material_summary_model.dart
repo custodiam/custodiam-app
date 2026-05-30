@@ -24,7 +24,7 @@ class MaterialSummaryModel {
       categoria: json['categoria'] as String?,
       estado: estado,
       cantidad: json['cantidad'] as int,
-      ubicacionBase: json['ubicacion_base'] as String,
+      ubicacionBase: json['ubicacion_base'] as String?,
     );
   }
 }

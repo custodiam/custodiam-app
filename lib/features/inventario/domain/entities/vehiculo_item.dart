@@ -11,7 +11,9 @@ class VehiculoItem {
   final DateTime? fechaItv;
   final String? fotoUrl;
   final String? observaciones;
-  final String ubicacionBase;
+  // Etiqueta legacy opcional de ubicación (PR2): la referencia canónica es
+  // el FK del backend; el texto puede no venir.
+  final String? ubicacionBase;
   final EstadoInventario estado;
   final String? observacionesIncidencia;
   final DateTime? createdAt;
@@ -27,7 +29,7 @@ class VehiculoItem {
     required this.codigoInterno,
     required this.matricula,
     required this.tipo,
-    required this.ubicacionBase,
+    this.ubicacionBase,
     required this.estado,
     this.marcaModelo,
     this.fechaItv,

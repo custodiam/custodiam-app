@@ -150,7 +150,7 @@ class _LoadedVehiculo extends ConsumerWidget {
           _InfoRow(
             icon: Symbols.location_on,
             label: 'Ubicación',
-            value: vehiculo.ubicacionBase,
+            value: vehiculo.ubicacionBase ?? 'Sin ubicación',
           ),
           if (vehiculo.observaciones != null &&
               vehiculo.observaciones!.isNotEmpty)

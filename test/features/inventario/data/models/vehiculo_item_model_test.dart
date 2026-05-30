@@ -47,4 +47,19 @@ void main() {
       expect(v.asignacionActual, isNull);
     });
   });
+
+  group('VehiculoItemModel.fromJson — ubicación (PR2)', () {
+    test('parsea ubicacion_base cuando viene como texto', () {
+      final v = VehiculoItemModel.fromJson(_vehiculoRow());
+      expect(v.ubicacionBase, 'Almacén 1');
+    });
+
+    test('tolera ubicacion_base nulo (texto opcional tras PR2)', () {
+      final v = VehiculoItemModel.fromJson({
+        ..._vehiculoRow(),
+        'ubicacion_base': null,
+      });
+      expect(v.ubicacionBase, isNull);
+    });
+  });
 }

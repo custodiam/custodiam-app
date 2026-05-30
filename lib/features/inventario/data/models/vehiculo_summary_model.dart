@@ -22,7 +22,7 @@ class VehiculoSummaryModel {
       matricula: json['matricula'] as String,
       tipo: tipo,
       estado: estado,
-      ubicacionBase: json['ubicacion_base'] as String,
+      ubicacionBase: json['ubicacion_base'] as String?,
     );
   }
 }

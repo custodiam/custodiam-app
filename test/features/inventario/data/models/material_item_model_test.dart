@@ -62,4 +62,19 @@ void main() {
       expect(m.unidadesAsignadas, 0);
     });
   });
+
+  group('MaterialItemModel.fromJson — ubicación (PR2)', () {
+    test('parsea ubicacion_base cuando viene como texto', () {
+      final m = MaterialItemModel.fromJson(_materialRow());
+      expect(m.ubicacionBase, 'Almacén 1');
+    });
+
+    test('tolera ubicacion_base nulo (texto opcional tras PR2)', () {
+      final m = MaterialItemModel.fromJson({
+        ..._materialRow(),
+        'ubicacion_base': null,
+      });
+      expect(m.ubicacionBase, isNull);
+    });
+  });
 }

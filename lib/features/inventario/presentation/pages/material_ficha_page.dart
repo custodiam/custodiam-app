@@ -171,7 +171,7 @@ class _LoadedMaterial extends ConsumerWidget {
           _InfoRow(
             icon: Symbols.location_on,
             label: 'Ubicación',
-            value: material.ubicacionBase,
+            value: material.ubicacionBase ?? 'Sin ubicación',
           ),
           if (material.descripcion != null &&
               material.descripcion!.isNotEmpty)

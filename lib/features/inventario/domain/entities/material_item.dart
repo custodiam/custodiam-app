@@ -13,7 +13,9 @@ class MaterialItem {
   final TipoMaterial tipo;
   final String? categoria;
   final int cantidad;
-  final String ubicacionBase;
+  // Etiqueta legacy opcional de ubicación (PR2): la referencia canónica es
+  // el FK del backend; el texto puede no venir.
+  final String? ubicacionBase;
   final DateTime? fechaAdquisicion;
   final DateTime? fechaProximaRevision;
   final String? fotoUrl;
@@ -36,7 +38,7 @@ class MaterialItem {
     required this.tipo,
     required this.estado,
     required this.cantidad,
-    required this.ubicacionBase,
+    this.ubicacionBase,
     this.descripcion,
     this.codigo,
     this.numeroSerie,

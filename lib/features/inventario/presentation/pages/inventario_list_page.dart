@@ -320,7 +320,7 @@ class _MaterialTile extends StatelessWidget {
       leading: const CircleAvatar(child: Icon(Symbols.inventory_2)),
       title: Text(material.nombre),
       subtitle: Text(
-        '${_tipoLabel(material.tipo)} · ${material.ubicacionBase}'
+        '${_tipoLabel(material.tipo)} · ${material.ubicacionBase ?? "Sin ubicación"}'
         '${material.codigo != null ? " · ${material.codigo}" : ""}',
       ),
       trailing: InventarioEstadoBadge(estado: material.estado),
@@ -466,7 +466,7 @@ class _VehiculoTile extends StatelessWidget {
       key: ValueKey('inventario_vehiculo_item_${vehiculo.id}'),
       leading: const CircleAvatar(child: Icon(Symbols.directions_car)),
       title: Text('${vehiculo.codigoInterno} · ${vehiculo.matricula}'),
-      subtitle: Text('${_tipoLabel(vehiculo.tipo)} · ${vehiculo.ubicacionBase}'),
+      subtitle: Text('${_tipoLabel(vehiculo.tipo)} · ${vehiculo.ubicacionBase ?? "Sin ubicación"}'),
       trailing: InventarioEstadoBadge(estado: vehiculo.estado),
       onTap: () => context.go('/inventario/vehiculos/${vehiculo.id}'),
     );
