@@ -133,6 +133,22 @@ void main() {
         ),
       );
     });
+
+    test('throws FormatException on a 204 with an empty body', () async {
+      // El backend responde 204 No Content a un borrado con éxito; delete()
+      // pasa el cuerpo vacío por jsonDecode, que lanza FormatException. Las
+      // capas de datos que esperan 204 (p. ej. liberarDotacionVehiculo)
+      // dependen de este contrato para absorberlo.
+      when(() => auth.getValidAccessToken())
+          .thenAnswer((_) async => const Success('tok'));
+      when(() => http_.delete(any(), headers: any(named: 'headers')))
+          .thenAnswer((_) async => http.Response('', 204));
+
+      expect(
+        () => client.delete('/things/42'),
+        throwsA(isA<FormatException>()),
+      );
+    });
   });
 
   group('PATCH', () {
