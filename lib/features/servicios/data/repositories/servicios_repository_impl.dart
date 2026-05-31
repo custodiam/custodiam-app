@@ -33,6 +33,8 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
     String? query,
     EstadoServicio? estado,
     TipoServicio? tipo,
+    DateTime? desde,
+    DateTime? hasta,
   }) async {
     try {
       final response = await _api.list(
@@ -41,6 +43,8 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
         query: query,
         estado: estado,
         tipo: tipo,
+        desde: desde,
+        hasta: hasta,
       );
       final items = response.body
           .cast<Map<String, dynamic>>()

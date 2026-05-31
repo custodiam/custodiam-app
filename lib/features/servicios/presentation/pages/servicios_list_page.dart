@@ -9,10 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_date_range_picker.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
@@ -84,6 +86,27 @@ class _ServiciosListPageBodyState
         .search(_searchController.text.trim());
   }
 
+  Future<void> _abrirDateRangePicker(ServiciosListState? estado) async {
+    final hoy = DateTime.now();
+    final inicial = estado?.desde != null && estado?.hasta != null
+        ? DateTimeRange(start: estado!.desde!, end: estado.hasta!)
+        : null;
+    // Los servicios se planifican a futuro, así que el rango admite
+    // tanto pasado como porvenir: ±5 años en torno a hoy cubre con
+    // holgura cualquier servicio histórico o programado del piloto.
+    final range = await showAppDateRangePicker(
+      context: context,
+      firstDate: DateTime(hoy.year - 5, hoy.month, hoy.day),
+      lastDate: DateTime(hoy.year + 5, hoy.month, hoy.day),
+      initialDateRange: inicial,
+    );
+    if (range == null) return;
+    if (!mounted) return;
+    await ref
+        .read(serviciosListViewModelProvider.notifier)
+        .filterByDateRange(desde: range.start, hasta: range.end);
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncState = ref.watch(serviciosListViewModelProvider);
@@ -117,6 +140,14 @@ class _ServiciosListPageBodyState
           child: _AltaServicioButton(),
         ),
         AppIconButton(
+          key: const ValueKey('servicios_filtro_fechas_button'),
+          tooltip: 'Filtrar por fechas',
+          icon: Symbols.date_range,
+          onPressed: asyncState.valueOrNull == null
+              ? null
+              : () => _abrirDateRangePicker(asyncState.valueOrNull),
+        ),
+        AppIconButton(
           key: const ValueKey('servicios_refresh_button'),
           tooltip: 'Recargar',
           icon: Symbols.refresh,
@@ -146,6 +177,14 @@ class _ServiciosListPageBodyState
                 .read(serviciosListViewModelProvider.notifier)
                 .filterByEstado(estado),
           ),
+          if (asyncState.valueOrNull?.tieneRangoFechas ?? false)
+            _RangoActivoChip(
+              desde: asyncState.valueOrNull!.desde,
+              hasta: asyncState.valueOrNull!.hasta,
+              onLimpiar: () => ref
+                  .read(serviciosListViewModelProvider.notifier)
+                  .filterByDateRange(),
+            ),
           const SizedBox(height: AppSpacing.sm),
           Expanded(child: _buildBody(asyncState)),
         ],
@@ -169,9 +208,12 @@ class _ServiciosListPageBodyState
       },
       data: (state) {
         if (state.items.isEmpty) {
+          final hayFiltros = state.query.isNotEmpty ||
+              state.estado != null ||
+              state.tieneRangoFechas;
           return AppEmptyState(
             title: 'Sin servicios',
-            description: state.query.isNotEmpty || state.estado != null
+            description: hayFiltros
                 ? 'Prueba a cambiar la búsqueda o el filtro.'
                 : 'Aún no hay servicios disponibles.',
             icon: Symbols.event,
@@ -277,6 +319,52 @@ class _EstadoFilterRow extends StatelessWidget {
             onSelected: (_) => onChanged(EstadoServicio.cerrado),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RangoActivoChip extends StatelessWidget {
+  final DateTime? desde;
+  final DateTime? hasta;
+  final VoidCallback onLimpiar;
+
+  const _RangoActivoChip({
+    required this.desde,
+    required this.hasta,
+    required this.onLimpiar,
+  });
+
+  String _fmt(DateTime f) => DateFormat('dd/MM/yyyy', 'es_ES').format(f);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final label = desde != null && hasta != null
+        ? 'Del ${_fmt(desde!)} al ${_fmt(hasta!)}'
+        : desde != null
+            ? 'Desde ${_fmt(desde!)}'
+            : 'Hasta ${_fmt(hasta!)}';
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: InputChip(
+          key: const ValueKey('servicios_chip_rango_activo'),
+          avatar: Icon(
+            Symbols.date_range,
+            size: 18,
+            color: theme.colorScheme.onSecondaryContainer,
+          ),
+          label: Text(label),
+          backgroundColor: theme.colorScheme.secondaryContainer,
+          deleteIcon: const Icon(Symbols.close, size: 18),
+          deleteButtonTooltipMessage: 'Quitar filtro de fechas',
+          onDeleted: onLimpiar,
+        ),
       ),
     );
   }
