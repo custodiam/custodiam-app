@@ -68,8 +68,18 @@ class _UbicacionSelectorFieldState
   @override
   void didUpdateWidget(covariant UbicacionSelectorField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final text = widget.value?.label ?? '';
-    if (_displayCtrl.text != text) _displayCtrl.text = text;
+    if ((widget.value?.label ?? '') == _displayCtrl.text) return;
+    // Asignar `controller.text` notifica a los listeners del controller (el
+    // EditableText interno del campo). Si didUpdateWidget corre mientras un
+    // ancestro se está construyendo —p. ej. el Form al hacer setState en el
+    // submit—, esa notificación dispara markNeedsBuild durante el build y
+    // Flutter lanza "setState() called during build". Diferir la
+    // sincronización al final del frame evita la colisión.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final text = widget.value?.label ?? '';
+      if (_displayCtrl.text != text) _displayCtrl.text = text;
+    });
   }
 
   @override
