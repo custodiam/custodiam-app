@@ -246,6 +246,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
       title: 'Crear servicio',
       body: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
