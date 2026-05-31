@@ -41,6 +41,55 @@ class _HostState extends State<_Host> {
   }
 }
 
+/// Host de regresión: el selector vive dentro de un Form + ListView, como el
+/// formulario de alta real (el ListView envuelve los campos en
+/// _SelectionKeepAlive). El botón cambia la selección y reconstruye el Form
+/// en el mismo setState, reproduciendo el rebuild del alta al fijar una
+/// ubicación nueva.
+class _SubmitHost extends StatefulWidget {
+  const _SubmitHost();
+
+  @override
+  State<_SubmitHost> createState() => _SubmitHostState();
+}
+
+class _SubmitHostState extends State<_SubmitHost> {
+  final _formKey = GlobalKey<FormState>();
+  CatalogoRecurso? _value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              children: [
+                UbicacionSelectorField(
+                  fieldKey: const ValueKey('sel'),
+                  value: _value,
+                  onChanged: (u) => setState(() => _value = u),
+                ),
+              ],
+            ),
+          ),
+        ),
+        ElevatedButton(
+          key: const ValueKey('set_value_btn'),
+          onPressed: () => setState(() {
+            _value = const CatalogoRecurso(
+              id: 'u-x',
+              label: 'Agustina de Aragón',
+            );
+          }),
+          child: const Text('set'),
+        ),
+      ],
+    );
+  }
+}
+
 void main() {
   late _MockUbicacionesService service;
 
@@ -103,6 +152,34 @@ void main() {
     expect(formKey.currentState!.validate(), isFalse);
     await tester.pump();
     expect(find.text('Ubicación obligatoria'), findsOneWidget);
+  });
+
+  testWidgets(
+      'cambiar la selección al reconstruir el Form no lanza '
+      'setState-during-build (regresión)', (tester) async {
+    // Reproduce el contexto del formulario de alta real: el selector vive
+    // dentro de un Form y un ListView (que envuelve los campos de texto en
+    // _SelectionKeepAlive). Un botón cambia la selección y reconstruye el
+    // Form en el mismo setState — como el alta de material al recibir una
+    // ubicación nueva del picker. El antiguo `_displayCtrl.text = text` en
+    // didUpdateWidget notificaba al campo durante el build del Form y
+    // lanzaba "setState() called during build"; el fix lo difiere.
+    await pumpRiverpod(
+      tester,
+      const _SubmitHost(),
+      overrides: [
+        ubicacionesCatalogoServiceProvider.overrideWithValue(service),
+      ],
+      currentUser: _user(const ['jefe_seccion']),
+      settle: false,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('set_value_btn')));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Agustina de Aragón'), findsOneWidget);
   });
 
   testWidgets('crear desde el footer da de alta la ubicación y la selecciona',
