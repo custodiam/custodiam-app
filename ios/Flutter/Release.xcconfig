@@ -1,2 +1,5 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
+// Maps API key (gitignored, lo genera `just secrets`). Opcional: sin él
+// el build web/CI no falla; solo el mapa nativo iOS quedaría sin key.
+#include? "Secrets.xcconfig"
