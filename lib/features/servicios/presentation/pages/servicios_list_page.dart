@@ -207,34 +207,53 @@ class _ServiciosListPageBodyState
         );
       },
       data: (state) {
+        Future<void> onRefresh() =>
+            ref.read(serviciosListViewModelProvider.notifier).refresh();
         if (state.items.isEmpty) {
           final hayFiltros = state.query.isNotEmpty ||
               state.estado != null ||
               state.tieneRangoFechas;
-          return AppEmptyState(
-            title: 'Sin servicios',
-            description: hayFiltros
-                ? 'Prueba a cambiar la búsqueda o el filtro.'
-                : 'Aún no hay servicios disponibles.',
-            icon: Symbols.event,
+          // ListView scrollable (no un widget estático) para que el gesto
+          // de deslizar-para-refrescar funcione también sin resultados.
+          return RefreshIndicator(
+            onRefresh: onRefresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xxl),
+                  child: AppEmptyState(
+                    title: 'Sin servicios',
+                    description: hayFiltros
+                        ? 'Prueba a cambiar la búsqueda o el filtro.'
+                        : 'Aún no hay servicios disponibles.',
+                    icon: Symbols.event,
+                  ),
+                ),
+              ],
+            ),
           );
         }
-        return ListView.separated(
-          key: const ValueKey('servicios_list_view'),
-          controller: _scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-          itemCount: state.items.length + (state.hasMore ? 1 : 0),
-          separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            if (index >= state.items.length) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: AppLoadingIndicator.fullScreen(),
-              );
-            }
-            final s = state.items[index];
-            return _ServicioTile(servicio: s);
-          },
+        return RefreshIndicator(
+          onRefresh: onRefresh,
+          child: ListView.separated(
+            key: const ValueKey('servicios_list_view'),
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            itemCount: state.items.length + (state.hasMore ? 1 : 0),
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              if (index >= state.items.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  child: AppLoadingIndicator.fullScreen(),
+                );
+              }
+              final s = state.items[index];
+              return _ServicioTile(servicio: s);
+            },
+          ),
         );
       },
     );
