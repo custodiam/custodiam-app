@@ -133,6 +133,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
       title: 'Nuevo material',
       body: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [

@@ -388,11 +388,13 @@ void main() {
     verifyNever(() => repo.createMaterial(any()));
 
     await _seleccionarUbicacion(tester);
+    await tester.pumpAndSettle();
 
-    // NOTA DE UX: el form valida al enviar (autovalidateMode por defecto),
-    // igual que el resto de campos; el mensaje de error no se limpia hasta el
-    // siguiente submit. Lo que importa es que la selección SÍ cuenta: al
-    // reenviar, la validación pasa y el material se crea.
+    // Con autovalidateMode.onUserInteraction el error se limpia al corregir el
+    // campo: tras seleccionar la ubicación el mensaje desaparece sin reenviar.
+    expect(find.text('Ubicación obligatoria'), findsNothing);
+
+    // El re-submit valida y crea el material.
     await tester.tap(find.byKey(K.altaMaterialSubmit));
     await tester.pumpAndSettle();
 

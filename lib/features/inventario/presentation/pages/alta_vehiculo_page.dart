@@ -142,6 +142,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
       title: 'Nuevo vehículo',
       body: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
