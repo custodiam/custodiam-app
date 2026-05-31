@@ -8,6 +8,7 @@
 //   selección granular llegará con la sección de voluntarios cuando
 //   el cliente reúna el catálogo paginado en un selector.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,7 @@ import '../../../../core/ui/buttons/app_destructive_button.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
+import '../../../../core/ui/maps/maps_launcher.dart';
 import '../../../../core/ui/buttons/app_text_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_confirm_dialog.dart';
@@ -156,6 +158,11 @@ class _LoadedFicha extends ConsumerWidget {
             label: 'Ubicación',
             value: servicio.ubicacion,
           ),
+          if (servicio.ubicacionLat != null && servicio.ubicacionLng != null)
+            _AbrirMapaButton(
+              lat: servicio.ubicacionLat!,
+              lng: servicio.ubicacionLng!,
+            ),
           _InfoRow(
             icon: Symbols.calendar_today,
             label: 'Inicio',
@@ -211,6 +218,50 @@ class _LoadedFicha extends ConsumerWidget {
           // — Acceso a sección de fichaje (US-04-04 / US-04-01-02) —
           _FichajeShortcut(servicio: servicio),
         ],
+      ),
+    );
+  }
+}
+
+class _AbrirMapaButton extends ConsumerWidget {
+  final double lat;
+  final double lng;
+
+  const _AbrirMapaButton({required this.lat, required this.lng});
+
+  Future<void> _abrir(BuildContext context, WidgetRef ref, bool esWeb) async {
+    final launcher = ref.read(mapsLauncherProvider);
+    final uri = esWeb ? mapsShowUri(lat, lng) : mapsDirectionsUri(lat, lng);
+    var ok = false;
+    try {
+      ok = await launcher.abrir(uri);
+    } catch (_) {
+      ok = false;
+    }
+    if (!ok && context.mounted) {
+      AppSnackbar.show(
+        context,
+        message: 'No se pudo abrir el mapa.',
+        variant: AppSnackbarVariant.danger,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // En escritorio/web solo "ver en el mapa"; en móvil, ruta navegable
+    // que la app de mapas enruta desde el GPS del usuario (ADR-030 §2).
+    const esWeb = kIsWeb;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: AppSecondaryButton(
+          key: const ValueKey('servicio_ficha_abrir_mapa'),
+          label: esWeb ? 'Ver en el mapa' : 'Cómo llegar',
+          icon: esWeb ? Symbols.map : Symbols.directions,
+          onPressed: () => _abrir(context, ref, esWeb),
+        ),
       ),
     );
   }

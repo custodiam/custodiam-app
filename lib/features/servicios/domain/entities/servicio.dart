@@ -13,6 +13,14 @@ class Servicio {
   final DateTime fechaInicio;
   final DateTime? fechaFin;
   final String ubicacion;
+
+  /// Coordenadas exactas de la ubicación, fuente de verdad para abrir
+  /// el mapa nativo (ADR-030). Son nulas mientras el servicio no tenga
+  /// ubicación geolocalizada; `ubicacion` (texto) sigue siendo la
+  /// etiqueta humana. Siempre van juntas o ambas nulas (lo garantiza
+  /// el backend).
+  final double? ubicacionLat;
+  final double? ubicacionLng;
   final int? numeroVoluntarios;
 
   /// Número de voluntarios actualmente inscritos. Lo aporta el backend
@@ -37,6 +45,8 @@ class Servicio {
     required this.inscritosCount,
     this.descripcion,
     this.fechaFin,
+    this.ubicacionLat,
+    this.ubicacionLng,
     this.numeroVoluntarios,
     this.notasMaterial,
     this.notasVehiculos,
