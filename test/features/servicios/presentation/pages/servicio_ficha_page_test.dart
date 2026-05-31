@@ -1,4 +1,5 @@
 import 'package:custodiam/core/ui/buttons/app_primary_button.dart';
+import 'package:custodiam/core/ui/maps/maps_launcher.dart';
 import 'package:custodiam/features/servicios/domain/entities/estado_servicio.dart';
 import 'package:custodiam/features/servicios/domain/entities/servicio.dart';
 import 'package:custodiam/features/servicios/domain/entities/tipo_servicio.dart';
@@ -11,12 +12,26 @@ import 'package:custodiam/features/servicios/presentation/viewmodels/servicios_d
 import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../../test_utils/test_app.dart';
 
 class _MockRepo extends Mock implements ServiciosRepository {}
+
+/// Captura las URLs en lugar de abrir mapas reales.
+class _FakeMapsLauncher extends MapsLauncher {
+  _FakeMapsLauncher(this.captured);
+
+  final List<Uri> captured;
+
+  @override
+  Future<bool> abrir(Uri uri) async {
+    captured.add(uri);
+    return true;
+  }
+}
 
 const _voluntario = CurrentUser(
   sub: 's',
@@ -29,6 +44,8 @@ Servicio _servicio({
   EstadoServicio estado = EstadoServicio.publicado,
   int? numeroVoluntarios,
   int inscritosCount = 0,
+  double? ubicacionLat,
+  double? ubicacionLng,
 }) {
   return Servicio(
     id: id,
@@ -37,6 +54,8 @@ Servicio _servicio({
     estado: estado,
     fechaInicio: DateTime.utc(2026, 6, 10, 8),
     ubicacion: 'Zuera',
+    ubicacionLat: ubicacionLat,
+    ubicacionLng: ubicacionLng,
     numeroVoluntarios: numeroVoluntarios,
     inscritosCount: inscritosCount,
   );
@@ -49,7 +68,11 @@ void main() {
     repo = _MockRepo();
   });
 
-  Future<void> pumpFicha(WidgetTester tester, Servicio servicio) async {
+  Future<void> pumpFicha(
+    WidgetTester tester,
+    Servicio servicio, {
+    List<Override> extraOverrides = const [],
+  }) async {
     when(() => repo.getById(servicio.id))
         .thenAnswer((_) async => Success(servicio));
     when(() => repo.getInventario(servicio.id)).thenAnswer(
@@ -69,6 +92,7 @@ void main() {
         getServicioByIdProvider.overrideWithValue(GetServicioById(repo)),
         getInventarioServicioProvider
             .overrideWithValue(GetInventarioServicio(repo)),
+        ...extraOverrides,
       ],
     );
   }
@@ -97,6 +121,39 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('no muestra el botón de mapa cuando el servicio no tiene coords',
+      (tester) async {
+    await pumpFicha(tester, _servicio());
+
+    expect(
+      find.byKey(const ValueKey('servicio_ficha_abrir_mapa')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('"Cómo llegar" abre el deeplink de direcciones en móvil',
+      (tester) async {
+    // El test corre en la VM (kIsWeb == false) → ruta navegable.
+    final capturadas = <Uri>[];
+    await pumpFicha(
+      tester,
+      _servicio(ubicacionLat: 41.8708, ubicacionLng: -0.7895),
+      extraOverrides: [
+        mapsLauncherProvider.overrideWithValue(_FakeMapsLauncher(capturadas)),
+      ],
+    );
+
+    final boton = find.byKey(const ValueKey('servicio_ficha_abrir_mapa'));
+    expect(boton, findsOneWidget);
+    expect(find.text('Cómo llegar'), findsOneWidget);
+
+    await tester.tap(boton);
+    await tester.pumpAndSettle();
+
+    expect(capturadas, hasLength(1));
+    expect(capturadas.single, mapsDirectionsUri(41.8708, -0.7895));
   });
 
   testWidgets(
