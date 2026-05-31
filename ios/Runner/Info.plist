@@ -4,6 +4,13 @@
 	<dict>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
+		<!-- API key de Google Maps (iOS). El valor se inyecta desde
+		     Secrets.xcconfig (gitignored); aquí nunca va en claro.
+		     La lee AppDelegate vía GMSServices.provideAPIKey. -->
+		<key>MAPS_API_KEY</key>
+		<string>$(MAPS_API_KEY)</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Custodiam usa tu ubicación solo mientras la app está abierta, para centrar el mapa al elegir el lugar de un servicio y para abrir la ruta hacia él. Nunca accede a tu ubicación en segundo plano.</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>

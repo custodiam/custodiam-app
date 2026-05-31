@@ -21,6 +21,12 @@
 default:
     @just --list
 
+# Descifrar secretos de cliente (sops+age) → archivos en claro que
+# Gradle/Xcode leen. Ejecutar UNA vez tras clonar; `flutter run`/`build`
+# no cambian. Requiere la clave age del equipo en ~/.config/sops/age/.
+secrets:
+    bash scripts/decrypt-secrets.sh
+
 # `flutter pub get` — sincronizar dependencias
 pub-get:
     flutter pub get

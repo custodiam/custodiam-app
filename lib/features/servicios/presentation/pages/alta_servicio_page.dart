@@ -14,6 +14,8 @@ import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
+import '../../../../core/ui/maps/app_location_picker.dart';
+import '../../../../core/ui/maps/map_point.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
@@ -69,6 +71,8 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
   late TipoServicio _tipo = widget.tipoInicial ?? TipoServicio.preventivo;
   DateTime? _fechaInicio;
   DateTime? _fechaFin;
+  double? _ubicacionLat;
+  double? _ubicacionLng;
 
   @override
   void dispose() {
@@ -114,6 +118,26 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
     );
     if (time == null) return null;
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+  }
+
+  Future<void> _pickUbicacion() async {
+    final inicial = (_ubicacionLat != null && _ubicacionLng != null)
+        ? MapPoint(_ubicacionLat!, _ubicacionLng!)
+        : null;
+    final result = await showAppLocationPicker(
+      context,
+      ref,
+      inicial: inicial,
+      textoInicial: _ubicacionCtrl.text.trim(),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _ubicacionLat = result.lat;
+      _ubicacionLng = result.lng;
+      if (result.direccion != null && result.direccion!.isNotEmpty) {
+        _ubicacionCtrl.text = result.direccion!;
+      }
+    });
   }
 
   Future<void> _pickFechaInicio() async {
@@ -178,6 +202,8 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
       fechaInicio: _fechaInicio!,
       fechaFin: _fechaFin,
       ubicacion: _ubicacionCtrl.text.trim(),
+      ubicacionLat: _ubicacionLat,
+      ubicacionLng: _ubicacionLng,
       numeroVoluntarios:
           numeroVoluntariosRaw.isEmpty ? null : int.parse(numeroVoluntariosRaw),
       notasMaterial: _normalize(_notasMaterialCtrl.text),
@@ -252,7 +278,43 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               controller: _ubicacionCtrl,
               prefixIcon: Symbols.location_on,
               validator: (v) => _validateRequired(v, 'Ubicación'),
+              // Alternativa no-mapa: el campo sigue siendo texto libre; el
+              // mapa es opcional para fijar coordenadas exactas (ADR-030).
+              suffixIcon: IconButton(
+                key: const ValueKey('alta_servicio_ubicacion_mapa'),
+                icon: const Icon(Symbols.map),
+                tooltip: 'Elegir en el mapa',
+                onPressed: _pickUbicacion,
+              ),
             ),
+            if (_ubicacionLat != null && _ubicacionLng != null)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Row(
+                  children: [
+                    Icon(
+                      Symbols.my_location,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        'Ubicación fijada en el mapa',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    TextButton(
+                      key: const ValueKey('alta_servicio_quitar_coords'),
+                      onPressed: () => setState(() {
+                        _ubicacionLat = null;
+                        _ubicacionLng = null;
+                      }),
+                      child: const Text('Quitar'),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: AppSpacing.md),
             // Guía 28 §WCAG 4.1.2: rol real = botón que abre date+time
             // picker, no TextField. Semantics fuerza la interpretación

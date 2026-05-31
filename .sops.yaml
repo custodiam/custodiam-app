@@ -1,0 +1,21 @@
+# sops + age configuration for custodiam-app
+#
+# Encripta los secretos de cliente que el build necesita (hoy: la API
+# key de Google Maps para Android/iOS). Mismo esquema y misma clave age
+# del equipo que custodiam-infra; las claves privadas viven en
+# ~/.config/sops/age/keys.txt (ver guía de gestión de secretos).
+#
+# Flujo cotidiano: `just secrets` descifra a archivos en claro
+# gitignored (android/secrets.properties, ios/Flutter/Secrets.xcconfig)
+# que Gradle y Xcode leen como si los hubieras escrito a mano. `flutter
+# run` y `flutter build` no cambian.
+#
+# Añadir un recipient nuevo: añade su clave pública aquí y ejecuta
+#   sops updatekeys secrets/maps.sops.env
+#
+# Comportamiento dotenv por defecto: las claves quedan legibles y solo
+# los valores se cifran, lo que mantiene el diff por-secreto en git.
+
+creation_rules:
+  - path_regex: \.sops\.env$
+    age: age1utaa5hjcj5u9rkq23vl8m73dzjdhuwat6t4fp6zndadeg2ksm4uqjlskvg

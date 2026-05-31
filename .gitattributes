@@ -1,0 +1,4 @@
+# Los scripts de shell deben conservar saltos LF aunque el equipo trabaje
+# en Windows con core.autocrlf=true: con CRLF, bash falla al ejecutarlos
+# ("bad interpreter: /usr/bin/env bash^M"). Afecta a `just secrets`.
+*.sh text eol=lf

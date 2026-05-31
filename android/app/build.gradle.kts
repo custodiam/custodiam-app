@@ -18,6 +18,17 @@ if (keystorePropertiesFile.exists()) {
 }
 val hasKeystore = keystorePropertiesFile.exists()
 
+// Cargar secrets.properties para la API key de Google Maps (si existe).
+// Lo genera `just secrets` desde secrets/maps.sops.env (sops+age) y está
+// gitignored. Si falta, el placeholder queda vacío: el build no falla
+// (CI web no necesita la key) pero el mapa nativo no cargaría.
+val mapsSecretsFile = rootProject.file("secrets.properties")
+val mapsSecrets = Properties()
+if (mapsSecretsFile.exists()) {
+    mapsSecretsFile.inputStream().use { mapsSecrets.load(it) }
+}
+val mapsApiKey: String = mapsSecrets.getProperty("MAPS_API_KEY") ?: ""
+
 android {
     namespace = "es.custodiam.app"
     compileSdk = flutter.compileSdkVersion
@@ -52,10 +63,16 @@ android {
 
     defaultConfig {
         applicationId = "es.custodiam.app"
-        minSdk = flutter.minSdkVersion
+        // google_maps_flutter exige Android SDK 24+. Tomamos el mayor
+        // entre el default de Flutter y 24 para no bajarlo nunca.
+        minSdk = maxOf(flutter.minSdkVersion, 24)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Inyecta la API key de Google Maps en el manifest sin hardcodearla
+        // (el manifest commiteado solo lleva ${MAPS_API_KEY}).
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
