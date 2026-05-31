@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
@@ -159,7 +160,7 @@ class _MiFichajeContent extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
           if (state.tieneEntradaAbierta)
             AppSecondaryButton(
-              key: const ValueKey('fichaje_salida_button'),
+              key: K.fichajeEnServicioSalidaButton,
               label: 'Fichar salida',
               icon: Symbols.logout,
               expanded: true,
@@ -172,7 +173,7 @@ class _MiFichajeContent extends ConsumerWidget {
             )
           else
             AppPrimaryButton(
-              key: const ValueKey('fichaje_entrada_button'),
+              key: K.fichajeEnServicioEntradaButton,
               label: state.yaFichadoYCerrado
                   ? 'Fichar entrada de nuevo'
                   : 'Fichar entrada',
@@ -312,7 +313,7 @@ class _VoluntariosFichadosSection extends ConsumerWidget {
             ),
             const Spacer(),
             IconButton(
-              key: const ValueKey('voluntarios_fichados_refresh'),
+              key: K.fichajeEnServicioVoluntariosRefresh,
               tooltip: 'Recargar',
               icon: const Icon(Symbols.refresh, size: 20),
               onPressed: () => ref
@@ -384,7 +385,7 @@ class _VoluntarioFichadoTile extends StatelessWidget {
         ? DateTime.now().difference(fichaje.horaEntrada).inSeconds
         : (fichaje.duracionSegundos ?? 0);
     return ListTile(
-      key: ValueKey('voluntarios_fichados_item_${fichaje.fichajeId}'),
+      key: K.fichajeEnServicioVoluntarioItem(fichaje.fichajeId),
       leading: CircleAvatar(
         backgroundColor: abierto
             ? Theme.of(context).colorScheme.tertiaryContainer

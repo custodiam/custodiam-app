@@ -1,3 +1,4 @@
+import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/features/servicios/domain/entities/estado_servicio.dart';
 import 'package:custodiam/features/servicios/domain/entities/servicio_summary.dart';
 import 'package:custodiam/features/servicios/domain/entities/servicios_page.dart';
@@ -164,7 +165,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.byKey(const ValueKey('servicios_filtro_fechas_button')),
+      find.byKey(K.serviciosListFiltroFechasBtn),
       findsOneWidget,
     );
   });
@@ -199,7 +200,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.byKey(const ValueKey('servicios_chip_rango_activo')),
+      find.byKey(K.serviciosListRangoActivoChip),
       findsOneWidget,
     );
     expect(find.textContaining('01/06/2026'), findsOneWidget);
@@ -255,7 +256,7 @@ void main() {
     expect(calls, 1); // carga inicial
 
     await tester.fling(
-      find.byKey(const ValueKey('servicios_list_view')),
+      find.byKey(K.serviciosListView),
       const Offset(0, 350),
       1000,
     );

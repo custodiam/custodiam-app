@@ -1,3 +1,4 @@
+import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/catalogo/catalogo_recurso.dart';
 import 'package:custodiam/infrastructure/catalogo/ubicaciones_catalogo_service.dart';
@@ -196,16 +197,16 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('sel')));
     await tester.pumpAndSettle();
     // Footer "crear" (jefe_seccion tiene ubicaciones.crear).
-    await tester.tap(find.byKey(const ValueKey('catalog_create')));
+    await tester.tap(find.byKey(K.catalogCreateBtn));
     await tester.pumpAndSettle();
 
     // Se abre el diálogo de alta rápida.
     expect(find.text('Nueva ubicación'), findsOneWidget);
     await tester.enterText(
-      find.byKey(const ValueKey('crear_ubicacion_nombre')),
+      find.byKey(K.crearUbicacionNombre),
       'Nave nueva',
     );
-    await tester.tap(find.byKey(const ValueKey('crear_ubicacion_submit')));
+    await tester.tap(find.byKey(K.crearUbicacionSubmit));
     await tester.pumpAndSettle();
 
     // El diálogo se cerró y la ubicación creada quedó seleccionada.

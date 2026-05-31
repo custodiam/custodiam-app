@@ -22,6 +22,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
@@ -136,14 +137,14 @@ class _VoluntariosListPageBodyState
         AppPermissionGate(
           permission: Permission.voluntariosCrear,
           child: AppIconButton(
-            key: const ValueKey('voluntarios_alta_button'),
+            key: K.voluntariosListAltaButton,
             tooltip: 'Alta de voluntario',
             icon: Symbols.person_add,
             onPressed: () => context.go('/voluntarios/alta'),
           ),
         ),
         AppIconButton(
-          key: const ValueKey('voluntarios_refresh_button'),
+          key: K.voluntariosListRefreshButton,
           tooltip: 'Recargar',
           icon: Symbols.refresh,
           onPressed: () =>
@@ -158,7 +159,7 @@ class _VoluntariosListPageBodyState
               vertical: AppSpacing.sm,
             ),
             child: AppTextField(
-              key: const ValueKey('voluntarios_search_field'),
+              key: K.voluntariosListSearchField,
               label: 'Buscar por nombre, DNI o email',
               controller: _searchController,
               prefixIcon: Symbols.search,
@@ -206,7 +207,7 @@ class _VoluntariosListPageBodyState
           );
         }
         return ListView.separated(
-          key: const ValueKey('voluntarios_list_view'),
+          key: K.voluntariosListListView,
           controller: _scrollController,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           itemCount: state.items.length + (state.hasMore ? 1 : 0),
@@ -241,28 +242,28 @@ class _EstadoFilterRow extends StatelessWidget {
       child: Row(
         children: [
           ChoiceChip(
-            key: const ValueKey('voluntarios_filter_todos'),
+            key: K.voluntariosListFilterTodosChip,
             label: const Text('Todos'),
             selected: selected == null,
             onSelected: (_) => onChanged(null),
           ),
           const SizedBox(width: AppSpacing.sm),
           ChoiceChip(
-            key: const ValueKey('voluntarios_filter_activos'),
+            key: K.voluntariosListFilterActivosChip,
             label: const Text('Activos'),
             selected: selected == EstadoVoluntario.activo,
             onSelected: (_) => onChanged(EstadoVoluntario.activo),
           ),
           const SizedBox(width: AppSpacing.sm),
           ChoiceChip(
-            key: const ValueKey('voluntarios_filter_baja'),
+            key: K.voluntariosListFilterBajaChip,
             label: const Text('Bajas'),
             selected: selected == EstadoVoluntario.baja,
             onSelected: (_) => onChanged(EstadoVoluntario.baja),
           ),
           const SizedBox(width: AppSpacing.sm),
           ChoiceChip(
-            key: const ValueKey('voluntarios_filter_suspendidos'),
+            key: K.voluntariosListFilterSuspendidosChip,
             label: const Text('Suspendidos'),
             selected: selected == EstadoVoluntario.suspendido,
             onSelected: (_) => onChanged(EstadoVoluntario.suspendido),
@@ -296,7 +297,7 @@ class _VoluntarioTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: ValueKey('voluntarios_item_${voluntario.id}'),
+      key: K.voluntariosListItem(voluntario.id),
       leading: CircleAvatar(child: Text(_initials)),
       title: Text(voluntario.nombre),
       subtitle: Text('${voluntario.telefono} · ${voluntario.municipio}'),

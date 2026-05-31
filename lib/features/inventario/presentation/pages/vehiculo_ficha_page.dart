@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
@@ -117,7 +118,7 @@ class _LoadedVehiculo extends ConsumerWidget {
       title: '${vehiculo.codigoInterno} · ${vehiculo.matricula}',
       actions: [
         AppIconButton(
-          key: const ValueKey('vehiculo_ficha_refresh'),
+          key: K.vehiculoFichaRefresh,
           tooltip: 'Recargar',
           icon: Symbols.refresh,
           onPressed: () => ref
@@ -181,7 +182,7 @@ class _LoadedVehiculo extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   AppDestructiveButton(
-                    key: const ValueKey('vehiculo_ficha_averia'),
+                    key: K.vehiculoFichaAveria,
                     label: 'Reportar avería',
                     icon: Symbols.build,
                     expanded: true,
@@ -194,7 +195,7 @@ class _LoadedVehiculo extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   AppDestructiveButton(
-                    key: const ValueKey('vehiculo_ficha_perdida'),
+                    key: K.vehiculoFichaPerdida,
                     label: 'Reportar pérdida',
                     icon: Symbols.report,
                     expanded: true,
@@ -225,7 +226,7 @@ class _LoadedVehiculo extends ConsumerWidget {
         context,
         title: title,
         content: AppTextField(
-          key: const ValueKey('vehiculo_incidencia_descripcion'),
+          key: K.vehiculoIncidenciaDescripcion,
           label: 'Descripción de la incidencia',
           controller: descripcionCtrl,
           prefixIcon: Symbols.notes,
@@ -237,7 +238,7 @@ class _LoadedVehiculo extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(false),
           ),
           AppPrimaryButton(
-            key: const ValueKey('vehiculo_incidencia_confirm'),
+            key: K.vehiculoIncidenciaConfirm,
             label: 'Registrar',
             onPressed: () => Navigator.of(context).pop(true),
           ),

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
@@ -94,7 +95,7 @@ class _AjustesContent extends ConsumerWidget {
         // desde la app por diseño. Se muestra disabled para dejarlo
         // explícito en la UI.
         SwitchListTile(
-          key: const ValueKey('notif_ajustes_emergencias'),
+          key: K.notifAjustesEmergencias,
           title: const Text('Emergencias'),
           subtitle: const Text(
             'Activadas siempre por seguridad. Para silenciarlas, '
@@ -109,7 +110,7 @@ class _AjustesContent extends ConsumerWidget {
         ),
         const Divider(height: 1),
         SwitchListTile(
-          key: const ValueKey('notif_ajustes_nuevos_servicios'),
+          key: K.notifAjustesNuevosServicios,
           title: const Text('Nuevos servicios disponibles'),
           subtitle: const Text(
             'Aviso cuando se publica un servicio preventivo o de '
@@ -123,7 +124,7 @@ class _AjustesContent extends ConsumerWidget {
         ),
         const Divider(height: 1),
         SwitchListTile(
-          key: const ValueKey('notif_ajustes_recordatorios'),
+          key: K.notifAjustesRecordatorios,
           title: const Text('Recordatorios de mis servicios'),
           subtitle: const Text(
             'Aviso unas horas antes de un servicio en el que estás '

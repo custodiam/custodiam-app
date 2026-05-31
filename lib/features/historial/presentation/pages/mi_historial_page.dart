@@ -16,6 +16,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
@@ -89,7 +90,7 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
       title: 'Mi historial',
       actions: [
         AppIconButton(
-          key: const ValueKey('mi_historial_filtro_fechas'),
+          key: K.miHistorialFiltroFechas,
           tooltip: 'Filtrar por fechas',
           icon: Symbols.date_range,
           onPressed: estadoActual == null
@@ -97,7 +98,7 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
               : () => _abrirDateRangePicker(context, estadoActual),
         ),
         AppIconButton(
-          key: const ValueKey('mi_historial_refresh'),
+          key: K.miHistorialRefresh,
           tooltip: 'Recargar',
           icon: Symbols.refresh,
           onPressed: () {
@@ -214,7 +215,7 @@ class _RangoActivoChip extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: InputChip(
-          key: const ValueKey('mi_historial_chip_rango_activo'),
+          key: K.miHistorialChipRangoActivo,
           avatar: Icon(Symbols.date_range,
               size: 18, color: theme.colorScheme.onSecondaryContainer),
           label: Text(label),
@@ -396,7 +397,7 @@ class _FiltroTiposBar extends StatelessWidget {
               horizontal: AppSpacing.xs,
             ),
             child: ChoiceChip(
-              key: const ValueKey('mi_historial_filtro_todos'),
+              key: K.miHistorialFiltroTodos,
               label: const Text('Todos'),
               selected: seleccionados.isEmpty,
               onSelected: (_) => onChange(const []),
@@ -409,7 +410,7 @@ class _FiltroTiposBar extends StatelessWidget {
                 horizontal: AppSpacing.xs,
               ),
               child: ChoiceChip(
-                key: ValueKey('mi_historial_filtro_${tipo.wire}'),
+                key: K.miHistorialFiltroTipo(tipo.wire),
                 label: Text(tipo.etiqueta),
                 selected: seleccionados.contains(tipo),
                 onSelected: (sel) {

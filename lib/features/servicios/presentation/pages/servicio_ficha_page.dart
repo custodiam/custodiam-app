@@ -14,6 +14,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
@@ -128,7 +129,7 @@ class _LoadedFicha extends ConsumerWidget {
       title: servicio.titulo,
       actions: [
         AppIconButton(
-          key: const ValueKey('servicio_ficha_refresh'),
+          key: K.servicioFichaRefreshBtn,
           tooltip: 'Recargar',
           icon: Symbols.refresh,
           onPressed: () => ref
@@ -257,7 +258,7 @@ class _AbrirMapaButton extends ConsumerWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: AppSecondaryButton(
-          key: const ValueKey('servicio_ficha_abrir_mapa'),
+          key: K.servicioFichaAbrirMapaBtn,
           label: esWeb ? 'Ver en el mapa' : 'Cómo llegar',
           icon: esWeb ? Symbols.map : Symbols.directions,
           onPressed: () => _abrir(context, ref, esWeb),
@@ -344,7 +345,7 @@ class _SelfServiceActions extends ConsumerWidget {
                 // anunciamos el motivo aquí para el lector de pantalla.
                 label: aforoLleno ? 'Aforo completo' : null,
                 child: AppPrimaryButton(
-                  key: const ValueKey('servicio_ficha_apuntarse_button'),
+                  key: K.servicioFichaApuntarseBtn,
                   label: 'Apuntarme',
                   icon: Symbols.check_circle,
                   expanded: true,
@@ -365,7 +366,7 @@ class _SelfServiceActions extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.only(top: AppSpacing.sm),
               child: AppSecondaryButton(
-                key: const ValueKey('servicio_ficha_desapuntarse_button'),
+                key: K.servicioFichaDesapuntarseBtn,
                 label: 'Darme de baja',
                 icon: Symbols.cancel,
                 expanded: true,
@@ -414,7 +415,7 @@ class _AdminActions extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.only(top: AppSpacing.sm),
           child: AppPrimaryButton(
-            key: const ValueKey('servicio_ficha_publicar_button'),
+            key: K.servicioFichaPublicarBtn,
             label: 'Publicar servicio',
             icon: Symbols.public,
             expanded: true,
@@ -437,7 +438,7 @@ class _AdminActions extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.only(top: AppSpacing.sm),
           child: AppSecondaryButton(
-            key: const ValueKey('servicio_ficha_convocar_button'),
+            key: K.servicioFichaConvocarBtn,
             label: 'Convocar voluntarios disponibles',
             icon: Symbols.campaign,
             expanded: true,
@@ -469,7 +470,7 @@ class _AdminActions extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.only(top: AppSpacing.sm),
           child: AppDestructiveButton(
-            key: const ValueKey('servicio_ficha_cerrar_button'),
+            key: K.servicioFichaCerrarBtn,
             label: 'Cerrar servicio',
             icon: Symbols.lock,
             expanded: true,
@@ -502,7 +503,7 @@ class _AdminActions extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('servicio_ficha_cerrar_observaciones'),
+            key: K.servicioFichaCerrarObservacionesField,
             label: 'Observaciones (opcional)',
             controller: controller,
             maxLines: 3,
@@ -515,7 +516,7 @@ class _AdminActions extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(false),
         ),
         AppPrimaryButton(
-          key: const ValueKey('servicio_ficha_cerrar_confirm'),
+          key: K.servicioFichaCerrarConfirmBtn,
           label: 'Cerrar',
           onPressed: () => Navigator.of(context).pop(true),
         ),
@@ -559,7 +560,7 @@ class _FichajeShortcut extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           AppPrimaryButton(
-            key: const ValueKey('servicio_ficha_fichaje_acceso'),
+            key: K.servicioFichaFichajeAccesoBtn,
             label: puedeFichar
                 ? 'Fichar entrada / salida'
                 : 'Ver voluntarios fichados',

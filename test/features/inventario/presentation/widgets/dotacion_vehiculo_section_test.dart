@@ -1,3 +1,4 @@
+import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/features/inventario/domain/entities/dotacion_vehiculo.dart';
 import 'package:custodiam/features/inventario/domain/repositories/inventario_repository.dart';
 import 'package:custodiam/features/inventario/domain/usecases/listar_dotacion_vehiculo.dart';
@@ -5,7 +6,6 @@ import 'package:custodiam/features/inventario/presentation/viewmodels/inventario
 import 'package:custodiam/features/inventario/presentation/widgets/dotacion_vehiculo_section.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -54,7 +54,7 @@ void main() {
     await pump(tester, _user(['jefe_seccion']));
 
     expect(find.text('Casco'), findsOneWidget);
-    expect(find.byKey(const ValueKey('dotacion_anadir')), findsOneWidget);
+    expect(find.byKey(K.dotacionAnadir), findsOneWidget);
     expect(find.byTooltip('Quitar de la dotación'), findsOneWidget);
   });
 
@@ -66,7 +66,7 @@ void main() {
     await pump(tester, _user(['voluntario']));
 
     expect(find.text('Casco'), findsOneWidget);
-    expect(find.byKey(const ValueKey('dotacion_anadir')), findsNothing);
+    expect(find.byKey(K.dotacionAnadir), findsNothing);
     expect(find.byTooltip('Quitar de la dotación'), findsNothing);
   });
 
@@ -78,6 +78,6 @@ void main() {
     await pump(tester, _user(['voluntario']));
 
     expect(find.text('Material asignado al vehículo'), findsNothing);
-    expect(find.byKey(const ValueKey('dotacion_anadir')), findsNothing);
+    expect(find.byKey(K.dotacionAnadir), findsNothing);
   });
 }

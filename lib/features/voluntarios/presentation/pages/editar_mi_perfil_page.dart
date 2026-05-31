@@ -13,6 +13,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
@@ -198,7 +199,7 @@ class _FormState extends ConsumerState<_Form> {
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           AppTextField(
-            key: const ValueKey('editar_perfil_telefono'),
+            key: K.editarMiPerfilTelefonoField,
             label: 'Teléfono',
             controller: _telefonoCtrl,
             keyboardType: TextInputType.phone,
@@ -207,7 +208,7 @@ class _FormState extends ConsumerState<_Form> {
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('editar_perfil_email'),
+            key: K.editarMiPerfilEmailField,
             label: 'Email',
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
@@ -216,7 +217,7 @@ class _FormState extends ConsumerState<_Form> {
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('editar_perfil_municipio'),
+            key: K.editarMiPerfilMunicipioField,
             label: 'Municipio',
             controller: _municipioCtrl,
             prefixIcon: Symbols.location_city,
@@ -224,14 +225,14 @@ class _FormState extends ConsumerState<_Form> {
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('editar_perfil_direccion'),
+            key: K.editarMiPerfilDireccionField,
             label: 'Dirección',
             controller: _direccionCtrl,
             prefixIcon: Symbols.home,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('editar_perfil_foto'),
+            key: K.editarMiPerfilFotoField,
             label: 'URL de foto',
             controller: _fotoCtrl,
             keyboardType: TextInputType.url,
@@ -239,7 +240,7 @@ class _FormState extends ConsumerState<_Form> {
           ),
           const SizedBox(height: AppSpacing.xl),
           AppPrimaryButton(
-            key: const ValueKey('editar_perfil_submit'),
+            key: K.editarMiPerfilSubmitButton,
             label: 'Guardar',
             icon: Symbols.save,
             expanded: true,
@@ -248,7 +249,7 @@ class _FormState extends ConsumerState<_Form> {
           ),
           const SizedBox(height: AppSpacing.sm),
           AppSecondaryButton(
-            key: const ValueKey('editar_perfil_cancel'),
+            key: K.editarMiPerfilCancelButton,
             label: 'Cancelar',
             expanded: true,
             onPressed: asyncSubmit.isLoading

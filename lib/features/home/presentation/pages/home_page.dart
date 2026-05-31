@@ -49,7 +49,7 @@ class HomePage extends ConsumerWidget {
               const SizedBox(height: AppSpacing.md),
               Text(
                 'Custodiam',
-                key: const ValueKey('home_title'),
+                key: K.homeTitle,
                 style: Theme.of(context).textTheme.headlineSmall,
                 textAlign: TextAlign.center,
               ),

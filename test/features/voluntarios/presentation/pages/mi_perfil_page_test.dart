@@ -1,3 +1,4 @@
+import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/estado_voluntario.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/voluntario.dart';
 import 'package:custodiam/features/voluntarios/domain/repositories/voluntarios_repository.dart';
@@ -145,7 +146,7 @@ void main() {
 
     // admin lacks ver_propio too, so we land on the forbidden screen.
     expect(find.text('Sin acceso'), findsOneWidget);
-    expect(find.byKey(const ValueKey('mi_perfil_edit_button')), findsNothing);
+    expect(find.byKey(K.miPerfilEditButton), findsNothing);
   });
 
   testWidgets('edit button renders for users with editar_propio',
@@ -158,10 +159,10 @@ void main() {
 
     // The CTA lives at the bottom of a scrollable profile; scroll to it.
     await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('mi_perfil_edit_button')),
+      find.byKey(K.miPerfilEditButton),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.byKey(const ValueKey('mi_perfil_edit_button')), findsOneWidget);
+    expect(find.byKey(K.miPerfilEditButton), findsOneWidget);
   });
 }

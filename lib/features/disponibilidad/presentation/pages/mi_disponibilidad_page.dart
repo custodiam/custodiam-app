@@ -18,6 +18,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
@@ -56,7 +57,7 @@ class _MiDisponibilidadBody extends ConsumerWidget {
       title: 'Mi disponibilidad',
       actions: [
         AppIconButton(
-          key: const ValueKey('mi_disponibilidad_refresh'),
+          key: K.miDisponibilidadRefresh,
           tooltip: 'Recargar',
           icon: Symbols.refresh,
           onPressed: () => ref
@@ -178,7 +179,7 @@ class _MesNavegacion extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         AppIconButton(
-          key: const ValueKey('mi_disponibilidad_prev_month'),
+          key: K.miDisponibilidadPrevMonth,
           tooltip: 'Mes anterior',
           icon: Symbols.chevron_left,
           onPressed: onPrev,
@@ -188,7 +189,7 @@ class _MesNavegacion extends StatelessWidget {
           style: theme.textTheme.titleLarge,
         ),
         AppIconButton(
-          key: const ValueKey('mi_disponibilidad_next_month'),
+          key: K.miDisponibilidadNextMonth,
           tooltip: 'Mes siguiente',
           icon: Symbols.chevron_right,
           onPressed: onNext,
@@ -335,7 +336,7 @@ class _CeldaDia extends StatelessWidget {
             side: border?.top ?? BorderSide.none,
           ),
           child: InkWell(
-            key: ValueKey('mi_disponibilidad_dia_$dia'),
+            key: K.miDisponibilidadDia(dia),
             borderRadius: BorderRadius.circular(AppRadius.sm),
             onTap: tappable ? () => onTap(fecha) : null,
             child: Center(

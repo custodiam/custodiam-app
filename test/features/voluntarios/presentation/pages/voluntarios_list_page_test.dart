@@ -1,3 +1,4 @@
+import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/core/ui/theme/app_theme.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/estado_voluntario.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/voluntario_summary.dart';
@@ -192,7 +193,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(
-      find.byKey(const ValueKey('voluntarios_search_field')),
+      find.byKey(K.voluntariosListSearchField),
       'bea',
     );
     await tester.testTextInput.receiveAction(TextInputAction.search);

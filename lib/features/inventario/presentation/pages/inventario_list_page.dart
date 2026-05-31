@@ -7,6 +7,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
@@ -88,7 +89,7 @@ class _AltaMenuButton extends ConsumerWidget {
         Permission.inventarioRegistrarVehiculo,
       ],
       child: PopupMenuButton<String>(
-        key: const ValueKey('inventario_alta_menu'),
+        key: K.inventarioAltaMenu,
         tooltip: 'Registrar nuevo',
         icon: const Icon(Symbols.add),
         onSelected: (target) => context.go('/inventario/$target'),
@@ -195,7 +196,7 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
             vertical: AppSpacing.sm,
           ),
           child: AppTextField(
-            key: const ValueKey('inventario_material_search'),
+            key: K.inventarioMaterialSearch,
             label: 'Buscar por nombre o código',
             controller: _searchController,
             prefixIcon: Symbols.search,
@@ -295,7 +296,7 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
               return RefreshIndicator(
                 onRefresh: onRefresh,
                 child: ListView.separated(
-                  key: const ValueKey('inventario_material_list_view'),
+                  key: K.inventarioMaterialListView,
                   controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding:
@@ -335,7 +336,7 @@ class _MaterialTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: ValueKey('inventario_material_item_${material.id}'),
+      key: K.inventarioMaterialItem(material.id),
       leading: const CircleAvatar(child: Icon(Symbols.inventory_2)),
       title: Text(material.nombre),
       subtitle: Text(
@@ -411,7 +412,7 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
             vertical: AppSpacing.sm,
           ),
           child: AppTextField(
-            key: const ValueKey('inventario_vehiculo_search'),
+            key: K.inventarioVehiculoSearch,
             label: 'Buscar por código o matrícula',
             controller: _searchController,
             prefixIcon: Symbols.search,
@@ -459,7 +460,7 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
               return RefreshIndicator(
                 onRefresh: onRefresh,
                 child: ListView.separated(
-                  key: const ValueKey('inventario_vehiculo_list_view'),
+                  key: K.inventarioVehiculoListView,
                   controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding:
@@ -500,7 +501,7 @@ class _VehiculoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: ValueKey('inventario_vehiculo_item_${vehiculo.id}'),
+      key: K.inventarioVehiculoItem(vehiculo.id),
       leading: const CircleAvatar(child: Icon(Symbols.directions_car)),
       title: Text('${vehiculo.codigoInterno} · ${vehiculo.matricula}'),
       subtitle: Text('${_tipoLabel(vehiculo.tipo)} · ${vehiculo.ubicacionBase ?? "Sin ubicación"}'),

@@ -1,3 +1,4 @@
+import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/features/servicios/domain/entities/servicio_inventario.dart';
 import 'package:custodiam/features/servicios/domain/repositories/servicios_repository.dart';
 import 'package:custodiam/features/servicios/domain/usecases/get_inventario_servicio.dart';
@@ -5,7 +6,6 @@ import 'package:custodiam/features/servicios/presentation/viewmodels/servicios_d
 import 'package:custodiam/features/servicios/presentation/widgets/recursos_asignados_section.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -77,7 +77,7 @@ void main() {
     await pump(tester, _user(['jefe_equipo'])); // tiene inventario.asignar_a_servicio
 
     expect(find.text('Recursos asignados'), findsOneWidget);
-    expect(find.byKey(const ValueKey('recursos_anadir')), findsOneWidget);
+    expect(find.byKey(K.servicioRecursosAnadirBtn), findsOneWidget);
     expect(find.text('Conos'), findsOneWidget);
     expect(find.textContaining('VEH-1 · 1234ABC'), findsOneWidget);
   });
@@ -87,7 +87,7 @@ void main() {
     await pump(tester, _user(['voluntario'])); // NO tiene el permiso
 
     expect(find.text('Conos'), findsOneWidget);
-    expect(find.byKey(const ValueKey('recursos_anadir')), findsNothing);
+    expect(find.byKey(K.servicioRecursosAnadirBtn), findsNothing);
   });
 
   testWidgets('shows an empty hint when there are no assigned resources',
@@ -100,10 +100,10 @@ void main() {
   testWidgets('tapping add opens the resource-type chooser', (tester) async {
     await pump(tester, _user(['jefe_equipo']));
 
-    await tester.tap(find.byKey(const ValueKey('recursos_anadir')));
+    await tester.tap(find.byKey(K.servicioRecursosAnadirBtn));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('recursos_tipo_material')), findsOneWidget);
-    expect(find.byKey(const ValueKey('recursos_tipo_vehiculo')), findsOneWidget);
+    expect(find.byKey(K.servicioRecursosTipoMaterialBtn), findsOneWidget);
+    expect(find.byKey(K.servicioRecursosTipoVehiculoBtn), findsOneWidget);
   });
 }

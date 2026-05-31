@@ -14,6 +14,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
@@ -53,7 +54,7 @@ class _MiPerfilPageBody extends ConsumerWidget {
       title: 'Mi perfil',
       actions: [
         AppIconButton(
-          key: const ValueKey('mi_perfil_refresh_button'),
+          key: K.miPerfilRefreshButton,
           tooltip: 'Recargar',
           icon: Symbols.refresh,
           onPressed: () =>
@@ -187,7 +188,7 @@ class _MiActividadSection extends StatelessWidget {
                   icon: Symbols.timer,
                   label: 'Mis horas',
                   route: '/mi-perfil/horas',
-                  keyValue: 'mi_perfil_tile_horas',
+                  tileKey: K.miPerfilTileHoras,
                 ),
               ),
               AppPermissionGate(
@@ -202,7 +203,7 @@ class _MiActividadSection extends StatelessWidget {
                   icon: Symbols.event_available,
                   label: 'Mi disponibilidad',
                   route: '/mi-perfil/disponibilidad',
-                  keyValue: 'mi_perfil_tile_disponibilidad',
+                  tileKey: K.miPerfilTileDisponibilidad,
                 ),
               ),
               AppPermissionGate(
@@ -211,7 +212,7 @@ class _MiActividadSection extends StatelessWidget {
                   icon: Symbols.history,
                   label: 'Mi historial',
                   route: '/mi-perfil/historial',
-                  keyValue: 'mi_perfil_tile_historial',
+                  tileKey: K.miPerfilTileHistorial,
                 ),
               ),
             ],
@@ -226,19 +227,19 @@ class _ActividadTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String route;
-  final String keyValue;
+  final Key tileKey;
 
   const _ActividadTile({
     required this.icon,
     required this.label,
     required this.route,
-    required this.keyValue,
+    required this.tileKey,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: ValueKey(keyValue),
+      key: tileKey,
       leading: Icon(icon),
       title: Text(label),
       trailing: const Icon(Symbols.chevron_right),
@@ -253,7 +254,7 @@ class _EditButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppPrimaryButton(
-      key: const ValueKey('mi_perfil_edit_button'),
+      key: K.miPerfilEditButton,
       label: 'Editar mis datos de contacto',
       icon: Symbols.edit,
       expanded: true,
