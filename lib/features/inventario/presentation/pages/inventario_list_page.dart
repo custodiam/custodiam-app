@@ -270,30 +270,49 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
                   .refresh(),
             ),
             data: (state) {
+              Future<void> onRefresh() => ref
+                  .read(materialesListViewModelProvider.notifier)
+                  .refresh();
               if (state.items.isEmpty) {
-                return const AppEmptyState(
-                  title: 'Sin material',
-                  description: 'No hay resultados para los filtros aplicados.',
-                  icon: Symbols.inventory_2,
+                return RefreshIndicator(
+                  onRefresh: onRefresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.only(top: AppSpacing.xxl),
+                        child: AppEmptyState(
+                          title: 'Sin material',
+                          description:
+                              'No hay resultados para los filtros aplicados.',
+                          icon: Symbols.inventory_2,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               }
-              return ListView.separated(
-                key: const ValueKey('inventario_material_list_view'),
-                controller: _scrollController,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                itemCount: state.items.length + (state.hasMore ? 1 : 0),
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  if (index >= state.items.length) {
-                    return const Padding(
-                      padding:
-                          EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      child: AppLoadingIndicator.fullScreen(),
-                    );
-                  }
-                  return _MaterialTile(material: state.items[index]);
-                },
+              return RefreshIndicator(
+                onRefresh: onRefresh,
+                child: ListView.separated(
+                  key: const ValueKey('inventario_material_list_view'),
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                  itemCount: state.items.length + (state.hasMore ? 1 : 0),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    if (index >= state.items.length) {
+                      return const Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: AppSpacing.md),
+                        child: AppLoadingIndicator.fullScreen(),
+                      );
+                    }
+                    return _MaterialTile(material: state.items[index]);
+                  },
+                ),
               );
             },
           ),
@@ -415,31 +434,49 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
                   .refresh(),
             ),
             data: (state) {
+              Future<void> onRefresh() => ref
+                  .read(vehiculosListViewModelProvider.notifier)
+                  .refresh();
               if (state.items.isEmpty) {
-                return const AppEmptyState(
-                  title: 'Sin vehículos',
-                  description:
-                      'No hay vehículos registrados con esos filtros.',
-                  icon: Symbols.directions_car,
+                return RefreshIndicator(
+                  onRefresh: onRefresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.only(top: AppSpacing.xxl),
+                        child: AppEmptyState(
+                          title: 'Sin vehículos',
+                          description:
+                              'No hay vehículos registrados con esos filtros.',
+                          icon: Symbols.directions_car,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               }
-              return ListView.separated(
-                key: const ValueKey('inventario_vehiculo_list_view'),
-                controller: _scrollController,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                itemCount: state.items.length + (state.hasMore ? 1 : 0),
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  if (index >= state.items.length) {
-                    return const Padding(
-                      padding:
-                          EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      child: AppLoadingIndicator.fullScreen(),
-                    );
-                  }
-                  return _VehiculoTile(vehiculo: state.items[index]);
-                },
+              return RefreshIndicator(
+                onRefresh: onRefresh,
+                child: ListView.separated(
+                  key: const ValueKey('inventario_vehiculo_list_view'),
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                  itemCount: state.items.length + (state.hasMore ? 1 : 0),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    if (index >= state.items.length) {
+                      return const Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: AppSpacing.md),
+                        child: AppLoadingIndicator.fullScreen(),
+                      );
+                    }
+                    return _VehiculoTile(vehiculo: state.items[index]);
+                  },
+                ),
               );
             },
           ),

@@ -232,4 +232,36 @@ void main() {
 
     expect(find.text('Preventivo Feria'), findsOneWidget);
   });
+
+  testWidgets('desliza hacia abajo (pull-to-refresh) recarga la lista',
+      (tester) async {
+    var calls = 0;
+    when(() => repo.list(
+          skip: any(named: 'skip'),
+          limit: any(named: 'limit'),
+          query: any(named: 'query'),
+          estado: any(named: 'estado'),
+          tipo: any(named: 'tipo'),
+        )).thenAnswer((_) async {
+      calls++;
+      return Success(ServiciosPage(
+        items: [_s('a', 'Preventivo Feria')],
+        total: 1,
+      ));
+    });
+
+    await pumpPage(tester);
+    await tester.pumpAndSettle();
+    expect(calls, 1); // carga inicial
+
+    await tester.fling(
+      find.byKey(const ValueKey('servicios_list_view')),
+      const Offset(0, 350),
+      1000,
+    );
+    await tester.pumpAndSettle();
+
+    // El gesto disparó el RefreshIndicator → refresh() → otra llamada.
+    expect(calls, greaterThan(1));
+  });
 }
