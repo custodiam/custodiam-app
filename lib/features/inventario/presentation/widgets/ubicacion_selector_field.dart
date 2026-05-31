@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/feedback/app_dialog.dart';
@@ -205,7 +206,7 @@ class _CrearUbicacionFormState extends ConsumerState<_CrearUbicacionForm> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppTextField(
-          key: const ValueKey('crear_ubicacion_nombre'),
+          key: K.crearUbicacionNombre,
           label: 'Nombre',
           controller: _nombreCtrl,
           autofocus: true,
@@ -214,7 +215,7 @@ class _CrearUbicacionFormState extends ConsumerState<_CrearUbicacionForm> {
         ),
         const SizedBox(height: AppSpacing.md),
         AppTextField(
-          key: const ValueKey('crear_ubicacion_descripcion'),
+          key: K.crearUbicacionDescripcion,
           label: 'Descripción (opcional)',
           controller: _descripcionCtrl,
           prefixIcon: Symbols.description,
@@ -230,7 +231,7 @@ class _CrearUbicacionFormState extends ConsumerState<_CrearUbicacionForm> {
         ],
         const SizedBox(height: AppSpacing.lg),
         AppPrimaryButton(
-          key: const ValueKey('crear_ubicacion_submit'),
+          key: K.crearUbicacionSubmit,
           label: 'Crear',
           icon: Symbols.add_location,
           expanded: true,
@@ -239,7 +240,7 @@ class _CrearUbicacionFormState extends ConsumerState<_CrearUbicacionForm> {
         ),
         const SizedBox(height: AppSpacing.sm),
         AppSecondaryButton(
-          key: const ValueKey('crear_ubicacion_cancel'),
+          key: K.crearUbicacionCancel,
           label: 'Cancelar',
           expanded: true,
           onPressed: _loading ? null : () => Navigator.of(context).pop(),

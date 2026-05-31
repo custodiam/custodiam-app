@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
@@ -99,7 +100,7 @@ class _Body extends ConsumerWidget {
             AppPermissionGate(
               permission: Permission.inventarioAsignarAServicio,
               child: AppIconButton(
-                key: const ValueKey('recursos_anadir'),
+                key: K.servicioRecursosAnadirBtn,
                 icon: Symbols.add,
                 tooltip: 'Asignar un recurso al servicio',
                 onPressed: () => _elegirTipo(context, ref),
@@ -153,13 +154,13 @@ class _Body extends ConsumerWidget {
       content: const Text('¿Qué tipo de recurso quieres asignar al servicio?'),
       actions: [
         AppTextButton(
-          key: const ValueKey('recursos_tipo_material'),
+          key: K.servicioRecursosTipoMaterialBtn,
           label: 'Material',
           icon: Symbols.inventory_2,
           onPressed: () => Navigator.of(context).pop('material'),
         ),
         AppTextButton(
-          key: const ValueKey('recursos_tipo_vehiculo'),
+          key: K.servicioRecursosTipoVehiculoBtn,
           label: 'Vehículo',
           icon: Symbols.directions_car,
           onPressed: () => Navigator.of(context).pop('vehiculo'),
@@ -233,7 +234,7 @@ class _Body extends ConsumerWidget {
         context,
         title: 'Cantidad',
         content: AppTextField(
-          key: const ValueKey('recursos_cantidad'),
+          key: K.servicioRecursosCantidadField,
           label: 'Unidades',
           controller: cantidadCtrl,
           keyboardType: TextInputType.number,
@@ -245,7 +246,7 @@ class _Body extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(false),
           ),
           AppPrimaryButton(
-            key: const ValueKey('recursos_cantidad_confirm'),
+            key: K.servicioRecursosCantidadConfirmBtn,
             label: 'Asignar',
             onPressed: () => Navigator.of(context).pop(true),
           ),

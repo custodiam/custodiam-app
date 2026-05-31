@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
@@ -149,7 +150,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
                   TipoMaterial.servicio => 'Servicio',
                 };
                 return ChoiceChip(
-                  key: ValueKey('alta_material_tipo_${t.wire}'),
+                  key: K.altaMaterialTipoChip(t.wire),
                   label: Text(label),
                   selected: _tipo == t,
                   onSelected: (_) => setState(() => _tipo = t),
@@ -163,7 +164,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_material_nombre'),
+              key: K.altaMaterialNombre,
               label: 'Nombre',
               controller: _nombreCtrl,
               autofocus: true,
@@ -172,7 +173,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_material_cantidad'),
+              key: K.altaMaterialCantidad,
               label: 'Cantidad',
               controller: _cantidadCtrl,
               keyboardType: TextInputType.number,
@@ -181,7 +182,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             UbicacionSelectorField(
-              fieldKey: const ValueKey('alta_material_ubicacion'),
+              fieldKey: K.altaMaterialUbicacion,
               value: _ubicacion,
               onChanged: (u) => setState(() => _ubicacion = u),
               validator: (v) => v == null ? 'Ubicación obligatoria' : null,
@@ -193,7 +194,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_material_descripcion'),
+              key: K.altaMaterialDescripcion,
               label: 'Descripción',
               controller: _descripcionCtrl,
               prefixIcon: Symbols.description,
@@ -201,28 +202,28 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_material_codigo'),
+              key: K.altaMaterialCodigo,
               label: 'Código (se genera automático si lo dejas vacío)',
               controller: _codigoCtrl,
               prefixIcon: Symbols.tag,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_material_numero_serie'),
+              key: K.altaMaterialNumeroSerie,
               label: 'Número de serie',
               controller: _numeroSerieCtrl,
               prefixIcon: Symbols.confirmation_number,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_material_categoria'),
+              key: K.altaMaterialCategoria,
               label: 'Categoría (ej. uniformidad, hidráulica…)',
               controller: _categoriaCtrl,
               prefixIcon: Symbols.category,
             ),
             const SizedBox(height: AppSpacing.xl),
             AppPrimaryButton(
-              key: const ValueKey('alta_material_submit'),
+              key: K.altaMaterialSubmit,
               label: 'Registrar material',
               icon: Symbols.add_box,
               expanded: true,
@@ -231,7 +232,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppSecondaryButton(
-              key: const ValueKey('alta_material_cancel'),
+              key: K.altaMaterialCancel,
               label: 'Cancelar',
               expanded: true,
               onPressed: asyncSubmit.isLoading

@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
@@ -111,7 +112,7 @@ class _DotacionBody extends ConsumerWidget {
             ),
             if (canManage)
               AppIconButton(
-                key: const ValueKey('dotacion_anadir'),
+                key: K.dotacionAnadir,
                 icon: Symbols.add,
                 tooltip: 'Añadir material a la dotación',
                 onPressed: () => _abrirAlta(context, ref),
@@ -151,14 +152,14 @@ class _DotacionBody extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             AppTextField(
-              key: const ValueKey('dotacion_material_id'),
+              key: K.dotacionMaterialId,
               label: 'ID del material (UUID)',
               controller: materialCtrl,
               prefixIcon: Symbols.inventory_2,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('dotacion_cantidad'),
+              key: K.dotacionCantidad,
               label: 'Cantidad',
               controller: cantidadCtrl,
               keyboardType: TextInputType.number,
@@ -172,7 +173,7 @@ class _DotacionBody extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(false),
           ),
           AppPrimaryButton(
-            key: const ValueKey('dotacion_anadir_confirm'),
+            key: K.dotacionAnadirConfirm,
             label: 'Añadir',
             onPressed: () => Navigator.of(context).pop(true),
           ),
@@ -225,7 +226,7 @@ class _DotacionBody extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(false),
         ),
         AppPrimaryButton(
-          key: const ValueKey('dotacion_quitar_confirm'),
+          key: K.dotacionQuitarConfirm,
           label: 'Quitar',
           onPressed: () => Navigator.of(context).pop(true),
         ),

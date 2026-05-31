@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
@@ -127,7 +128,7 @@ class _LoadedMaterial extends ConsumerWidget {
       title: material.nombre,
       actions: [
         AppIconButton(
-          key: const ValueKey('material_ficha_refresh'),
+          key: K.materialFichaRefresh,
           tooltip: 'Recargar',
           icon: Symbols.refresh,
           onPressed: () => ref
@@ -200,7 +201,7 @@ class _LoadedMaterial extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     AppPrimaryButton(
-                      key: const ValueKey('material_ficha_asignar_personal'),
+                      key: K.materialFichaAsignarPersonal,
                       label: 'Asignar como equipamiento personal',
                       icon: Symbols.person_add,
                       expanded: true,
@@ -221,7 +222,7 @@ class _LoadedMaterial extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     AppPrimaryButton(
-                      key: const ValueKey('material_ficha_prestar'),
+                      key: K.materialFichaPrestar,
                       label: 'Prestar a un voluntario',
                       icon: Symbols.swap_horiz,
                       expanded: true,
@@ -241,7 +242,7 @@ class _LoadedMaterial extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   AppSecondaryButton(
-                    key: const ValueKey('material_ficha_devolver'),
+                    key: K.materialFichaDevolver,
                     label: 'Registrar devolución',
                     icon: Symbols.assignment_return,
                     expanded: true,
@@ -263,7 +264,7 @@ class _LoadedMaterial extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   AppDestructiveButton(
-                    key: const ValueKey('material_ficha_averia'),
+                    key: K.materialFichaAveria,
                     label: 'Reportar avería',
                     icon: Symbols.build,
                     expanded: true,
@@ -276,7 +277,7 @@ class _LoadedMaterial extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   AppDestructiveButton(
-                    key: const ValueKey('material_ficha_perdida'),
+                    key: K.materialFichaPerdida,
                     label: 'Reportar pérdida',
                     icon: Symbols.report,
                     expanded: true,
@@ -312,14 +313,14 @@ class _LoadedMaterial extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             AppTextField(
-              key: const ValueKey('material_asignar_voluntario_id'),
+              key: K.materialAsignarVoluntarioId,
               label: 'ID del voluntario (UUID)',
               controller: voluntarioCtrl,
               prefixIcon: Symbols.person,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('material_asignar_cantidad'),
+              key: K.materialAsignarCantidad,
               label: 'Cantidad',
               controller: cantidadCtrl,
               keyboardType: TextInputType.number,
@@ -333,7 +334,7 @@ class _LoadedMaterial extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(false),
           ),
           AppPrimaryButton(
-            key: const ValueKey('material_asignar_confirm'),
+            key: K.materialAsignarConfirm,
             label: 'Asignar',
             onPressed: () => Navigator.of(context).pop(true),
           ),
@@ -387,14 +388,14 @@ class _LoadedMaterial extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             AppTextField(
-              key: const ValueKey('material_devolver_voluntario_id'),
+              key: K.materialDevolverVoluntarioId,
               label: 'ID del voluntario que devuelve',
               controller: voluntarioCtrl,
               prefixIcon: Symbols.person,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('material_devolver_observaciones'),
+              key: K.materialDevolverObservaciones,
               label: 'Observaciones (opcional)',
               controller: observacionesCtrl,
               prefixIcon: Symbols.notes,
@@ -408,7 +409,7 @@ class _LoadedMaterial extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(false),
           ),
           AppPrimaryButton(
-            key: const ValueKey('material_devolver_confirm'),
+            key: K.materialDevolverConfirm,
             label: 'Devolver',
             onPressed: () => Navigator.of(context).pop(true),
           ),
@@ -460,7 +461,7 @@ class _LoadedMaterial extends ConsumerWidget {
         context,
         title: title,
         content: AppTextField(
-          key: const ValueKey('material_incidencia_descripcion'),
+          key: K.materialIncidenciaDescripcion,
           label: 'Descripción de la incidencia',
           controller: descripcionCtrl,
           prefixIcon: Symbols.notes,
@@ -472,7 +473,7 @@ class _LoadedMaterial extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(false),
           ),
           AppPrimaryButton(
-            key: const ValueKey('material_incidencia_confirm'),
+            key: K.materialIncidenciaConfirm,
             label: 'Registrar',
             onPressed: () => Navigator.of(context).pop(true),
           ),

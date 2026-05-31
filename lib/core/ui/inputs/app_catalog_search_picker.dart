@@ -13,6 +13,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../app/test_keys.dart';
 import '../../../infrastructure/auth/permissions.dart';
 import '../auth/app_permission_gate.dart';
 import '../buttons/app_text_button.dart';
@@ -199,7 +200,7 @@ class _AppCatalogSearchPickerState<T> extends State<AppCatalogSearchPicker<T>> {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 AppTextField(
-                  key: const ValueKey('catalog_search_field'),
+                  key: K.catalogSearchField,
                   label: widget.searchHint,
                   controller: _searchCtrl,
                   prefixIcon: Symbols.search,
@@ -216,7 +217,7 @@ class _AppCatalogSearchPickerState<T> extends State<AppCatalogSearchPicker<T>> {
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 child: AppTextButton(
-                  key: const ValueKey('catalog_create'),
+                  key: K.catalogCreateBtn,
                   label: widget.createLabel!,
                   icon: Symbols.add,
                   onPressed: widget.onCreate,

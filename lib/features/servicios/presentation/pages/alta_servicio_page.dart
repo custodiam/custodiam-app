@@ -8,6 +8,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
@@ -264,7 +265,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_servicio_titulo'),
+              key: K.altaServicioTitulo,
               label: 'Título',
               controller: _tituloCtrl,
               autofocus: true,
@@ -273,7 +274,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_servicio_ubicacion'),
+              key: K.altaServicioUbicacion,
               label: 'Ubicación',
               controller: _ubicacionCtrl,
               prefixIcon: Symbols.location_on,
@@ -281,7 +282,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               // Alternativa no-mapa: el campo sigue siendo texto libre; el
               // mapa es opcional para fijar coordenadas exactas (ADR-030).
               suffixIcon: IconButton(
-                key: const ValueKey('alta_servicio_ubicacion_mapa'),
+                key: K.altaServicioUbicacionMapaBtn,
                 icon: const Icon(Symbols.map),
                 tooltip: 'Elegir en el mapa',
                 onPressed: _pickUbicacion,
@@ -305,7 +306,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
                       ),
                     ),
                     TextButton(
-                      key: const ValueKey('alta_servicio_quitar_coords'),
+                      key: K.altaServicioQuitarCoordsBtn,
                       onPressed: () => setState(() {
                         _ubicacionLat = null;
                         _ubicacionLng = null;
@@ -323,7 +324,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               label: 'Fecha y hora de inicio',
               button: true,
               child: GestureDetector(
-                key: const ValueKey('alta_servicio_fecha_inicio'),
+                key: K.altaServicioFechaInicioBtn,
                 onTap: _pickFechaInicio,
                 child: AbsorbPointer(
                   child: AppTextField(
@@ -343,7 +344,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_servicio_descripcion'),
+              key: K.altaServicioDescripcion,
               label: 'Descripción',
               controller: _descripcionCtrl,
               prefixIcon: Symbols.description,
@@ -354,7 +355,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               label: 'Fecha y hora de fin',
               button: true,
               child: GestureDetector(
-                key: const ValueKey('alta_servicio_fecha_fin'),
+                key: K.altaServicioFechaFinBtn,
                 onTap: _pickFechaFin,
                 child: AbsorbPointer(
                   child: AppTextField(
@@ -367,7 +368,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_servicio_numero_voluntarios'),
+              key: K.altaServicioNumeroVoluntarios,
               label: 'Número de voluntarios necesarios',
               controller: _numeroVoluntariosCtrl,
               keyboardType: TextInputType.number,
@@ -376,7 +377,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_servicio_notas_material'),
+              key: K.altaServicioNotasMaterial,
               label: 'Notas sobre material',
               controller: _notasMaterialCtrl,
               prefixIcon: Symbols.inventory_2,
@@ -384,7 +385,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_servicio_notas_vehiculos'),
+              key: K.altaServicioNotasVehiculos,
               label: 'Notas sobre vehículos',
               controller: _notasVehiculosCtrl,
               prefixIcon: Symbols.directions_car,
@@ -392,7 +393,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             ),
             const SizedBox(height: AppSpacing.xl),
             AppPrimaryButton(
-              key: const ValueKey('alta_servicio_submit'),
+              key: K.altaServicioSubmitBtn,
               label: _tipo == TipoServicio.emergencia
                   ? 'Crear emergencia'
                   : 'Crear servicio',
@@ -405,7 +406,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppSecondaryButton(
-              key: const ValueKey('alta_servicio_cancel'),
+              key: K.altaServicioCancelBtn,
               label: 'Cancelar',
               expanded: true,
               onPressed: asyncSubmit.isLoading
@@ -446,7 +447,7 @@ class _TipoSelector extends ConsumerWidget {
       runSpacing: AppSpacing.sm,
       children: tipos.map((t) {
         return ChoiceChip(
-          key: ValueKey('alta_servicio_tipo_${t.wire}'),
+          key: K.altaServicioTipoChip(t.wire),
           label: Text(_label(t)),
           selected: selected == t,
           onSelected: (_) => onChanged(t),

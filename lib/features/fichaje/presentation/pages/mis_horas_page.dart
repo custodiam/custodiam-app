@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
@@ -42,7 +43,7 @@ class _MisHorasBody extends ConsumerWidget {
       title: 'Mis horas',
       actions: [
         AppIconButton(
-          key: const ValueKey('mis_horas_refresh'),
+          key: K.misHorasRefresh,
           tooltip: 'Recargar',
           icon: Symbols.refresh,
           onPressed: () =>

@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
@@ -140,7 +141,7 @@ class _ServiciosListPageBodyState
           child: _AltaServicioButton(),
         ),
         AppIconButton(
-          key: const ValueKey('servicios_filtro_fechas_button'),
+          key: K.serviciosListFiltroFechasBtn,
           tooltip: 'Filtrar por fechas',
           icon: Symbols.date_range,
           onPressed: asyncState.valueOrNull == null
@@ -148,7 +149,7 @@ class _ServiciosListPageBodyState
               : () => _abrirDateRangePicker(asyncState.valueOrNull),
         ),
         AppIconButton(
-          key: const ValueKey('servicios_refresh_button'),
+          key: K.serviciosListRefreshBtn,
           tooltip: 'Recargar',
           icon: Symbols.refresh,
           onPressed: () =>
@@ -163,7 +164,7 @@ class _ServiciosListPageBodyState
               vertical: AppSpacing.sm,
             ),
             child: AppTextField(
-              key: const ValueKey('servicios_search_field'),
+              key: K.serviciosListSearchField,
               label: 'Buscar por título o ubicación',
               controller: _searchController,
               prefixIcon: Symbols.search,
@@ -237,7 +238,7 @@ class _ServiciosListPageBodyState
         return RefreshIndicator(
           onRefresh: onRefresh,
           child: ListView.separated(
-            key: const ValueKey('servicios_list_view'),
+            key: K.serviciosListView,
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
@@ -266,7 +267,7 @@ class _AltaServicioButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppIconButton(
-      key: const ValueKey('servicios_alta_button'),
+      key: K.serviciosListAltaBtn,
       tooltip: 'Crear servicio',
       icon: Symbols.add,
       onPressed: () => context.go('/servicios/alta'),
@@ -288,21 +289,21 @@ class _EstadoFilterRow extends StatelessWidget {
       child: Row(
         children: [
           ChoiceChip(
-            key: const ValueKey('servicios_filter_todos'),
+            key: K.serviciosListFilterTodosChip,
             label: const Text('Todos'),
             selected: selected == null,
             onSelected: (_) => onChanged(null),
           ),
           const SizedBox(width: AppSpacing.sm),
           ChoiceChip(
-            key: const ValueKey('servicios_filter_publicado'),
+            key: K.serviciosListFilterPublicadoChip,
             label: const Text('Publicados'),
             selected: selected == EstadoServicio.publicado,
             onSelected: (_) => onChanged(EstadoServicio.publicado),
           ),
           const SizedBox(width: AppSpacing.sm),
           ChoiceChip(
-            key: const ValueKey('servicios_filter_activo'),
+            key: K.serviciosListFilterActivoChip,
             label: const Text('Activos'),
             selected: selected == EstadoServicio.activo,
             onSelected: (_) => onChanged(EstadoServicio.activo),
@@ -322,7 +323,7 @@ class _EstadoFilterRow extends StatelessWidget {
               children: [
                 const SizedBox(width: AppSpacing.sm),
                 ChoiceChip(
-                  key: const ValueKey('servicios_filter_borrador'),
+                  key: K.serviciosListFilterBorradorChip,
                   label: const Text('Borradores'),
                   selected: selected == EstadoServicio.borrador,
                   onSelected: (_) => onChanged(EstadoServicio.borrador),
@@ -332,7 +333,7 @@ class _EstadoFilterRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           ChoiceChip(
-            key: const ValueKey('servicios_filter_cerrado'),
+            key: K.serviciosListFilterCerradoChip,
             label: const Text('Cerrados'),
             selected: selected == EstadoServicio.cerrado,
             onSelected: (_) => onChanged(EstadoServicio.cerrado),
@@ -372,7 +373,7 @@ class _RangoActivoChip extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: InputChip(
-          key: const ValueKey('servicios_chip_rango_activo'),
+          key: K.serviciosListRangoActivoChip,
           avatar: Icon(
             Symbols.date_range,
             size: 18,
@@ -405,7 +406,7 @@ class _ServicioTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: ValueKey('servicios_item_${servicio.id}'),
+      key: K.serviciosListItem(servicio.id),
       leading: _TipoIcon(tipo: servicio.tipo),
       title: Text(
         servicio.titulo,

@@ -13,6 +13,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
@@ -183,7 +184,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_nombre'),
+              key: K.altaVoluntarioNombreField,
               label: 'Nombre completo',
               controller: _nombreCtrl,
               autofocus: true,
@@ -192,7 +193,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_telefono'),
+              key: K.altaVoluntarioTelefonoField,
               label: 'Teléfono',
               controller: _telefonoCtrl,
               keyboardType: TextInputType.phone,
@@ -201,7 +202,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_municipio'),
+              key: K.altaVoluntarioMunicipioField,
               label: 'Municipio',
               controller: _municipioCtrl,
               prefixIcon: Symbols.location_city,
@@ -215,7 +216,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               label: 'Fecha de nacimiento',
               button: true,
               child: GestureDetector(
-                key: const ValueKey('alta_fecha_nacimiento'),
+                key: K.altaVoluntarioFechaNacimientoField,
                 onTap: _pickDate,
                 child: AbsorbPointer(
                   child: AppTextField(
@@ -236,14 +237,14 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_dni'),
+              key: K.altaVoluntarioDniField,
               label: 'DNI',
               controller: _dniCtrl,
               prefixIcon: Symbols.badge,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_email'),
+              key: K.altaVoluntarioEmailField,
               label: 'Email',
               controller: _emailCtrl,
               keyboardType: TextInputType.emailAddress,
@@ -252,14 +253,14 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_direccion'),
+              key: K.altaVoluntarioDireccionField,
               label: 'Dirección',
               controller: _direccionCtrl,
               prefixIcon: Symbols.home,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_foto'),
+              key: K.altaVoluntarioFotoField,
               label: 'URL de foto',
               controller: _fotoCtrl,
               keyboardType: TextInputType.url,
@@ -267,7 +268,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             SwitchListTile(
-              key: const ValueKey('alta_conductor'),
+              key: K.altaVoluntarioConductorSwitch,
               title: const Text('Conductor habilitado'),
               subtitle: const Text(
                 'Marca si tiene permiso para conducir vehículos del servicio.',
@@ -277,7 +278,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
             ),
             const SizedBox(height: AppSpacing.xl),
             AppPrimaryButton(
-              key: const ValueKey('alta_submit'),
+              key: K.altaVoluntarioSubmitButton,
               label: 'Crear voluntario',
               icon: Symbols.person_add,
               expanded: true,
@@ -286,7 +287,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppSecondaryButton(
-              key: const ValueKey('alta_cancel'),
+              key: K.altaVoluntarioCancelButton,
               label: 'Cancelar',
               expanded: true,
               onPressed: asyncSubmit.isLoading

@@ -1,3 +1,4 @@
+import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/core/ui/inputs/app_catalog_search_picker.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/auth/permissions.dart';
@@ -39,7 +40,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Elegir material'), findsOneWidget);
-      expect(find.byKey(const ValueKey('catalog_search_field')), findsOneWidget);
+      expect(find.byKey(K.catalogSearchField), findsOneWidget);
       expect(find.text('Casco'), findsOneWidget);
       expect(find.text('Botas'), findsOneWidget);
     });
@@ -91,7 +92,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(
-        find.byKey(const ValueKey('catalog_search_field')),
+        find.byKey(K.catalogSearchField),
         'cas',
       );
       await tester.pump(const Duration(milliseconds: 350)); // pasa el debounce
@@ -115,7 +116,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const ValueKey('catalog_create')), findsOneWidget);
+      expect(find.byKey(K.catalogCreateBtn), findsOneWidget);
     });
 
     testWidgets('hides the create footer for a user without the permission',
@@ -133,7 +134,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const ValueKey('catalog_create')), findsNothing);
+      expect(find.byKey(K.catalogCreateBtn), findsNothing);
     });
 
     testWidgets('item tap targets meet the minimum size guideline',

@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
@@ -159,7 +160,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
                   TipoVehiculo.remolque => 'Remolque',
                 };
                 return ChoiceChip(
-                  key: ValueKey('alta_vehiculo_tipo_${t.wire}'),
+                  key: K.altaVehiculoTipoChip(t.wire),
                   label: Text(label),
                   selected: _tipo == t,
                   onSelected: (_) => setState(() => _tipo = t),
@@ -173,7 +174,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_vehiculo_codigo'),
+              key: K.altaVehiculoCodigo,
               label: 'Código interno',
               controller: _codigoCtrl,
               autofocus: true,
@@ -182,7 +183,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_vehiculo_matricula'),
+              key: K.altaVehiculoMatricula,
               label: 'Matrícula',
               controller: _matriculaCtrl,
               prefixIcon: Symbols.directions_car,
@@ -190,7 +191,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             UbicacionSelectorField(
-              fieldKey: const ValueKey('alta_vehiculo_ubicacion'),
+              fieldKey: K.altaVehiculoUbicacion,
               value: _ubicacion,
               onChanged: (u) => setState(() => _ubicacion = u),
               validator: (v) => v == null ? 'Ubicación obligatoria' : null,
@@ -202,7 +203,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_vehiculo_marca_modelo'),
+              key: K.altaVehiculoMarcaModelo,
               label: 'Marca y modelo',
               controller: _marcaModeloCtrl,
               prefixIcon: Symbols.commute,
@@ -215,7 +216,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
               label: 'Próxima ITV',
               button: true,
               child: GestureDetector(
-                key: const ValueKey('alta_vehiculo_itv'),
+                key: K.altaVehiculoItv,
                 onTap: _pickItv,
                 child: AbsorbPointer(
                   child: AppTextField(
@@ -228,7 +229,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_vehiculo_observaciones'),
+              key: K.altaVehiculoObservaciones,
               label: 'Observaciones',
               controller: _observacionesCtrl,
               prefixIcon: Symbols.notes,
@@ -236,7 +237,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
             ),
             const SizedBox(height: AppSpacing.xl),
             AppPrimaryButton(
-              key: const ValueKey('alta_vehiculo_submit'),
+              key: K.altaVehiculoSubmit,
               label: 'Registrar vehículo',
               icon: Symbols.directions_car_filled,
               expanded: true,
@@ -245,7 +246,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppSecondaryButton(
-              key: const ValueKey('alta_vehiculo_cancel'),
+              key: K.altaVehiculoCancel,
               label: 'Cancelar',
               expanded: true,
               onPressed: asyncSubmit.isLoading

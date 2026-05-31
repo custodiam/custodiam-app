@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../app/test_keys.dart';
 import '../buttons/app_icon_button.dart';
 import '../feedback/app_snackbar.dart';
 import '../inputs/app_text_field.dart';
@@ -171,7 +172,7 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
         title: const Text('Elegir ubicación'),
         actions: [
           AppIconButton(
-            key: const ValueKey('location_picker_confirmar'),
+            key: K.locationPickerConfirmarAppBarBtn,
             tooltip: 'Confirmar ubicación',
             icon: Symbols.check,
             onPressed: _confirmar,
@@ -241,7 +242,7 @@ class _PanelInferior extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   AppTextField(
-                    key: const ValueKey('location_picker_direccion'),
+                    key: K.locationPickerDireccionField,
                     label: 'Dirección',
                     controller: textController,
                     prefixIcon: Symbols.location_on,
@@ -258,7 +259,7 @@ class _PanelInferior extends StatelessWidget {
                           ),
                         ),
                         AppIconButton(
-                          key: const ValueKey('location_picker_recargar'),
+                          key: K.locationPickerRecargarBtn,
                           tooltip: 'Recargar dirección sugerida del punto',
                           icon: Symbols.refresh,
                           onPressed: controller.cargandoSugerencia
@@ -281,7 +282,7 @@ class _PanelInferior extends StatelessWidget {
                     ),
                   const SizedBox(height: AppSpacing.sm),
                   FilledButton.icon(
-                    key: const ValueKey('location_picker_confirmar_btn'),
+                    key: K.locationPickerConfirmarBtn,
                     onPressed: controller.puedeConfirmar ? onConfirmar : null,
                     icon: const Icon(Symbols.check),
                     label: const Text('Confirmar ubicación'),
@@ -337,13 +338,13 @@ class _SugerenciaBanner extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                key: const ValueKey('location_picker_mantener'),
+                key: K.locationPickerMantenerBtn,
                 onPressed: onMantener,
                 child: const Text('Mantener mi texto'),
               ),
               const SizedBox(width: AppSpacing.xs),
               FilledButton(
-                key: const ValueKey('location_picker_usar_sugerencia'),
+                key: K.locationPickerUsarSugerenciaBtn,
                 onPressed: onUsar,
                 child: const Text('Usar sugerencia'),
               ),

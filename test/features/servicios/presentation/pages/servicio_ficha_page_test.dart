@@ -1,3 +1,4 @@
+import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/core/ui/buttons/app_primary_button.dart';
 import 'package:custodiam/core/ui/maps/maps_launcher.dart';
 import 'package:custodiam/features/servicios/domain/entities/estado_servicio.dart';
@@ -11,7 +12,6 @@ import 'package:custodiam/features/servicios/presentation/pages/servicio_ficha_p
 import 'package:custodiam/features/servicios/presentation/viewmodels/servicios_di.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -99,7 +99,7 @@ void main() {
 
   AppPrimaryButton apuntarseButton(WidgetTester tester) {
     return tester.widget<AppPrimaryButton>(
-      find.byKey(const ValueKey('servicio_ficha_apuntarse_button')),
+      find.byKey(K.servicioFichaApuntarseBtn),
     );
   }
 
@@ -116,7 +116,7 @@ void main() {
       find.descendant(
         of: find.bySemanticsLabel('Aforo completo'),
         matching: find.byKey(
-          const ValueKey('servicio_ficha_apuntarse_button'),
+          K.servicioFichaApuntarseBtn,
         ),
       ),
       findsOneWidget,
@@ -128,7 +128,7 @@ void main() {
     await pumpFicha(tester, _servicio());
 
     expect(
-      find.byKey(const ValueKey('servicio_ficha_abrir_mapa')),
+      find.byKey(K.servicioFichaAbrirMapaBtn),
       findsNothing,
     );
   });
@@ -145,7 +145,7 @@ void main() {
       ],
     );
 
-    final boton = find.byKey(const ValueKey('servicio_ficha_abrir_mapa'));
+    final boton = find.byKey(K.servicioFichaAbrirMapaBtn);
     expect(boton, findsOneWidget);
     expect(find.text('Cómo llegar'), findsOneWidget);
 
@@ -172,7 +172,7 @@ void main() {
       find.descendant(
         of: find.bySemanticsLabel('Aforo completo'),
         matching: find.byKey(
-          const ValueKey('servicio_ficha_apuntarse_button'),
+          K.servicioFichaApuntarseBtn,
         ),
       ),
       findsOneWidget,

@@ -22,6 +22,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
@@ -85,7 +86,7 @@ class _VoluntarioFichaBody extends ConsumerWidget {
       title: 'Ficha de voluntario',
       actions: [
         AppIconButton(
-          key: const ValueKey('voluntario_ficha_refresh'),
+          key: K.voluntarioFichaRefreshButton,
           tooltip: 'Recargar',
           icon: Symbols.refresh,
           onPressed: () => ref.read(provider.notifier).refresh(),
@@ -210,7 +211,7 @@ class _BajaSection extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         if (!yaDeBaja)
           AppDestructiveButton(
-            key: const ValueKey('ficha_dar_baja'),
+            key: K.voluntarioFichaDarBajaButton,
             label: 'Dar de baja',
             icon: Symbols.person_off,
             expanded: true,
@@ -246,7 +247,7 @@ class _BajaSection extends ConsumerWidget {
           ),
         const SizedBox(height: AppSpacing.md),
         AppDestructiveButton(
-          key: const ValueKey('ficha_anonimizar'),
+          key: K.voluntarioFichaAnonimizarButton,
           label: 'Anonimizar (RGPD, irreversible)',
           icon: Symbols.privacy_tip,
           expanded: true,
@@ -506,7 +507,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           Text('Datos del voluntario', style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.sm),
           AppTextField(
-            key: const ValueKey('ficha_nombre'),
+            key: K.voluntarioFichaNombreField,
             label: 'Nombre completo',
             controller: _nombreCtrl,
             enabled: widget.canEdit && !widget.isMutating,
@@ -515,7 +516,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_telefono'),
+            key: K.voluntarioFichaTelefonoField,
             label: 'Teléfono',
             controller: _telefonoCtrl,
             enabled: widget.canEdit && !widget.isMutating,
@@ -525,7 +526,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_municipio'),
+            key: K.voluntarioFichaMunicipioField,
             label: 'Municipio',
             controller: _municipioCtrl,
             enabled: widget.canEdit && !widget.isMutating,
@@ -543,7 +544,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             button: true,
             enabled: widget.canEdit && !widget.isMutating,
             child: GestureDetector(
-              key: const ValueKey('ficha_fecha_nacimiento'),
+              key: K.voluntarioFichaFechaNacimientoField,
               onTap: widget.canEdit && !widget.isMutating ? _pickDate : null,
               child: AbsorbPointer(
                 child: AppTextField(
@@ -557,7 +558,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_dni'),
+            key: K.voluntarioFichaDniField,
             label: 'DNI',
             controller: _dniCtrl,
             enabled: widget.canEdit && !widget.isMutating,
@@ -565,7 +566,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_email'),
+            key: K.voluntarioFichaEmailField,
             label: 'Email',
             controller: _emailCtrl,
             enabled: widget.canEdit && !widget.isMutating,
@@ -575,7 +576,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_direccion'),
+            key: K.voluntarioFichaDireccionField,
             label: 'Dirección',
             controller: _direccionCtrl,
             enabled: widget.canEdit && !widget.isMutating,
@@ -583,7 +584,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_foto'),
+            key: K.voluntarioFichaFotoField,
             label: 'URL de foto',
             controller: _fotoCtrl,
             enabled: widget.canEdit && !widget.isMutating,
@@ -592,7 +593,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           ),
           const SizedBox(height: AppSpacing.md),
           SwitchListTile(
-            key: const ValueKey('ficha_conductor'),
+            key: K.voluntarioFichaConductorSwitch,
             title: const Text('Conductor habilitado'),
             value: _conductorHabilitado,
             onChanged: widget.canEdit && !widget.isMutating
@@ -601,7 +602,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           ),
           const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<EstadoVoluntario>(
-            key: const ValueKey('ficha_estado'),
+            key: K.voluntarioFichaEstadoDropdown,
             initialValue: _estado,
             decoration: const InputDecoration(
               labelText: 'Estado',
@@ -630,7 +631,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           const SizedBox(height: AppSpacing.xl),
           if (widget.canEdit)
             AppPrimaryButton(
-              key: const ValueKey('ficha_save'),
+              key: K.voluntarioFichaSaveButton,
               label: 'Guardar cambios',
               icon: Symbols.save,
               expanded: true,
@@ -708,7 +709,7 @@ class _RolesSectionState extends ConsumerState<_RolesSection> {
             children: [
               for (final a in widget.asignaciones)
                 InputChip(
-                  key: ValueKey('ficha_rol_chip_${a.rolId}'),
+                  key: K.voluntarioFichaRolChip(a.rolId),
                   label: Text(a.rolNombre),
                   onDeleted: widget.canEdit && !widget.isMutating ? () => _onQuitar(a.rolId) : null,
                 ),
@@ -717,7 +718,7 @@ class _RolesSectionState extends ConsumerState<_RolesSection> {
         const SizedBox(height: AppSpacing.md),
         if (widget.canEdit && !widget.isMutating && disponibles.isNotEmpty) ...[
           DropdownButtonFormField<String>(
-            key: const ValueKey('ficha_rol_selector'),
+            key: K.voluntarioFichaRolSelectorDropdown,
             initialValue: _seleccionado,
             decoration: const InputDecoration(
               labelText: 'Asignar nuevo rol',
@@ -731,7 +732,7 @@ class _RolesSectionState extends ConsumerState<_RolesSection> {
           ),
           const SizedBox(height: AppSpacing.sm),
           AppSecondaryButton(
-            key: const ValueKey('ficha_rol_asignar'),
+            key: K.voluntarioFichaRolAsignarButton,
             label: 'Asignar rol',
             icon: Symbols.add,
             expanded: true,

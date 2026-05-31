@@ -1,3 +1,4 @@
+import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/core/ui/theme/app_theme.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/estado_voluntario.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/rol.dart';
@@ -155,7 +156,10 @@ void main() {
     expect(find.text('Ana Pérez'), findsWidgets);
     expect(find.text('600000000'), findsWidgets);
     expect(find.text('ana@example.com'), findsWidgets);
-    expect(find.byKey(const ValueKey('ficha_rol_chip_rol-1')), findsOneWidget);
+    expect(
+      find.byKey(K.voluntarioFichaRolChip('rol-1')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('VoluntarioNotFound renders a tailored empty state',
@@ -183,16 +187,19 @@ void main() {
     await pumpPage(tester, vol, rolesRepo);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('ficha_rol_selector')));
+    await tester.tap(find.byKey(K.voluntarioFichaRolSelectorDropdown));
     await tester.pumpAndSettle();
     // The dropdown menu opens with one DropdownMenuItem per disponible.
     await tester.tap(find.text('jefe_equipo').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('ficha_rol_asignar')));
+    await tester.tap(find.byKey(K.voluntarioFichaRolAsignarButton));
     await tester.pumpAndSettle();
 
     verify(() => vol.asignarRol('vol-1', 'rol-2')).called(1);
-    expect(find.byKey(const ValueKey('ficha_rol_chip_rol-2')), findsOneWidget);
+    expect(
+      find.byKey(K.voluntarioFichaRolChip('rol-2')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('quitarRol removes the chip from the state', (tester) async {
@@ -206,13 +213,16 @@ void main() {
 
     // M3 InputChip uses a non-stable delete glyph; invoke onDeleted
     // directly to avoid coupling the test to icon internals.
-    final chip = find.byKey(const ValueKey('ficha_rol_chip_rol-1'));
+    final chip = find.byKey(K.voluntarioFichaRolChip('rol-1'));
     final inputChip = tester.firstWidget<InputChip>(chip);
     inputChip.onDeleted!.call();
     await tester.pumpAndSettle();
 
     verify(() => vol.quitarRol('vol-1', 'rol-1')).called(1);
-    expect(find.byKey(const ValueKey('ficha_rol_chip_rol-1')), findsNothing);
+    expect(
+      find.byKey(K.voluntarioFichaRolChip('rol-1')),
+      findsNothing,
+    );
   });
 
   testWidgets('shows danger snackbar with RolYaAsignado copy on 409',
@@ -225,11 +235,11 @@ void main() {
     await pumpPage(tester, vol, rolesRepo);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('ficha_rol_selector')));
+    await tester.tap(find.byKey(K.voluntarioFichaRolSelectorDropdown));
     await tester.pumpAndSettle();
     await tester.tap(find.text('jefe_equipo').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('ficha_rol_asignar')));
+    await tester.tap(find.byKey(K.voluntarioFichaRolAsignarButton));
     await tester.pump();
 
     expect(find.byType(SnackBar), findsOneWidget);
@@ -244,11 +254,11 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('ficha_save')),
+      find.byKey(K.voluntarioFichaSaveButton),
       400,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.byKey(const ValueKey('ficha_save')));
+    await tester.tap(find.byKey(K.voluntarioFichaSaveButton));
     await tester.pump();
 
     expect(find.textContaining('No has cambiado nada'), findsOneWidget);
@@ -265,15 +275,15 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(
-      find.byKey(const ValueKey('ficha_telefono')),
+      find.byKey(K.voluntarioFichaTelefonoField),
       '699999999',
     );
     await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('ficha_save')),
+      find.byKey(K.voluntarioFichaSaveButton),
       400,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.byKey(const ValueKey('ficha_save')));
+    await tester.tap(find.byKey(K.voluntarioFichaSaveButton));
     await tester.pumpAndSettle();
 
     final captured =
@@ -292,7 +302,10 @@ void main() {
     await tester.pumpAndSettle();
 
     // The dropdown selector for new roles is hidden when canEdit is false.
-    expect(find.byKey(const ValueKey('ficha_rol_selector')), findsNothing);
-    expect(find.byKey(const ValueKey('ficha_rol_asignar')), findsNothing);
+    expect(
+      find.byKey(K.voluntarioFichaRolSelectorDropdown),
+      findsNothing,
+    );
+    expect(find.byKey(K.voluntarioFichaRolAsignarButton), findsNothing);
   });
 }
