@@ -10,6 +10,8 @@
 // patrol_test/mobile/.
 
 import 'package:custodiam/app/app.dart';
+import 'package:custodiam/features/notificaciones/data/datasources/fcm_service_unavailable.dart';
+import 'package:custodiam/features/notificaciones/presentation/viewmodels/notificaciones_di.dart';
 import 'package:custodiam/infrastructure/auth/auth_service.dart';
 import 'package:custodiam/infrastructure/di/providers.dart';
 import 'package:flutter/foundation.dart';
@@ -18,11 +20,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:patrol/patrol.dart';
 
+import '../support/patrol_bootstrap.dart';
+
 class _UnauthenticatedAuthService extends Mock implements AuthService {}
 
 void main() {
   patrolTest('the app boots on device and lands on the login screen',
       ($) async {
+    // Mismo bootstrap no-dependiente-de-plataforma que lib/main.dart, para que
+    // los flujos que sigan a este smoke pinten pantallas con DateFormat(..,
+    // 'es_ES') sin LocaleDataException.
+    await bootstrapPatrolApp();
+
     final auth = _UnauthenticatedAuthService();
     when(() => auth.init()).thenAnswer((_) async {});
     when(() => auth.isAuthenticated).thenReturn(false);
@@ -33,7 +42,14 @@ void main() {
 
     await $.pumpWidget(
       ProviderScope(
-        overrides: [authServiceProvider.overrideWithValue(auth)],
+        overrides: [
+          authServiceProvider.overrideWithValue(auth),
+          // Aislamiento explícito de FCM: sin Firebase inicializado el
+          // FcmBootstrap caería igualmente al fallback, pero lo fijamos para
+          // no depender de ese comportamiento de runtime (ni de que
+          // FirebaseMessaging.instance lance sin init en cada device/imagen).
+          fcmServiceProvider.overrideWithValue(const FcmServiceUnavailable()),
+        ],
         child: const CustodiamApp(),
       ),
     );
