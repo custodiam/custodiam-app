@@ -165,6 +165,27 @@ void main() {
       );
     });
 
+    testWidgets('al cancelar el diálogo no llama al repo', (tester) async {
+      await pump(tester, _user(['jefe_seccion']));
+
+      await tester.tap(find.byKey(K.vehiculoFichaAveria));
+      await tester.pumpAndSettle();
+
+      // Cerrar por "Cancelar" reconstruye el campo durante la animación de
+      // cierre — el camino del use-after-dispose. No debe tocar el repo.
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(K.vehiculoIncidenciaConfirm), findsNothing);
+      verifyNever(
+        () => repo.reportarIncidenciaVehiculo(
+          any(),
+          nuevoEstado: any(named: 'nuevoEstado'),
+          descripcion: any(named: 'descripcion'),
+        ),
+      );
+    });
+
     testWidgets(
         'éxito: rellenar descripción y confirmar llama al repo con averiado',
         (tester) async {

@@ -61,6 +61,15 @@ AsignacionMaterial _asignacion() => AsignacionMaterial(
 CurrentUser _user(List<String> roles) =>
     CurrentUser(sub: '1', email: 'a@b.com', roles: roles);
 
+/// Avanza la cadena async de una acción con éxito (notifier → snackbar →
+/// refresh del listado) sin esperar el auto-dismiss de 4 s del SnackBar, que
+/// colgaría un `pumpAndSettle`. Helper compartido para no repetir el conteo
+/// de pumps caso a caso.
+Future<void> _settleAction(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
 void main() {
   setUpAll(() {
     // Necesario para los matchers `any(named:)` sobre enums en mocktail.
@@ -253,8 +262,7 @@ void main() {
         '2',
       );
       await tester.tap(find.byKey(K.materialAsignarConfirm));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await _settleAction(tester);
 
       verify(() => repo.asignarMaterialAVoluntario(
             _materialId,
@@ -263,6 +271,59 @@ void main() {
             cantidad: 2,
           )).called(1);
       expect(find.text('Asignación registrada.'), findsOneWidget);
+    });
+
+    testWidgets('al cancelar el diálogo no llama al repo', (tester) async {
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaPrestar));
+      await tester.pumpAndSettle();
+
+      // Cerrar por "Cancelar" desmonta el diálogo (rebuild durante la
+      // animación de cierre): el camino donde se manifestaba el
+      // use-after-dispose del controller. No debe tocar el repo ni petar.
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(K.materialAsignarConfirm), findsNothing);
+      verifyNever(() => repo.asignarMaterialAVoluntario(
+            any(),
+            voluntarioId: any(named: 'voluntarioId'),
+            tipo: any(named: 'tipo'),
+            cantidad: any(named: 'cantidad'),
+          ));
+    });
+
+    testWidgets(
+        'cantidad no numérica cae al fallback de 1 unidad',
+        (tester) async {
+      when(() => repo.asignarMaterialAVoluntario(
+            any(),
+            voluntarioId: any(named: 'voluntarioId'),
+            tipo: any(named: 'tipo'),
+            cantidad: any(named: 'cantidad'),
+          )).thenAnswer((_) async => Success(_asignacion()));
+
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaPrestar));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(K.materialAsignarVoluntarioId),
+        'vol-1',
+      );
+      // 'abc' no parsea → int.tryParse(...) ?? 1.
+      await tester.enterText(find.byKey(K.materialAsignarCantidad), 'abc');
+      await tester.tap(find.byKey(K.materialAsignarConfirm));
+      await _settleAction(tester);
+
+      verify(() => repo.asignarMaterialAVoluntario(
+            _materialId,
+            voluntarioId: 'vol-1',
+            tipo: TipoAsignacion.prestamo,
+            cantidad: 1,
+          )).called(1);
     });
   });
 
