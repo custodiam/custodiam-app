@@ -94,7 +94,12 @@ class UbicacionesRepositoryImpl implements UbicacionesRepository {
     try {
       final json = await _api.actualizar(
         id,
-        _body(nombre: nombre, descripcion: descripcion, lat: lat, lng: lng),
+        _bodyActualizar(
+          nombre: nombre,
+          descripcion: descripcion,
+          lat: lat,
+          lng: lng,
+        ),
       );
       return Success(UbicacionModel.fromJson(json));
     } on ApiException catch (e) {
@@ -126,8 +131,9 @@ class UbicacionesRepositoryImpl implements UbicacionesRepository {
     }
   }
 
-  /// Body común para POST/PATCH. Solo incluye lo no nulo; lat/lng van juntas
-  /// o ninguna (invariante del backend). En crear, `nombre` siempre llega.
+  /// Body para POST (crear). Solo incluye lo no nulo: no fija descripción ni
+  /// coordenadas si no se aportan. lat/lng van juntas o ninguna (invariante
+  /// del backend). `nombre` siempre llega en crear.
   Map<String, dynamic> _body({
     String? nombre,
     String? descripcion,
@@ -141,6 +147,29 @@ class UbicacionesRepositoryImpl implements UbicacionesRepository {
       body['lat'] = lat;
       body['lng'] = lng;
     }
+    return body;
+  }
+
+  /// Body para PATCH (actualizar). A diferencia de [_body], envía
+  /// `descripcion`, `lat` y `lng` SIEMPRE (incluido null) para que la edición
+  /// refleje borrados: quitar las coordenadas o vaciar la descripción debe
+  /// persistir, no quedar como "no tocar". El backend aplica el patch con
+  /// `exclude_unset=True`, así que una clave enviada con null limpia la
+  /// columna; el validador "ambos o ninguno" admite el par (null, null) y el
+  /// formulario fija/quita lat+lng juntos, así que nunca se manda una sola.
+  /// `nombre` solo se incluye si llega (el formulario lo valida no vacío).
+  Map<String, dynamic> _bodyActualizar({
+    String? nombre,
+    String? descripcion,
+    double? lat,
+    double? lng,
+  }) {
+    final body = <String, dynamic>{
+      'descripcion': descripcion,
+      'lat': lat,
+      'lng': lng,
+    };
+    if (nombre != null) body['nombre'] = nombre;
     return body;
   }
 

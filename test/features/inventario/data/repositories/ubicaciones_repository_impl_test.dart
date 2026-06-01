@@ -4,8 +4,10 @@
 //  - obtener / crear felices,
 //  - mapeo de 409 a nombreDuplicado (crear/actualizar) y enUso (eliminar),
 //  - mapeo de 404 a notFound y 401 a AuthFailure.sessionExpired,
-//  - eliminar 204 (cuerpo vacío) resuelve Success<void>,
-//  - el body de crear/actualizar arma lat+lng solo cuando llegan ambos.
+//  - eliminar feliz resuelve Success<void> (el 204 con cuerpo vacío lo
+//    absorbe el datasource; ver ubicaciones_api_test),
+//  - el body de crear omite lo nulo, y el de actualizar envía descripción y
+//    coordenadas explícitas (incluido null) para permitir borrarlas.
 //
 // El mapeo de Failure vive en guía 26 §4; este test fija su contrato.
 
@@ -233,17 +235,54 @@ void main() {
       expectFailure<Ubicacion>(result, UbicacionNombreDuplicado);
     });
 
-    test('el body incluye lat+lng solo cuando llegan ambos', () async {
+    test('el body de PATCH envía nombre, descripción y coordenadas', () async {
       when(() => api.actualizar('u-1', any()))
           .thenAnswer((_) async => _detalle());
 
-      await repo.actualizar('u-1', nombre: 'X', lat: 1.0, lng: 2.0);
+      await repo.actualizar(
+        'u-1',
+        nombre: 'X',
+        descripcion: 'Parque',
+        lat: 1.0,
+        lng: 2.0,
+      );
 
       final body = verify(() => api.actualizar('u-1', captureAny()))
           .captured
           .single as Map<String, dynamic>;
+      expect(body['nombre'], 'X');
+      expect(body['descripcion'], 'Parque');
       expect(body['lat'], 1.0);
       expect(body['lng'], 2.0);
+    });
+
+    test(
+        'borrar coords y descripción en edición: el body las envía como null '
+        'explícito (no las omite, para que el PATCH las limpie)', () async {
+      when(() => api.actualizar('u-1', any())).thenAnswer(
+        (_) async => _detalle(descripcion: null, lat: null, lng: null),
+      );
+
+      // El usuario quitó las coordenadas y vació la descripción.
+      await repo.actualizar(
+        'u-1',
+        nombre: 'X',
+        descripcion: null,
+        lat: null,
+        lng: null,
+      );
+
+      final body = verify(() => api.actualizar('u-1', captureAny()))
+          .captured
+          .single as Map<String, dynamic>;
+      // Las claves DEBEN viajar con null (no omitirse): el backend solo
+      // limpia las columnas cuya clave llega en el patch (exclude_unset).
+      expect(body.containsKey('descripcion'), isTrue);
+      expect(body['descripcion'], isNull);
+      expect(body.containsKey('lat'), isTrue);
+      expect(body['lat'], isNull);
+      expect(body.containsKey('lng'), isTrue);
+      expect(body['lng'], isNull);
     });
   });
 
