@@ -27,6 +27,7 @@ import '../../domain/entities/vehiculo_summary.dart';
 import '../viewmodels/materiales_list_view_model.dart';
 import '../viewmodels/vehiculos_list_view_model.dart';
 import '../widgets/inventario_estado_badge.dart';
+import '../widgets/ubicaciones_tab.dart';
 
 class InventarioListPage extends ConsumerWidget {
   const InventarioListPage({super.key});
@@ -46,8 +47,28 @@ class _InventarioListBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // La pestaña Ubicaciones es gestión solo-mandos: se muestra únicamente a
+    // quien tiene `ubicaciones.crear`. Por eso el TabBar tiene 2 o 3 pestañas
+    // según el rol (length dinámico); Material y Vehículos las ve todo el que
+    // tiene `inventario.ver`.
+    final user = ref.watch(authServiceProvider).currentUser;
+    final canUbicaciones =
+        user?.hasPermission(Permission.ubicacionesCrear) ?? false;
+
+    final tabs = <Widget>[
+      const Tab(icon: Icon(Symbols.inventory_2), text: 'Material'),
+      const Tab(icon: Icon(Symbols.directions_car), text: 'Vehículos'),
+      if (canUbicaciones)
+        const Tab(icon: Icon(Symbols.location_on), text: 'Ubicaciones'),
+    ];
+    final views = <Widget>[
+      const _MaterialesTab(),
+      const _VehiculosTab(),
+      if (canUbicaciones) const UbicacionesTab(),
+    ];
+
     return DefaultTabController(
-      length: 2,
+      length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Inventario'),
@@ -55,23 +76,10 @@ class _InventarioListBody extends ConsumerWidget {
           actions: const [
             _AltaMenuButton(),
           ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Symbols.inventory_2), text: 'Material'),
-              Tab(
-                icon: Icon(Symbols.directions_car),
-                text: 'Vehículos',
-              ),
-            ],
-          ),
+          bottom: TabBar(tabs: tabs),
         ),
-        body: const SafeArea(
-          child: TabBarView(
-            children: [
-              _MaterialesTab(),
-              _VehiculosTab(),
-            ],
-          ),
+        body: SafeArea(
+          child: TabBarView(children: views),
         ),
       ),
     );

@@ -139,6 +139,19 @@ abstract final class K {
   static const Key crearUbicacionSubmit = ValueKey('crear_ubicacion_submit');
   static const Key crearUbicacionCancel = ValueKey('crear_ubicacion_cancel');
 
+  // ---- Inventario — Gestión de ubicaciones (E10) ------------------------
+  static const Key ubicacionesSearch = ValueKey('ubicaciones_search');
+  static const Key ubicacionesListView = ValueKey('ubicaciones_list_view');
+  static const Key ubicacionesNuevaBtn = ValueKey('ubicaciones_nueva');
+  static Key ubicacionItem(String id) => ValueKey('ubicacion_item_$id');
+  static Key ubicacionAccionesBtn(String id) =>
+      ValueKey('ubicacion_acciones_$id');
+  static const Key ubicacionFormNombre = ValueKey('ubicacion_form_nombre');
+  static const Key ubicacionFormDescripcion =
+      ValueKey('ubicacion_form_descripcion');
+  static const Key ubicacionFormMapaBtn = ValueKey('ubicacion_form_mapa');
+  static const Key ubicacionFormSubmit = ValueKey('ubicacion_form_submit');
+
   // ---- Inventario — Dotación vehículo -----------------------------------
   static const Key dotacionAnadir = ValueKey('dotacion_anadir');
   static const Key dotacionMaterialId = ValueKey('dotacion_material_id');
