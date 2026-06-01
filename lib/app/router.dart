@@ -45,6 +45,7 @@ import '../features/inventario/presentation/pages/alta_material_page.dart';
 import '../features/inventario/presentation/pages/alta_vehiculo_page.dart';
 import '../features/inventario/presentation/pages/inventario_list_page.dart';
 import '../features/inventario/presentation/pages/material_ficha_page.dart';
+import '../features/inventario/presentation/pages/ubicacion_form_page.dart';
 import '../features/inventario/presentation/pages/vehiculo_ficha_page.dart';
 import '../features/notificaciones/presentation/pages/notificaciones_ajustes_page.dart';
 import '../features/servicios/domain/entities/tipo_servicio.dart';
@@ -237,6 +238,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                     name: 'inventario-vehiculo-ficha',
                     builder: (_, state) => VehiculoFichaPage(
                       vehiculoId: state.pathParameters['id']!,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'ubicaciones/alta',
+                    name: 'inventario-ubicacion-alta',
+                    builder: (_, _) => const UbicacionFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'ubicaciones/:id/editar',
+                    name: 'inventario-ubicacion-editar',
+                    builder: (_, state) => UbicacionFormPage(
+                      ubicacionId: state.pathParameters['id']!,
                     ),
                   ),
                 ],
