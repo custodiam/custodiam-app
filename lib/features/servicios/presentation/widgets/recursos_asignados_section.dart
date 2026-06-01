@@ -228,36 +228,63 @@ class _Body extends ConsumerWidget {
   }
 
   Future<int?> _pedirCantidad(BuildContext context) async {
-    final cantidadCtrl = TextEditingController(text: '1');
-    try {
-      final ok = await AppDialog.show<bool>(
-        context,
-        title: 'Cantidad',
-        content: AppTextField(
-          key: K.servicioRecursosCantidadField,
-          label: 'Unidades',
-          controller: cantidadCtrl,
-          keyboardType: TextInputType.number,
-          prefixIcon: Symbols.numbers,
+    // El diálogo es un StatefulWidget que posee y libera su controller en
+    // State.dispose(), atado al ciclo de vida del subárbol del diálogo;
+    // devuelve el texto crudo en el pop (el controller ya no existe al
+    // volver del await). Cancelar/descartar devuelve null.
+    final cantidadRaw = await AppDialog.showBuilder<String>(
+      context,
+      builder: (_) => const _CantidadDialog(),
+    );
+    if (cantidadRaw == null) return null;
+    final cantidad = int.tryParse(cantidadRaw.trim()) ?? 1;
+    return cantidad < 1 ? 1 : cantidad;
+  }
+}
+
+/// Diálogo de cantidad al asignar material a un servicio. StatefulWidget
+/// para liberar el controller en dispose() en vez de en un `finally` que
+/// correría durante la animación de cierre, con el campo aún reconstruyéndose
+/// con un controller ya liberado.
+class _CantidadDialog extends StatefulWidget {
+  const _CantidadDialog();
+
+  @override
+  State<_CantidadDialog> createState() => _CantidadDialogState();
+}
+
+class _CantidadDialogState extends State<_CantidadDialog> {
+  final _cantidadCtrl = TextEditingController(text: '1');
+
+  @override
+  void dispose() {
+    _cantidadCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppDialog(
+      title: 'Cantidad',
+      content: AppTextField(
+        key: K.servicioRecursosCantidadField,
+        label: 'Unidades',
+        controller: _cantidadCtrl,
+        keyboardType: TextInputType.number,
+        prefixIcon: Symbols.numbers,
+      ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          AppTextButton(
-            label: 'Cancelar',
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-          AppPrimaryButton(
-            key: K.servicioRecursosCantidadConfirmBtn,
-            label: 'Asignar',
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
-      );
-      if (ok != true) return null;
-      final cantidad = int.tryParse(cantidadCtrl.text.trim()) ?? 1;
-      return cantidad < 1 ? 1 : cantidad;
-    } finally {
-      cantidadCtrl.dispose();
-    }
+        AppPrimaryButton(
+          key: K.servicioRecursosCantidadConfirmBtn,
+          label: 'Asignar',
+          onPressed: () => Navigator.of(context).pop(_cantidadCtrl.text),
+        ),
+      ],
+    );
   }
 }
 
