@@ -146,8 +146,8 @@ class _DotacionBody extends ConsumerWidget {
     // dispose(), atado al ciclo de vida del diálogo. Liberarlos en un
     // `finally` lo haría durante la animación de cierre, mientras los
     // campos todavía rebuildean con un controller ya liberado.
-    final result = await showDialog<_DotacionAltaResult>(
-      context: context,
+    final result = await AppDialog.showBuilder<_DotacionAltaResult>(
+      context,
       builder: (_) => const _DotacionAltaDialog(),
     );
     if (result == null) return;
