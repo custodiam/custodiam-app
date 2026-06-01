@@ -199,4 +199,38 @@ void main() {
       ),
     );
   });
+
+  testWidgets(
+      'cantidad 0 (menor que 1) cae al clamp de 1 unidad', (tester) async {
+    final catalogo = _MockCatalogo();
+    when(() => catalogo.buscarMaterial(any(), any())).thenAnswer(
+      (_) async =>
+          [const CatalogoRecurso(id: 'm-1', label: 'Conos disponibles')],
+    );
+    when(
+      () => repo.asignarMaterial('s-1', materialId: 'm-1', cantidad: 1),
+    ).thenAnswer((_) async => const Success(null));
+
+    await pump(
+      tester,
+      _user(['jefe_equipo']),
+      extraOverrides: [
+        inventarioCatalogoServiceProvider.overrideWithValue(catalogo),
+        asignarMaterialServicioProvider
+            .overrideWithValue(AsignarMaterialServicio(repo)),
+      ],
+    );
+
+    await abrirDialogoCantidad(tester);
+
+    // '0' parsea pero es < 1 → `cantidad < 1 ? 1 : cantidad` lo lleva a 1.
+    // Es la rama del clamp propia de servicios, ausente en material/dotación.
+    await tester.enterText(find.byKey(K.servicioRecursosCantidadField), '0');
+    await tester.tap(find.byKey(K.servicioRecursosCantidadConfirmBtn));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    verify(() => repo.asignarMaterial('s-1', materialId: 'm-1', cantidad: 1))
+        .called(1);
+  });
 }
