@@ -43,9 +43,14 @@ test:
 test-coverage:
     flutter test --coverage
 
-# `flutter test integration_test/` — tests E2E (requiere dispositivo/emulador + backend)
-test-e2e:
-    flutter test integration_test/all_tests.dart
+# Tests E2E móviles con Patrol (guía 36). Requiere: patrol_cli instalado
+# (`dart pub global activate patrol_cli`), un dispositivo/emulador Android
+# conectado (`just devices`), el flavor de test del backend levantado
+# (custodiam-infra: `just test-up`) y `adb reverse tcp:8001 tcp:8001` para
+# que el device alcance la api-test. Con varios devices, pasa el id:
+#   just test-e2e -d <device-id>
+test-e2e *args:
+    patrol test --target patrol_test/mobile {{args}}
 
 # Code generation con build_runner (json_serializable, etc.)
 gen:
