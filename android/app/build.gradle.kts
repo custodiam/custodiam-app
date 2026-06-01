@@ -73,6 +73,11 @@ android {
         // Inyecta la API key de Google Maps en el manifest sin hardcodearla
         // (el manifest commiteado solo lleva ${MAPS_API_KEY}).
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+
+        // Patrol E2E (guía 36): runner de instrumentación nativo + reinicio
+        // del estado de la app entre tests para aislarlos.
+        testInstrumentationRunner = "pl.leancode.patrol.PatrolJUnitRunner"
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
     }
 
     buildTypes {
@@ -85,6 +90,16 @@ android {
             }
         }
     }
+
+    // Patrol E2E (guía 36): ejecuta cada test bajo AndroidX Test Orchestrator
+    // para que clearPackageData reinicie el estado entre flujos.
+    testOptions {
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+    }
+}
+
+dependencies {
+    androidTestUtil("androidx.test:orchestrator:1.5.1")
 }
 
 flutter {
