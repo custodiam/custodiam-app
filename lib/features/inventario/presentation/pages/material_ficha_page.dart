@@ -31,6 +31,7 @@ import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
+import '../../../../infrastructure/catalogo/catalogo_recurso.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/material_item.dart';
@@ -40,6 +41,7 @@ import '../viewmodels/material_ficha_view_model.dart';
 import '../viewmodels/materiales_list_view_model.dart';
 import '../widgets/asignacion_actual_section.dart';
 import '../widgets/inventario_estado_badge.dart';
+import '../widgets/voluntario_selector_field.dart';
 
 class MaterialFichaPage extends ConsumerWidget {
   final String materialId;
@@ -317,7 +319,7 @@ class _LoadedMaterial extends ConsumerWidget {
     if (voluntarioId.isEmpty) {
       AppSnackbar.show(
         context,
-        message: 'Indica el ID del voluntario.',
+        message: 'Selecciona un voluntario.',
         variant: AppSnackbarVariant.warning,
       );
       return;
@@ -354,7 +356,7 @@ class _LoadedMaterial extends ConsumerWidget {
     if (voluntarioId.isEmpty) {
       AppSnackbar.show(
         context,
-        message: 'Indica el ID del voluntario.',
+        message: 'Selecciona un voluntario.',
         variant: AppSnackbarVariant.warning,
       );
       return;
@@ -433,12 +435,11 @@ class _AsignarDialog extends StatefulWidget {
 }
 
 class _AsignarDialogState extends State<_AsignarDialog> {
-  final _voluntarioCtrl = TextEditingController();
   final _cantidadCtrl = TextEditingController(text: '1');
+  CatalogoRecurso? _voluntario;
 
   @override
   void dispose() {
-    _voluntarioCtrl.dispose();
     _cantidadCtrl.dispose();
     super.dispose();
   }
@@ -452,11 +453,10 @@ class _AsignarDialogState extends State<_AsignarDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppTextField(
-            key: K.materialAsignarVoluntarioId,
-            label: 'ID del voluntario (UUID)',
-            controller: _voluntarioCtrl,
-            prefixIcon: Symbols.person,
+          VoluntarioSelectorField(
+            fieldKey: K.materialAsignarVoluntarioSelector,
+            value: _voluntario,
+            onChanged: (v) => setState(() => _voluntario = v),
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -477,7 +477,7 @@ class _AsignarDialogState extends State<_AsignarDialog> {
           key: K.materialAsignarConfirm,
           label: 'Asignar',
           onPressed: () => Navigator.of(context).pop(
-            _AsignarResult(_voluntarioCtrl.text, _cantidadCtrl.text),
+            _AsignarResult(_voluntario?.id ?? '', _cantidadCtrl.text),
           ),
         ),
       ],
@@ -494,12 +494,11 @@ class _DevolverDialog extends StatefulWidget {
 }
 
 class _DevolverDialogState extends State<_DevolverDialog> {
-  final _voluntarioCtrl = TextEditingController();
   final _observacionesCtrl = TextEditingController();
+  CatalogoRecurso? _voluntario;
 
   @override
   void dispose() {
-    _voluntarioCtrl.dispose();
     _observacionesCtrl.dispose();
     super.dispose();
   }
@@ -511,11 +510,11 @@ class _DevolverDialogState extends State<_DevolverDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppTextField(
-            key: K.materialDevolverVoluntarioId,
-            label: 'ID del voluntario que devuelve',
-            controller: _voluntarioCtrl,
-            prefixIcon: Symbols.person,
+          VoluntarioSelectorField(
+            fieldKey: K.materialDevolverVoluntarioSelector,
+            label: 'Voluntario que devuelve',
+            value: _voluntario,
+            onChanged: (v) => setState(() => _voluntario = v),
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -536,7 +535,7 @@ class _DevolverDialogState extends State<_DevolverDialog> {
           key: K.materialDevolverConfirm,
           label: 'Devolver',
           onPressed: () => Navigator.of(context).pop(
-            _DevolverResult(_voluntarioCtrl.text, _observacionesCtrl.text),
+            _DevolverResult(_voluntario?.id ?? '', _observacionesCtrl.text),
           ),
         ),
       ],

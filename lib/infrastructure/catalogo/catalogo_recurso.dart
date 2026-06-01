@@ -40,4 +40,14 @@ class CatalogoRecurso {
       label: json['nombre'] as String,
     );
   }
+
+  /// Construye desde una fila de `GET /voluntarios` (VoluntarioSummary): se
+  /// muestra el nombre y el teléfono, los dos datos con los que un mando
+  /// reconoce a un voluntario al asignarle material.
+  factory CatalogoRecurso.voluntario(Map<String, dynamic> json) {
+    return CatalogoRecurso(
+      id: json['id'] as String,
+      label: '${json['nombre']} · ${json['telefono']}',
+    );
+  }
 }

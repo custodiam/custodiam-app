@@ -19,6 +19,7 @@ import '../auth/keycloak_web_auth_service.dart';
 import '../auth/token_store.dart';
 import '../catalogo/inventario_catalogo_service.dart';
 import '../catalogo/ubicaciones_catalogo_service.dart';
+import '../catalogo/voluntarios_catalogo_service.dart';
 import '../network/api_client.dart';
 // Conditional import: on web targets we get the real
 // WebSessionStorageGateway backed by package:web; on VM (unit tests)
@@ -54,4 +55,11 @@ final inventarioCatalogoServiceProvider = Provider<InventarioCatalogoService>(
 final ubicacionesCatalogoServiceProvider =
     Provider<UbicacionesCatalogoService>(
   (ref) => UbicacionesCatalogoService(ref.watch(apiClientProvider)),
+);
+
+/// Catálogo de voluntarios para el picker de asignar/devolver material:
+/// sustituye al campo de UUID a mano del diálogo (US-05-03 paso 2).
+final voluntariosCatalogoServiceProvider =
+    Provider<VoluntariosCatalogoService>(
+  (ref) => VoluntariosCatalogoService(ref.watch(apiClientProvider)),
 );
