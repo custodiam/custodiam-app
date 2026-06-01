@@ -14,7 +14,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/ui/theme/extensions/app_semantic_colors.dart';
+import '../../../../core/ui/misc/app_status_badge.dart';
 import '../../domain/entities/estado_inventario.dart';
 import 'inventario_estado_badge.dart';
 
@@ -40,13 +40,11 @@ class InventarioEstadoAvatar extends StatelessWidget {
     if (!resalta) {
       avatar = CircleAvatar(child: Icon(tipoIcon));
     } else {
-      final semantic = context.semanticColors;
       final scheme = Theme.of(context).colorScheme;
-      // Mismo color que la variante del badge: danger para averiado, neutral
-      // (superficie) para perdido. Mantiene la coherencia con la ficha.
-      final (Color bg, Color fg) = estado == EstadoInventario.averiado
-          ? (semantic.danger, semantic.onDanger)
-          : (scheme.surfaceContainerHighest, scheme.onSurfaceVariant);
+      // El color del estado se deriva de la MISMA fuente que el badge de la
+      // ficha (appStatusVariantColors sobre la variante compartida), para que
+      // ambos no se desincronicen si cambia el mapeo variante→color.
+      final (bg, fg) = appStatusVariantColors(context, visual.variant);
       avatar = Stack(
         clipBehavior: Clip.none,
         children: [
