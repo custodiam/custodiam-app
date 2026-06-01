@@ -490,9 +490,43 @@ class _AdminActions extends ConsumerWidget {
     WidgetRef ref,
     String servicioId,
   ) async {
-    final controller = TextEditingController();
-    final ok = await AppDialog.show<bool>(
+    // El diálogo es un StatefulWidget que posee y libera su controller en
+    // State.dispose(); devuelve el texto de observaciones en el pop (null si
+    // se cancela). Antes el controller era local y no se liberaba nunca (leak).
+    final observacionesRaw = await AppDialog.showBuilder<String>(
       context,
+      builder: (_) => const _CerrarServicioDialog(),
+    );
+    if (observacionesRaw == null) return;
+    final obs = observacionesRaw.trim();
+    await ref
+        .read(servicioFichaViewModelProvider(servicioId).notifier)
+        .cerrar(observaciones: obs.isEmpty ? null : obs);
+  }
+}
+
+/// Diálogo de cierre de servicio. StatefulWidget para liberar el controller
+/// de observaciones en dispose(), atado al ciclo de vida del diálogo;
+/// devuelve el texto en el pop (null al cancelar).
+class _CerrarServicioDialog extends StatefulWidget {
+  const _CerrarServicioDialog();
+
+  @override
+  State<_CerrarServicioDialog> createState() => _CerrarServicioDialogState();
+}
+
+class _CerrarServicioDialogState extends State<_CerrarServicioDialog> {
+  final _observacionesCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _observacionesCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppDialog(
       title: 'Cerrar servicio',
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -505,7 +539,7 @@ class _AdminActions extends ConsumerWidget {
           AppTextField(
             key: K.servicioFichaCerrarObservacionesField,
             label: 'Observaciones (opcional)',
-            controller: controller,
+            controller: _observacionesCtrl,
             maxLines: 3,
           ),
         ],
@@ -513,21 +547,15 @@ class _AdminActions extends ConsumerWidget {
       actions: [
         AppTextButton(
           label: 'Cancelar',
-          onPressed: () => Navigator.of(context).pop(false),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         AppPrimaryButton(
           key: K.servicioFichaCerrarConfirmBtn,
           label: 'Cerrar',
-          onPressed: () => Navigator.of(context).pop(true),
+          onPressed: () => Navigator.of(context).pop(_observacionesCtrl.text),
         ),
       ],
     );
-    if (ok != true) return;
-    final observaciones =
-        controller.text.trim().isEmpty ? null : controller.text.trim();
-    await ref
-        .read(servicioFichaViewModelProvider(servicioId).notifier)
-        .cerrar(observaciones: observaciones);
   }
 }
 

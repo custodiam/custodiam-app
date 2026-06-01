@@ -183,6 +183,56 @@ void main() {
     expect(find.text('Material añadido a la dotación.'), findsOneWidget);
   });
 
+  testWidgets('al cancelar el alta no llama al repo', (tester) async {
+    when(() => repo.listarDotacionVehiculo('v-1'))
+        .thenAnswer((_) async => Success([_dotacion()]));
+
+    await pump(tester, _user(['jefe_seccion']));
+
+    await tester.tap(find.byKey(K.dotacionAnadir));
+    await tester.pumpAndSettle();
+
+    // Cerrar por "Cancelar" desmonta el diálogo durante la animación de
+    // cierre (el camino del use-after-dispose); no debe llamar al repo.
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(K.dotacionAnadirConfirm), findsNothing);
+    verifyNever(
+      () => repo.asignarDotacionVehiculo(
+        any(),
+        materialId: any(named: 'materialId'),
+        cantidad: any(named: 'cantidad'),
+      ),
+    );
+  });
+
+  testWidgets(
+      'cantidad no numérica cae al fallback de 1 unidad', (tester) async {
+    when(() => repo.listarDotacionVehiculo('v-1'))
+        .thenAnswer((_) async => Success([_dotacion()]));
+    when(
+      () => repo.asignarDotacionVehiculo('v-1', materialId: 'm-2', cantidad: 1),
+    ).thenAnswer((_) async => Success(_dotacion()));
+
+    await pump(tester, _user(['jefe_seccion']));
+
+    await tester.tap(find.byKey(K.dotacionAnadir));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(K.dotacionMaterialId), 'm-2');
+    // 'abc' no parsea → int.tryParse(...) ?? 1.
+    await tester.enterText(find.byKey(K.dotacionCantidad), 'abc');
+    await tester.tap(find.byKey(K.dotacionAnadirConfirm));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    verify(
+      () => repo.asignarDotacionVehiculo('v-1', materialId: 'm-2', cantidad: 1),
+    ).called(1);
+  });
+
   // -- Flujo "Quitar de la dotación" ----------------------------------------
 
   testWidgets('tapping remove opens the confirmation dialog', (tester) async {

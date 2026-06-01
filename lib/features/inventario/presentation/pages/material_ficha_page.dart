@@ -306,8 +306,8 @@ class _LoadedMaterial extends ConsumerWidget {
     // ancla al ciclo de vida del subárbol del diálogo y no a un `finally`
     // que se ejecutaría mientras la animación de cierre todavía rebuildea
     // los campos con un controller ya liberado.
-    final result = await showDialog<_AsignarResult>(
-      context: context,
+    final result = await AppDialog.showBuilder<_AsignarResult>(
+      context,
       builder: (_) => _AsignarDialog(tipo: tipo),
     );
     if (result == null) return;
@@ -344,8 +344,8 @@ class _LoadedMaterial extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final result = await showDialog<_DevolverResult>(
-      context: context,
+    final result = await AppDialog.showBuilder<_DevolverResult>(
+      context,
       builder: (_) => const _DevolverDialog(),
     );
     if (result == null) return;
@@ -383,8 +383,8 @@ class _LoadedMaterial extends ConsumerWidget {
     EstadoInventario nuevoEstado,
     String title,
   ) async {
-    final descripcionRaw = await showDialog<String>(
-      context: context,
+    final descripcionRaw = await AppDialog.showBuilder<String>(
+      context,
       builder: (_) => _IncidenciaDialog(title: title),
     );
     if (descripcionRaw == null) return;

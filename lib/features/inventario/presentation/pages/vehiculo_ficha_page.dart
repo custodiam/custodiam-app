@@ -224,8 +224,8 @@ class _LoadedVehiculo extends ConsumerWidget {
     // dispose(), atado al ciclo de vida del diálogo. Disponerlo en un
     // `finally` lo liberaría mientras la animación de cierre todavía
     // rebuildea el campo con el controller ya liberado.
-    final descripcionRaw = await showDialog<String>(
-      context: context,
+    final descripcionRaw = await AppDialog.showBuilder<String>(
+      context,
       builder: (_) => _IncidenciaVehiculoDialog(title: title),
     );
     if (descripcionRaw == null) return;
