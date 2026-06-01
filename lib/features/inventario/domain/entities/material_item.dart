@@ -16,6 +16,10 @@ class MaterialItem {
   // Etiqueta legacy opcional de ubicación (PR2): la referencia canónica es
   // el FK del backend; el texto puede no venir.
   final String? ubicacionBase;
+  // FK a la ubicación del catálogo (E10). Es la referencia canónica desde la
+  // que se resuelven las coordenadas para "ver en el mapa"; puede ser null si
+  // el material no tiene ubicación asignada.
+  final String? ubicacionBaseId;
   final DateTime? fechaAdquisicion;
   final DateTime? fechaProximaRevision;
   final String? fotoUrl;
@@ -39,6 +43,7 @@ class MaterialItem {
     required this.estado,
     required this.cantidad,
     this.ubicacionBase,
+    this.ubicacionBaseId,
     this.descripcion,
     this.codigo,
     this.numeroSerie,

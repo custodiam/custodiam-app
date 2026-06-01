@@ -15,6 +15,7 @@ import 'package:custodiam/features/inventario/domain/entities/material_item.dart
 import 'package:custodiam/features/inventario/domain/entities/materiales_page.dart';
 import 'package:custodiam/features/inventario/domain/entities/tipo_asignacion.dart';
 import 'package:custodiam/features/inventario/domain/entities/tipo_material.dart';
+import 'package:custodiam/features/inventario/domain/entities/ubicacion.dart';
 import 'package:custodiam/features/inventario/domain/repositories/inventario_repository.dart';
 import 'package:custodiam/features/inventario/domain/usecases/asignar_material_a_voluntario.dart';
 import 'package:custodiam/features/inventario/domain/usecases/devolver_material.dart';
@@ -23,6 +24,7 @@ import 'package:custodiam/features/inventario/domain/usecases/list_materiales.da
 import 'package:custodiam/features/inventario/domain/usecases/reportar_incidencia_material.dart';
 import 'package:custodiam/features/inventario/presentation/pages/material_ficha_page.dart';
 import 'package:custodiam/features/inventario/presentation/viewmodels/inventario_di.dart';
+import 'package:custodiam/features/inventario/presentation/viewmodels/ubicaciones_di.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter/widgets.dart';
@@ -38,6 +40,7 @@ const _materialId = 'm-1';
 MaterialItem _material({
   TipoMaterial tipo = TipoMaterial.prestable,
   EstadoInventario estado = EstadoInventario.operativo,
+  String? ubicacionBaseId,
 }) {
   return MaterialItem(
     id: _materialId,
@@ -45,6 +48,7 @@ MaterialItem _material({
     tipo: tipo,
     estado: estado,
     cantidad: 5,
+    ubicacionBaseId: ubicacionBaseId,
     asignacionesActivas: const <AsignacionActual>[],
   );
 }
@@ -92,6 +96,8 @@ void main() {
     CurrentUser user, {
     TipoMaterial tipo = TipoMaterial.prestable,
     EstadoInventario estado = EstadoInventario.operativo,
+    String? ubicacionBaseId,
+    Ubicacion? ubicacionResuelta,
   }) async {
     // Superficie alta para que toda la columna de acciones del ListView
     // quede dispuesta sin scroll — los tests tocan botones que de otro
@@ -100,7 +106,9 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     when(() => repo.getMaterial(_materialId)).thenAnswer(
-      (_) async => Success(_material(tipo: tipo, estado: estado)),
+      (_) async => Success(
+        _material(tipo: tipo, estado: estado, ubicacionBaseId: ubicacionBaseId),
+      ),
     );
     when(() => repo.listMaterial(
           skip: any(named: 'skip'),
@@ -125,6 +133,18 @@ void main() {
             .overrideWithValue(AsignarMaterialAVoluntario(repo)),
         devolverMaterialProvider.overrideWithValue(DevolverMaterial(repo)),
         listMaterialesProvider.overrideWithValue(ListMateriales(repo)),
+        if (ubicacionResuelta != null)
+          ubicacionPorIdProvider.overrideWith((ref, id) async {
+            // Ata la ubicación resuelta al id que la ficha DEBE propagar: si la
+            // page pasara un id distinto (o null), el provider lanza, el botón
+            // no aparece y el test falla. Sin esta guarda el caso 'con coords'
+            // pasaría con cualquier id no nulo y no cubriría el cableado real
+            // page → UbicacionMapaButton.
+            if (id != ubicacionBaseId) {
+              throw StateError('id de ubicación inesperado: $id');
+            }
+            return ubicacionResuelta;
+          }),
       ],
       settle: false,
     );
@@ -488,6 +508,46 @@ void main() {
             nuevoEstado: EstadoInventario.perdido,
             descripcion: 'Extraviado en intervención',
           )).called(1);
+    });
+  });
+
+  group('Ver en el mapa', () {
+    testWidgets('sin ubicacionBaseId no se muestra el botón de mapa',
+        (tester) async {
+      await pump(tester, _user(['jefe_equipo']));
+
+      expect(find.byKey(K.materialFichaAbrirMapaBtn), findsNothing);
+    });
+
+    testWidgets(
+        'con una ubicación con coordenadas se muestra el botón de mapa',
+        (tester) async {
+      await pump(
+        tester,
+        _user(['jefe_equipo']),
+        ubicacionBaseId: 'u-1',
+        ubicacionResuelta: const Ubicacion(
+          id: 'u-1',
+          nombre: 'Base',
+          lat: 41.0,
+          lng: -0.5,
+        ),
+      );
+
+      expect(find.byKey(K.materialFichaAbrirMapaBtn), findsOneWidget);
+    });
+
+    testWidgets(
+        'con una ubicación sin coordenadas no se muestra el botón de mapa',
+        (tester) async {
+      await pump(
+        tester,
+        _user(['jefe_equipo']),
+        ubicacionBaseId: 'u-1',
+        ubicacionResuelta: const Ubicacion(id: 'u-1', nombre: 'Oficina'),
+      );
+
+      expect(find.byKey(K.materialFichaAbrirMapaBtn), findsNothing);
     });
   });
 }

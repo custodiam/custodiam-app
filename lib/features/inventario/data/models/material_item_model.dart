@@ -27,6 +27,7 @@ class MaterialItemModel {
       categoria: json['categoria'] as String?,
       cantidad: json['cantidad'] as int,
       ubicacionBase: json['ubicacion_base'] as String?,
+      ubicacionBaseId: json['ubicacion_base_id'] as String?,
       fechaAdquisicion: _date(json['fecha_adquisicion']),
       fechaProximaRevision: _date(json['fecha_proxima_revision']),
       fotoUrl: json['foto_url'] as String?,
