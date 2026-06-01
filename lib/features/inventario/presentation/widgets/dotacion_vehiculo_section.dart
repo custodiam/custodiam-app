@@ -142,69 +142,36 @@ class _DotacionBody extends ConsumerWidget {
   }
 
   Future<void> _abrirAlta(BuildContext context, WidgetRef ref) async {
-    final materialCtrl = TextEditingController();
-    final cantidadCtrl = TextEditingController(text: '1');
-    try {
-      final ok = await AppDialog.show<bool>(
+    // El diálogo es un StatefulWidget que libera sus controllers en
+    // dispose(), atado al ciclo de vida del diálogo. Liberarlos en un
+    // `finally` lo haría durante la animación de cierre, mientras los
+    // campos todavía rebuildean con un controller ya liberado.
+    final result = await showDialog<_DotacionAltaResult>(
+      context: context,
+      builder: (_) => const _DotacionAltaDialog(),
+    );
+    if (result == null) return;
+    if (!context.mounted) return;
+    final materialId = result.materialId.trim();
+    final cantidad = int.tryParse(result.cantidad.trim()) ?? 1;
+    if (materialId.isEmpty) {
+      AppSnackbar.show(
         context,
-        title: 'Añadir material a la dotación',
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              key: K.dotacionMaterialId,
-              label: 'ID del material (UUID)',
-              controller: materialCtrl,
-              prefixIcon: Symbols.inventory_2,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: K.dotacionCantidad,
-              label: 'Cantidad',
-              controller: cantidadCtrl,
-              keyboardType: TextInputType.number,
-              prefixIcon: Symbols.numbers,
-            ),
-          ],
-        ),
-        actions: [
-          AppTextButton(
-            label: 'Cancelar',
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-          AppPrimaryButton(
-            key: K.dotacionAnadirConfirm,
-            label: 'Añadir',
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
+        message: 'Indica el ID del material.',
+        variant: AppSnackbarVariant.warning,
       );
-      if (ok != true) return;
-      if (!context.mounted) return;
-      final materialId = materialCtrl.text.trim();
-      final cantidad = int.tryParse(cantidadCtrl.text.trim()) ?? 1;
-      if (materialId.isEmpty) {
-        AppSnackbar.show(
-          context,
-          message: 'Indica el ID del material.',
-          variant: AppSnackbarVariant.warning,
-        );
-        return;
-      }
-      final exito = await ref
-          .read(dotacionVehiculoViewModelProvider(vehiculoId).notifier)
-          .asignar(materialId: materialId, cantidad: cantidad);
-      if (!context.mounted) return;
-      if (exito) {
-        AppSnackbar.show(
-          context,
-          message: 'Material añadido a la dotación.',
-          variant: AppSnackbarVariant.success,
-        );
-      }
-    } finally {
-      materialCtrl.dispose();
-      cantidadCtrl.dispose();
+      return;
+    }
+    final exito = await ref
+        .read(dotacionVehiculoViewModelProvider(vehiculoId).notifier)
+        .asignar(materialId: materialId, cantidad: cantidad);
+    if (!context.mounted) return;
+    if (exito) {
+      AppSnackbar.show(
+        context,
+        message: 'Material añadido a la dotación.',
+        variant: AppSnackbarVariant.success,
+      );
     }
   }
 
@@ -245,6 +212,73 @@ class _DotacionBody extends ConsumerWidget {
         variant: AppSnackbarVariant.success,
       );
     }
+  }
+}
+
+/// Valores capturados por el diálogo de alta de dotación.
+class _DotacionAltaResult {
+  final String materialId;
+  final String cantidad;
+  const _DotacionAltaResult(this.materialId, this.cantidad);
+}
+
+/// Diálogo de alta de material en la dotación. StatefulWidget para liberar
+/// sus controllers en dispose(), atado al ciclo de vida del diálogo.
+class _DotacionAltaDialog extends StatefulWidget {
+  const _DotacionAltaDialog();
+
+  @override
+  State<_DotacionAltaDialog> createState() => _DotacionAltaDialogState();
+}
+
+class _DotacionAltaDialogState extends State<_DotacionAltaDialog> {
+  final _materialCtrl = TextEditingController();
+  final _cantidadCtrl = TextEditingController(text: '1');
+
+  @override
+  void dispose() {
+    _materialCtrl.dispose();
+    _cantidadCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppDialog(
+      title: 'Añadir material a la dotación',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppTextField(
+            key: K.dotacionMaterialId,
+            label: 'ID del material (UUID)',
+            controller: _materialCtrl,
+            prefixIcon: Symbols.inventory_2,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppTextField(
+            key: K.dotacionCantidad,
+            label: 'Cantidad',
+            controller: _cantidadCtrl,
+            keyboardType: TextInputType.number,
+            prefixIcon: Symbols.numbers,
+          ),
+        ],
+      ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        AppPrimaryButton(
+          key: K.dotacionAnadirConfirm,
+          label: 'Añadir',
+          onPressed: () => Navigator.of(context).pop(
+            _DotacionAltaResult(_materialCtrl.text, _cantidadCtrl.text),
+          ),
+        ),
+      ],
+    );
   }
 }
 

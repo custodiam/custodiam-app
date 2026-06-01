@@ -220,50 +220,78 @@ class _LoadedVehiculo extends ConsumerWidget {
     EstadoInventario nuevoEstado,
     String title,
   ) async {
-    final descripcionCtrl = TextEditingController();
-    try {
-      final ok = await AppDialog.show<bool>(
+    // El diálogo es un StatefulWidget que libera su controller en
+    // dispose(), atado al ciclo de vida del diálogo. Disponerlo en un
+    // `finally` lo liberaría mientras la animación de cierre todavía
+    // rebuildea el campo con el controller ya liberado.
+    final descripcionRaw = await showDialog<String>(
+      context: context,
+      builder: (_) => _IncidenciaVehiculoDialog(title: title),
+    );
+    if (descripcionRaw == null) return;
+    if (!context.mounted) return;
+    final descripcion = descripcionRaw.trim();
+    if (descripcion.isEmpty) {
+      AppSnackbar.show(
         context,
-        title: title,
-        content: AppTextField(
-          key: K.vehiculoIncidenciaDescripcion,
-          label: 'Descripción de la incidencia',
-          controller: descripcionCtrl,
-          prefixIcon: Symbols.notes,
-          maxLines: 4,
-        ),
-        actions: [
-          AppTextButton(
-            label: 'Cancelar',
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-          AppPrimaryButton(
-            key: K.vehiculoIncidenciaConfirm,
-            label: 'Registrar',
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
+        message: 'La descripción es obligatoria.',
+        variant: AppSnackbarVariant.warning,
       );
-      if (ok != true) return;
-      if (!context.mounted) return;
-      final descripcion = descripcionCtrl.text.trim();
-      if (descripcion.isEmpty) {
-        AppSnackbar.show(
-          context,
-          message: 'La descripción es obligatoria.',
-          variant: AppSnackbarVariant.warning,
-        );
-        return;
-      }
-      await ref
-          .read(vehiculoFichaViewModelProvider(vehiculo.id).notifier)
-          .reportarIncidencia(
-            nuevoEstado: nuevoEstado,
-            descripcion: descripcion,
-          );
-    } finally {
-      descripcionCtrl.dispose();
+      return;
     }
+    await ref
+        .read(vehiculoFichaViewModelProvider(vehiculo.id).notifier)
+        .reportarIncidencia(
+          nuevoEstado: nuevoEstado,
+          descripcion: descripcion,
+        );
+  }
+}
+
+/// Diálogo de incidencia (avería/pérdida) de vehículo. Devuelve la
+/// descripción cruda; la validación de vacío la hace la página tras
+/// cerrar. StatefulWidget para liberar el controller en dispose().
+class _IncidenciaVehiculoDialog extends StatefulWidget {
+  final String title;
+  const _IncidenciaVehiculoDialog({required this.title});
+
+  @override
+  State<_IncidenciaVehiculoDialog> createState() =>
+      _IncidenciaVehiculoDialogState();
+}
+
+class _IncidenciaVehiculoDialogState extends State<_IncidenciaVehiculoDialog> {
+  final _descripcionCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _descripcionCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppDialog(
+      title: widget.title,
+      content: AppTextField(
+        key: K.vehiculoIncidenciaDescripcion,
+        label: 'Descripción de la incidencia',
+        controller: _descripcionCtrl,
+        prefixIcon: Symbols.notes,
+        maxLines: 4,
+      ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        AppPrimaryButton(
+          key: K.vehiculoIncidenciaConfirm,
+          label: 'Registrar',
+          onPressed: () => Navigator.of(context).pop(_descripcionCtrl.text),
+        ),
+      ],
+    );
   }
 }
 
