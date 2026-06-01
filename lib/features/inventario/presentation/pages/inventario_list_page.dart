@@ -26,7 +26,7 @@ import '../../domain/entities/tipo_vehiculo.dart';
 import '../../domain/entities/vehiculo_summary.dart';
 import '../viewmodels/materiales_list_view_model.dart';
 import '../viewmodels/vehiculos_list_view_model.dart';
-import '../widgets/inventario_estado_badge.dart';
+import '../widgets/inventario_estado_avatar.dart';
 import '../widgets/ubicaciones_tab.dart';
 
 class InventarioListPage extends ConsumerWidget {
@@ -345,13 +345,15 @@ class _MaterialTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       key: K.inventarioMaterialItem(material.id),
-      leading: const CircleAvatar(child: Icon(Symbols.inventory_2)),
+      leading: InventarioEstadoAvatar(
+        tipoIcon: Symbols.inventory_2,
+        estado: material.estado,
+      ),
       title: Text(material.nombre),
       subtitle: Text(
         '${_tipoLabel(material.tipo)} · ${material.ubicacionBase ?? "Sin ubicación"}'
         '${material.codigo != null ? " · ${material.codigo}" : ""}',
       ),
-      trailing: InventarioEstadoBadge(estado: material.estado),
       onTap: () => context.go('/inventario/material/${material.id}'),
     );
   }
@@ -510,10 +512,14 @@ class _VehiculoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       key: K.inventarioVehiculoItem(vehiculo.id),
-      leading: const CircleAvatar(child: Icon(Symbols.directions_car)),
+      leading: InventarioEstadoAvatar(
+        tipoIcon: Symbols.directions_car,
+        estado: vehiculo.estado,
+      ),
       title: Text('${vehiculo.codigoInterno} · ${vehiculo.matricula}'),
-      subtitle: Text('${_tipoLabel(vehiculo.tipo)} · ${vehiculo.ubicacionBase ?? "Sin ubicación"}'),
-      trailing: InventarioEstadoBadge(estado: vehiculo.estado),
+      subtitle: Text(
+        '${_tipoLabel(vehiculo.tipo)} · ${vehiculo.ubicacionBase ?? "Sin ubicación"}',
+      ),
       onTap: () => context.go('/inventario/vehiculos/${vehiculo.id}'),
     );
   }
