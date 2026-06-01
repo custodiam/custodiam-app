@@ -170,7 +170,10 @@ void main() {
 
     await tester.enterText(find.byKey(K.ubicacionFormNombre), 'Base Zuera');
     await tester.tap(find.byKey(K.ubicacionFormSubmit));
-    await tester.pump();
+    // pumpAndSettle (no un único pump): si la rama de error navegara por error,
+    // GoRouter montaría la ruta destino y la aserción de "no navega" lo
+    // detectaría. Con un solo pump la ruta no se monta y el guard sería falso.
+    await tester.pumpAndSettle();
 
     expect(
       find.text('Ya existe una ubicación con ese nombre.'),
