@@ -72,5 +72,21 @@ void main() {
       expect(params.containsKey('q'), isFalse);
       expect(params['skip'], '0');
     });
+
+    test('propaga ApiException del cliente (contrato con el picker)', () {
+      // El picker (AppCatalogSearchPicker.onLoadPage) captura la excepción
+      // para mostrar su estado de error; el servicio no debe tragársela.
+      when(
+        () => client.getList(
+          '/voluntarios',
+          queryParams: any(named: 'queryParams'),
+        ),
+      ).thenThrow(ApiException(statusCode: 500, message: 'boom'));
+
+      expect(
+        () => service.buscarVoluntarios('x', 0),
+        throwsA(isA<ApiException>()),
+      );
+    });
   });
 }
