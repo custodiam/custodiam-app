@@ -13,6 +13,7 @@ import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
+import '../../../../core/ui/buttons/app_text_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
@@ -249,14 +250,14 @@ class _UbicacionFormState extends ConsumerState<_UbicacionForm> {
                   ),
                 ),
                 if (_tieneCoords)
-                  TextButton(
+                  AppTextButton(
+                    label: 'Quitar',
                     onPressed: _guardando
                         ? null
                         : () => setState(() {
                               _lat = null;
                               _lng = null;
                             }),
-                    child: const Text('Quitar'),
                   ),
               ],
             ),
