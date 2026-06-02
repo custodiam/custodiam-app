@@ -74,9 +74,35 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
   DateTime? _fechaFin;
   double? _ubicacionLat;
   double? _ubicacionLng;
+  // Texto que corresponde a las coordenadas fijadas. Si el usuario edita el
+  // campo de dirección y deja de coincidir, se sueltan las coords (coherencia
+  // texto↔punto de la Opción 3): texto y coordenadas nunca describen lugares
+  // distintos.
+  String? _ubicacionTextoFijado;
+
+  @override
+  void initState() {
+    super.initState();
+    _ubicacionCtrl.addListener(_onUbicacionTextChanged);
+  }
+
+  /// Si hay coords fijadas y el usuario escribe un texto que ya no coincide
+  /// con el de esas coords, las suelta: el texto pasa a ser la fuente de
+  /// verdad (no hay forward-geocoding que recoloque el punto).
+  void _onUbicacionTextChanged() {
+    if (_ubicacionLat == null) return;
+    if (_ubicacionCtrl.text.trim() != _ubicacionTextoFijado) {
+      setState(() {
+        _ubicacionLat = null;
+        _ubicacionLng = null;
+        _ubicacionTextoFijado = null;
+      });
+    }
+  }
 
   @override
   void dispose() {
+    _ubicacionCtrl.removeListener(_onUbicacionTextChanged);
     _tituloCtrl.dispose();
     _descripcionCtrl.dispose();
     _ubicacionCtrl.dispose();
@@ -132,11 +158,17 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
       textoInicial: _ubicacionCtrl.text.trim(),
     );
     if (result == null || !mounted) return;
+    final nuevoTexto = result.direccion ?? '';
     setState(() {
       _ubicacionLat = result.lat;
       _ubicacionLng = result.lng;
-      if (result.direccion != null && result.direccion!.isNotEmpty) {
-        _ubicacionCtrl.text = result.direccion!;
+      // Fijar el texto de referencia ANTES de escribir en el controller, para
+      // que el listener de coherencia no malinterprete este cambio
+      // programático como una edición manual y suelte las coords recién
+      // fijadas.
+      _ubicacionTextoFijado = result.lat != null ? nuevoTexto.trim() : null;
+      if (nuevoTexto.isNotEmpty) {
+        _ubicacionCtrl.text = nuevoTexto;
       }
     });
   }
@@ -311,6 +343,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
                       onPressed: () => setState(() {
                         _ubicacionLat = null;
                         _ubicacionLng = null;
+                        _ubicacionTextoFijado = null;
                       }),
                       child: const Text('Quitar'),
                     ),

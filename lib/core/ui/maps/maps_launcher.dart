@@ -26,6 +26,20 @@ Uri mapsShowUri(double lat, double lng) => Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
     );
 
+/// Variante por TEXTO de "cómo llegar": cuando un servicio tiene una
+/// dirección escrita pero no coordenadas (Opción 3), se delega la
+/// geocodificación a la app de mapas pasándole el texto como destino.
+Uri mapsDirectionsUriTexto(String texto) => Uri.parse(
+      'https://www.google.com/maps/dir/?api=1'
+      '&destination=${Uri.encodeComponent(texto)}',
+    );
+
+/// Variante por TEXTO de "ver en el mapa": busca la dirección escrita.
+Uri mapsShowUriTexto(String texto) => Uri.parse(
+      'https://www.google.com/maps/search/?api=1'
+      '&query=${Uri.encodeComponent(texto)}',
+    );
+
 /// Abre una URL de mapa en la app/navegador externos. Thin wrapper sobre
 /// `url_launcher`; se inyecta para que los tests capturen la URL sin
 /// tocar plugins de plataforma.

@@ -32,4 +32,21 @@ void main() {
       expect(uri.queryParameters['query'], '0.0,-3.0');
     });
   });
+
+  group('variantes por texto (Opción 3)', () {
+    test('mapsDirectionsUriTexto enruta por la dirección escrita', () {
+      final uri = mapsDirectionsUriTexto('Pabellón municipal, Zuera');
+
+      expect(uri.path, '/maps/dir/');
+      expect(uri.queryParameters['api'], '1');
+      expect(uri.queryParameters['destination'], 'Pabellón municipal, Zuera');
+    });
+
+    test('mapsShowUriTexto busca la dirección escrita', () {
+      final uri = mapsShowUriTexto('Calle Mayor 1 & 2');
+
+      expect(uri.path, '/maps/search/');
+      expect(uri.queryParameters['query'], 'Calle Mayor 1 & 2');
+    });
+  });
 }
