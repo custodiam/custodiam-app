@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:custodiam/app/router.dart';
+import 'package:custodiam/app/widgets/auth_lifecycle_listener.dart';
 import 'package:custodiam/core/ui/theme/app_theme.dart';
 import 'package:custodiam/features/notificaciones/presentation/widgets/fcm_bootstrap.dart';
 import 'package:custodiam/infrastructure/theme/app_theme_mode_provider.dart';
@@ -30,21 +31,23 @@ class CustodiamApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(appThemeModeProvider);
-    return FcmBootstrap(
-      child: MaterialApp.router(
-        title: 'Custodiam',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        darkTheme: AppTheme.dark(),
-        themeMode: themeMode,
-        locale: const Locale('es', 'ES'),
-        supportedLocales: const [Locale('es', 'ES')],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        routerConfig: ref.watch(routerProvider),
+    return AuthLifecycleListener(
+      child: FcmBootstrap(
+        child: MaterialApp.router(
+          title: 'Custodiam',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: themeMode,
+          locale: const Locale('es', 'ES'),
+          supportedLocales: const [Locale('es', 'ES')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          routerConfig: ref.watch(routerProvider),
+        ),
       ),
     );
   }
