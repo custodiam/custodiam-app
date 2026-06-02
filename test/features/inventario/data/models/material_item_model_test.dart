@@ -76,5 +76,18 @@ void main() {
       });
       expect(m.ubicacionBase, isNull);
     });
+
+    test('parsea ubicacion_base_id (FK del catálogo, E10)', () {
+      final m = MaterialItemModel.fromJson({
+        ..._materialRow(),
+        'ubicacion_base_id': 'u-1',
+      });
+      expect(m.ubicacionBaseId, 'u-1');
+    });
+
+    test('tolera ubicacion_base_id ausente', () {
+      final m = MaterialItemModel.fromJson(_materialRow());
+      expect(m.ubicacionBaseId, isNull);
+    });
   });
 }

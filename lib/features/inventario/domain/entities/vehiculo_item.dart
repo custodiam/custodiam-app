@@ -14,6 +14,10 @@ class VehiculoItem {
   // Etiqueta legacy opcional de ubicación (PR2): la referencia canónica es
   // el FK del backend; el texto puede no venir.
   final String? ubicacionBase;
+  // FK a la ubicación del catálogo (E10). Referencia canónica desde la que se
+  // resuelven las coordenadas para "ver en el mapa"; null si no tiene
+  // ubicación asignada.
+  final String? ubicacionBaseId;
   final EstadoInventario estado;
   final String? observacionesIncidencia;
   final DateTime? createdAt;
@@ -30,6 +34,7 @@ class VehiculoItem {
     required this.matricula,
     required this.tipo,
     this.ubicacionBase,
+    this.ubicacionBaseId,
     required this.estado,
     this.marcaModelo,
     this.fechaItv,

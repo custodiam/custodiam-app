@@ -29,6 +29,7 @@ import '../viewmodels/vehiculos_list_view_model.dart';
 import '../widgets/asignacion_actual_section.dart';
 import '../widgets/dotacion_vehiculo_section.dart';
 import '../widgets/inventario_estado_badge.dart';
+import '../widgets/ubicacion_mapa_button.dart';
 
 class VehiculoFichaPage extends ConsumerWidget {
   final String vehiculoId;
@@ -152,6 +153,10 @@ class _LoadedVehiculo extends ConsumerWidget {
             icon: Symbols.location_on,
             label: 'Ubicación',
             value: vehiculo.ubicacionBase ?? 'Sin ubicación',
+          ),
+          UbicacionMapaButton(
+            buttonKey: K.vehiculoFichaAbrirMapaBtn,
+            ubicacionBaseId: vehiculo.ubicacionBaseId,
           ),
           if (vehiculo.observaciones != null &&
               vehiculo.observaciones!.isNotEmpty)

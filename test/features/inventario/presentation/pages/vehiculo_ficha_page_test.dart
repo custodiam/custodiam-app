@@ -13,6 +13,7 @@ import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/features/inventario/domain/entities/dotacion_vehiculo.dart';
 import 'package:custodiam/features/inventario/domain/entities/estado_inventario.dart';
 import 'package:custodiam/features/inventario/domain/entities/tipo_vehiculo.dart';
+import 'package:custodiam/features/inventario/domain/entities/ubicacion.dart';
 import 'package:custodiam/features/inventario/domain/entities/vehiculo_item.dart';
 import 'package:custodiam/features/inventario/domain/entities/vehiculos_page.dart';
 import 'package:custodiam/features/inventario/domain/repositories/inventario_repository.dart';
@@ -22,6 +23,7 @@ import 'package:custodiam/features/inventario/domain/usecases/listar_dotacion_ve
 import 'package:custodiam/features/inventario/domain/usecases/reportar_incidencia_vehiculo.dart';
 import 'package:custodiam/features/inventario/presentation/pages/vehiculo_ficha_page.dart';
 import 'package:custodiam/features/inventario/presentation/viewmodels/inventario_di.dart';
+import 'package:custodiam/features/inventario/presentation/viewmodels/ubicaciones_di.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,6 +35,7 @@ class _MockRepo extends Mock implements InventarioRepository {}
 
 VehiculoItem _vehiculo({
   EstadoInventario estado = EstadoInventario.operativo,
+  String? ubicacionBaseId,
 }) =>
     VehiculoItem(
       id: 'v-1',
@@ -42,6 +45,7 @@ VehiculoItem _vehiculo({
       marcaModelo: 'Renault Trafic',
       fechaItv: DateTime(2027, 3, 1),
       ubicacionBase: 'Almacén 1',
+      ubicacionBaseId: ubicacionBaseId,
       estado: estado,
     );
 
@@ -77,9 +81,13 @@ void main() {
     WidgetTester tester,
     CurrentUser user, {
     EstadoInventario estado = EstadoInventario.operativo,
+    String? ubicacionBaseId,
+    Ubicacion? ubicacionResuelta,
   }) async {
-    when(() => repo.getVehiculo('v-1'))
-        .thenAnswer((_) async => Success(_vehiculo(estado: estado)));
+    when(() => repo.getVehiculo('v-1')).thenAnswer(
+      (_) async =>
+          Success(_vehiculo(estado: estado, ubicacionBaseId: ubicacionBaseId)),
+    );
     await pumpRiverpod(
       tester,
       const VehiculoFichaPage(vehiculoId: 'v-1'),
@@ -93,6 +101,18 @@ void main() {
         listarDotacionVehiculoProvider
             .overrideWithValue(ListarDotacionVehiculo(repo)),
         listVehiculosProvider.overrideWithValue(ListVehiculos(repo)),
+        if (ubicacionResuelta != null)
+          ubicacionPorIdProvider.overrideWith((ref, id) async {
+            // Ata la ubicación resuelta al id que la ficha DEBE propagar: si la
+            // page pasara un id distinto (o null), el provider lanza, el botón
+            // no aparece y el test falla. Sin esta guarda el caso 'con coords'
+            // pasaría con cualquier id no nulo y no cubriría el cableado real
+            // page → UbicacionMapaButton.
+            if (id != ubicacionBaseId) {
+              throw StateError('id de ubicación inesperado: $id');
+            }
+            return ubicacionResuelta;
+          }),
       ],
     );
     await tester.pumpAndSettle();
@@ -280,6 +300,46 @@ void main() {
 
       expect(find.byKey(K.vehiculoFichaAveria), findsNothing);
       expect(find.byKey(K.vehiculoFichaPerdida), findsNothing);
+    });
+  });
+
+  group('Ver en el mapa', () {
+    testWidgets('sin ubicacionBaseId no se muestra el botón de mapa',
+        (tester) async {
+      await pump(tester, _user(['jefe_seccion']));
+
+      expect(find.byKey(K.vehiculoFichaAbrirMapaBtn), findsNothing);
+    });
+
+    testWidgets(
+        'con una ubicación con coordenadas se muestra el botón de mapa',
+        (tester) async {
+      await pump(
+        tester,
+        _user(['jefe_seccion']),
+        ubicacionBaseId: 'u-1',
+        ubicacionResuelta: const Ubicacion(
+          id: 'u-1',
+          nombre: 'Base',
+          lat: 41.0,
+          lng: -0.5,
+        ),
+      );
+
+      expect(find.byKey(K.vehiculoFichaAbrirMapaBtn), findsOneWidget);
+    });
+
+    testWidgets(
+        'con una ubicación sin coordenadas no se muestra el botón de mapa',
+        (tester) async {
+      await pump(
+        tester,
+        _user(['jefe_seccion']),
+        ubicacionBaseId: 'u-1',
+        ubicacionResuelta: const Ubicacion(id: 'u-1', nombre: 'Oficina'),
+      );
+
+      expect(find.byKey(K.vehiculoFichaAbrirMapaBtn), findsNothing);
     });
   });
 }
