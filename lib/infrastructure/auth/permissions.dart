@@ -43,6 +43,7 @@ enum Permission {
   inventarioPrestarTemporal('inventario.prestar_temporal'),
   inventarioRegistrarDevolucion('inventario.registrar_devolucion'),
   inventarioAsignarAServicio('inventario.asignar_a_servicio'),
+  inventarioGestionarDotacionVehiculo('inventario.gestionar_dotacion_vehiculo'),
   inventarioReportarIncidencia('inventario.reportar_incidencia'),
   inventarioVer('inventario.ver'),
 
@@ -56,6 +57,9 @@ enum Permission {
   offlineConsultarServicios('offline.consultar_servicios'),
   offlineFicharPropio('offline.fichar_propio'),
   offlineVerEstadoConexion('offline.ver_estado_conexion'),
+
+  // E10 — Ubicaciones / Geolocalización
+  ubicacionesCrear('ubicaciones.crear'),
 
   // Administración del sistema
   sistemaPanelAdmin('sistema.panel_admin'),
@@ -126,6 +130,8 @@ const _baseJefeEquipo = <Permission>{
 const _baseJefeSeccion = <Permission>{
   ..._baseJefeEquipo,
   Permission.inventarioAsignarEquipamientoPersonal,
+  Permission.inventarioGestionarDotacionVehiculo,
+  Permission.ubicacionesCrear,
 };
 
 const _baseJefeUnidad = <Permission>{

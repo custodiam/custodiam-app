@@ -13,12 +13,18 @@ class ServiciosApi {
 
   /// GET /servicios — paginated list. Returns the raw envelope so the
   /// repository can read `X-Total-Count`.
+  ///
+  /// `desde`/`hasta` se envían como fechas de calendario `YYYY-MM-DD`
+  /// (el backend las interpreta como rango inclusivo sobre
+  /// `fecha_inicio`); solo se usa la parte de fecha, la hora se ignora.
   Future<ApiResponse<List<dynamic>>> list({
     int skip = 0,
     int limit = 50,
     String? query,
     EstadoServicio? estado,
     TipoServicio? tipo,
+    DateTime? desde,
+    DateTime? hasta,
   }) {
     final params = <String, String>{
       'skip': skip.toString(),
@@ -33,7 +39,22 @@ class ServiciosApi {
     if (tipo != null) {
       params['tipo'] = tipo.wire;
     }
+    if (desde != null) {
+      params['desde'] = _wireDate(desde);
+    }
+    if (hasta != null) {
+      params['hasta'] = _wireDate(hasta);
+    }
     return _client.getList('/servicios', queryParams: params);
+  }
+
+  /// Serializa solo la parte de calendario (`YYYY-MM-DD`), sin hora ni
+  /// zona horaria, para casar con el query param `date` del backend.
+  static String _wireDate(DateTime d) {
+    final y = d.year.toString().padLeft(4, '0');
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '$y-$m-$day';
   }
 
   Future<Map<String, dynamic>> getById(String id) {
@@ -81,5 +102,25 @@ class ServiciosApi {
 
   Future<ApiResponse<List<dynamic>>> listVoluntarios(String id) {
     return _client.getList('/servicios/$id/voluntarios');
+  }
+
+  /// GET /servicios/{id}/inventario — recursos asignados (R1). Cuerpo objeto
+  /// {material: [...], vehiculos: [...]}.
+  Future<Map<String, dynamic>> getInventario(String id) {
+    return _client.get('/servicios/$id/inventario');
+  }
+
+  Future<Map<String, dynamic>> asignarMaterial(
+    String id,
+    Map<String, dynamic> body,
+  ) {
+    return _client.post('/servicios/$id/inventario/material', body);
+  }
+
+  Future<Map<String, dynamic>> asignarVehiculo(
+    String id,
+    Map<String, dynamic> body,
+  ) {
+    return _client.post('/servicios/$id/inventario/vehiculo', body);
   }
 }

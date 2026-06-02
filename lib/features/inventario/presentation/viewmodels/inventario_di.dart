@@ -6,14 +6,17 @@ import '../../../../infrastructure/di/providers.dart';
 import '../../data/datasources/inventario_api.dart';
 import '../../data/repositories/inventario_repository_impl.dart';
 import '../../domain/repositories/inventario_repository.dart';
+import '../../domain/usecases/asignar_dotacion_vehiculo.dart';
 import '../../domain/usecases/asignar_material_a_voluntario.dart';
 import '../../domain/usecases/create_material.dart';
 import '../../domain/usecases/create_vehiculo.dart';
 import '../../domain/usecases/devolver_material.dart';
 import '../../domain/usecases/get_material.dart';
 import '../../domain/usecases/get_vehiculo.dart';
+import '../../domain/usecases/liberar_dotacion_vehiculo.dart';
 import '../../domain/usecases/list_materiales.dart';
 import '../../domain/usecases/list_vehiculos.dart';
+import '../../domain/usecases/listar_dotacion_vehiculo.dart';
 import '../../domain/usecases/reportar_incidencia_material.dart';
 import '../../domain/usecases/reportar_incidencia_vehiculo.dart';
 
@@ -66,4 +69,18 @@ final createVehiculoProvider = Provider<CreateVehiculo>((ref) {
 final reportarIncidenciaVehiculoProvider =
     Provider<ReportarIncidenciaVehiculo>((ref) {
   return ReportarIncidenciaVehiculo(ref.watch(inventarioRepositoryProvider));
+});
+
+final listarDotacionVehiculoProvider = Provider<ListarDotacionVehiculo>((ref) {
+  return ListarDotacionVehiculo(ref.watch(inventarioRepositoryProvider));
+});
+
+final asignarDotacionVehiculoProvider =
+    Provider<AsignarDotacionVehiculo>((ref) {
+  return AsignarDotacionVehiculo(ref.watch(inventarioRepositoryProvider));
+});
+
+final liberarDotacionVehiculoProvider =
+    Provider<LiberarDotacionVehiculo>((ref) {
+  return LiberarDotacionVehiculo(ref.watch(inventarioRepositoryProvider));
 });

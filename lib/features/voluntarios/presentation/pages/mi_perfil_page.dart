@@ -10,12 +10,16 @@
 // button. Tap navigates to /mi-perfil/editar.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
@@ -49,22 +53,22 @@ class _MiPerfilPageBody extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Mi perfil',
       actions: [
-        IconButton(
-          key: const ValueKey('mi_perfil_refresh_button'),
+        AppIconButton(
+          key: K.miPerfilRefreshButton,
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Symbols.refresh,
           onPressed: () =>
               ref.read(miPerfilViewModelProvider.notifier).refresh(),
         ),
       ],
       body: asyncProfile.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) {
           if (error is VoluntarioNotFound) {
             return AppEmptyState(
               title: 'Sin perfil',
               description: error.message,
-              icon: Icons.person_outline,
+              icon: Symbols.person,
             );
           }
           final message =
@@ -181,28 +185,34 @@ class _MiActividadSection extends StatelessWidget {
               AppPermissionGate(
                 permission: Permission.fichajeVerPropio,
                 child: _ActividadTile(
-                  icon: Icons.timer_outlined,
+                  icon: Symbols.timer,
                   label: 'Mis horas',
                   route: '/mi-perfil/horas',
-                  keyValue: 'mi_perfil_tile_horas',
+                  tileKey: K.miPerfilTileHoras,
                 ),
               ),
               AppPermissionGate(
-                permission: Permission.voluntariosVerPropio,
+                // Auditoría RBAC (29-may, B1): el tile abre el calendario
+                // de gestión, no una vista. secretario/tesorero tienen
+                // `voluntariosVerPropio` pero no `voluntariosDisponibilidadPropia`,
+                // así que veían el tile y aterrizaban en una pantalla
+                // sin toggle activo. Lockstep semántico con el permiso
+                // que realmente controla la edición.
+                permission: Permission.voluntariosDisponibilidadPropia,
                 child: _ActividadTile(
-                  icon: Icons.event_available_outlined,
+                  icon: Symbols.event_available,
                   label: 'Mi disponibilidad',
                   route: '/mi-perfil/disponibilidad',
-                  keyValue: 'mi_perfil_tile_disponibilidad',
+                  tileKey: K.miPerfilTileDisponibilidad,
                 ),
               ),
               AppPermissionGate(
                 permission: Permission.voluntariosVerPropio,
                 child: _ActividadTile(
-                  icon: Icons.history,
+                  icon: Symbols.history,
                   label: 'Mi historial',
                   route: '/mi-perfil/historial',
-                  keyValue: 'mi_perfil_tile_historial',
+                  tileKey: K.miPerfilTileHistorial,
                 ),
               ),
             ],
@@ -217,22 +227,22 @@ class _ActividadTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String route;
-  final String keyValue;
+  final Key tileKey;
 
   const _ActividadTile({
     required this.icon,
     required this.label,
     required this.route,
-    required this.keyValue,
+    required this.tileKey,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: ValueKey(keyValue),
+      key: tileKey,
       leading: Icon(icon),
       title: Text(label),
-      trailing: const Icon(Icons.chevron_right),
+      trailing: const Icon(Symbols.chevron_right),
       onTap: () => context.go(route),
     );
   }
@@ -244,9 +254,9 @@ class _EditButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppPrimaryButton(
-      key: const ValueKey('mi_perfil_edit_button'),
+      key: K.miPerfilEditButton,
       label: 'Editar mis datos de contacto',
-      icon: Icons.edit_outlined,
+      icon: Symbols.edit,
       expanded: true,
       onPressed: () => context.go('/mi-perfil/editar'),
     );
@@ -324,7 +334,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar el perfil propio.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

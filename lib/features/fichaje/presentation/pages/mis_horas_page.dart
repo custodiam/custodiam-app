@@ -2,12 +2,17 @@
 // de fichajes cerrados y abiertos. Accesible desde /mi-perfil/horas.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -37,16 +42,16 @@ class _MisHorasBody extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Mis horas',
       actions: [
-        IconButton(
-          key: const ValueKey('mis_horas_refresh'),
+        AppIconButton(
+          key: K.misHorasRefresh,
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Symbols.refresh,
           onPressed: () =>
               ref.read(misHorasViewModelProvider.notifier).refresh(),
         ),
       ],
       body: asyncState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) => AppErrorState(
           title: 'No se pudieron cargar tus horas',
           description: error is Failure ? error.message : null,
@@ -82,7 +87,7 @@ class _MisHorasContent extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
               color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Column(
               children: [
@@ -105,17 +110,17 @@ class _MisHorasContent extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
           _MetricRow(
-            icon: Icons.check_circle_outline,
+            icon: Symbols.check_circle,
             label: 'Fichajes cerrados',
             value: horas.fichajesCerrados.toString(),
           ),
           _MetricRow(
-            icon: Icons.timer_outlined,
+            icon: Symbols.timer,
             label: 'Fichajes abiertos',
             value: horas.fichajesAbiertos.toString(),
           ),
           _MetricRow(
-            icon: Icons.functions_outlined,
+            icon: Symbols.functions,
             label: 'Horas (decimal)',
             value: horas.totalHoras.toStringAsFixed(2),
           ),
@@ -168,7 +173,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar tus horas.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

@@ -18,6 +18,8 @@ class ServiciosListState {
   final String query;
   final EstadoServicio? estado;
   final TipoServicio? tipo;
+  final DateTime? desde;
+  final DateTime? hasta;
   final bool isLoadingMore;
 
   const ServiciosListState({
@@ -26,10 +28,14 @@ class ServiciosListState {
     this.query = '',
     this.estado,
     this.tipo,
+    this.desde,
+    this.hasta,
     this.isLoadingMore = false,
   });
 
   bool get hasMore => items.length < total;
+
+  bool get tieneRangoFechas => desde != null || hasta != null;
 
   ServiciosListState copyWith({
     List<ServicioSummary>? items,
@@ -39,6 +45,9 @@ class ServiciosListState {
     bool clearEstado = false,
     TipoServicio? tipo,
     bool clearTipo = false,
+    DateTime? desde,
+    DateTime? hasta,
+    bool clearRango = false,
     bool? isLoadingMore,
   }) {
     return ServiciosListState(
@@ -47,6 +56,8 @@ class ServiciosListState {
       query: query ?? this.query,
       estado: clearEstado ? null : (estado ?? this.estado),
       tipo: clearTipo ? null : (tipo ?? this.tipo),
+      desde: clearRango ? null : (desde ?? this.desde),
+      hasta: clearRango ? null : (hasta ?? this.hasta),
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
@@ -59,13 +70,21 @@ class ServiciosListViewModel extends AsyncNotifier<ServiciosListState> {
 
   @override
   Future<ServiciosListState> build() {
-    return _fetchFirstPage(query: '', estado: null, tipo: null);
+    return _fetchFirstPage(
+      query: '',
+      estado: null,
+      tipo: null,
+      desde: null,
+      hasta: null,
+    );
   }
 
   Future<ServiciosListState> _fetchFirstPage({
     required String query,
     required EstadoServicio? estado,
     required TipoServicio? tipo,
+    required DateTime? desde,
+    required DateTime? hasta,
   }) async {
     final result = await _list(
       skip: 0,
@@ -73,6 +92,8 @@ class ServiciosListViewModel extends AsyncNotifier<ServiciosListState> {
       query: query.isEmpty ? null : query,
       estado: estado,
       tipo: tipo,
+      desde: desde,
+      hasta: hasta,
     );
     return switch (result) {
       Success(:final value) => ServiciosListState(
@@ -81,6 +102,8 @@ class ServiciosListViewModel extends AsyncNotifier<ServiciosListState> {
           query: query,
           estado: estado,
           tipo: tipo,
+          desde: desde,
+          hasta: hasta,
         ),
       Fail(:final failure) => throw failure,
     };
@@ -94,6 +117,8 @@ class ServiciosListViewModel extends AsyncNotifier<ServiciosListState> {
         query: query,
         estado: current?.estado,
         tipo: current?.tipo,
+        desde: current?.desde,
+        hasta: current?.hasta,
       ),
     );
   }
@@ -106,6 +131,8 @@ class ServiciosListViewModel extends AsyncNotifier<ServiciosListState> {
         query: current?.query ?? '',
         estado: estado,
         tipo: current?.tipo,
+        desde: current?.desde,
+        hasta: current?.hasta,
       ),
     );
   }
@@ -118,6 +145,24 @@ class ServiciosListViewModel extends AsyncNotifier<ServiciosListState> {
         query: current?.query ?? '',
         estado: current?.estado,
         tipo: tipo,
+        desde: current?.desde,
+        hasta: current?.hasta,
+      ),
+    );
+  }
+
+  /// Aplica (o limpia, si ambos son `null`) el filtro por rango de
+  /// `fecha_inicio`. Conserva el resto de filtros activos.
+  Future<void> filterByDateRange({DateTime? desde, DateTime? hasta}) async {
+    final current = state.valueOrNull;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => _fetchFirstPage(
+        query: current?.query ?? '',
+        estado: current?.estado,
+        tipo: current?.tipo,
+        desde: desde,
+        hasta: hasta,
       ),
     );
   }
@@ -130,6 +175,8 @@ class ServiciosListViewModel extends AsyncNotifier<ServiciosListState> {
         query: current?.query ?? '',
         estado: current?.estado,
         tipo: current?.tipo,
+        desde: current?.desde,
+        hasta: current?.hasta,
       ),
     );
   }
@@ -146,6 +193,8 @@ class ServiciosListViewModel extends AsyncNotifier<ServiciosListState> {
       query: current.query.isEmpty ? null : current.query,
       estado: current.estado,
       tipo: current.tipo,
+      desde: current.desde,
+      hasta: current.hasta,
     );
     state = switch (result) {
       Success(:final value) => AsyncData(

@@ -1,3 +1,4 @@
+import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/core/ui/theme/app_theme.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/estado_voluntario.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/mi_perfil_update.dart';
@@ -125,7 +126,7 @@ void main() {
     await pumpPage(tester, repo);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('editar_perfil_submit')));
+    await tester.tap(find.byKey(K.editarMiPerfilSubmitButton));
     await tester.pump();
 
     expect(find.textContaining('No has cambiado nada'), findsOneWidget);
@@ -143,10 +144,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(
-      find.byKey(const ValueKey('editar_perfil_telefono')),
+      find.byKey(K.editarMiPerfilTelefonoField),
       '699999999',
     );
-    await tester.tap(find.byKey(const ValueKey('editar_perfil_submit')));
+    await tester.tap(find.byKey(K.editarMiPerfilSubmitButton));
     await tester.pumpAndSettle();
 
     final captured = verify(() => repo.updateMyProfile(captureAny())).captured;
@@ -166,10 +167,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(
-      find.byKey(const ValueKey('editar_perfil_email')),
+      find.byKey(K.editarMiPerfilEmailField),
       'taken@example.com',
     );
-    await tester.tap(find.byKey(const ValueKey('editar_perfil_submit')));
+    await tester.tap(find.byKey(K.editarMiPerfilSubmitButton));
     await tester.pump();
 
     expect(find.byType(SnackBar), findsOneWidget);
@@ -187,10 +188,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(
-      find.byKey(const ValueKey('editar_perfil_email')),
+      find.byKey(K.editarMiPerfilEmailField),
       'no-arroba',
     );
-    await tester.tap(find.byKey(const ValueKey('editar_perfil_submit')));
+    await tester.tap(find.byKey(K.editarMiPerfilSubmitButton));
     await tester.pump();
 
     expect(find.text('Email no válido'), findsOneWidget);

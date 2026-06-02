@@ -1,9 +1,11 @@
 // AltaVehiculoPage (US-05-02).
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
@@ -11,13 +13,16 @@ import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
+import '../../../../infrastructure/catalogo/catalogo_recurso.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/tipo_vehiculo.dart';
 import '../../domain/entities/vehiculo_create.dart';
 import '../viewmodels/alta_vehiculo_view_model.dart';
 import '../viewmodels/vehiculos_list_view_model.dart';
+import '../widgets/ubicacion_selector_field.dart';
 
 class AltaVehiculoPage extends ConsumerWidget {
   const AltaVehiculoPage({super.key});
@@ -45,18 +50,17 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
   final _codigoCtrl = TextEditingController();
   final _matriculaCtrl = TextEditingController();
   final _marcaModeloCtrl = TextEditingController();
-  final _ubicacionCtrl = TextEditingController();
   final _observacionesCtrl = TextEditingController();
   final _itvCtrl = TextEditingController();
   TipoVehiculo _tipo = TipoVehiculo.furgoneta;
   DateTime? _fechaItv;
+  CatalogoRecurso? _ubicacion;
 
   @override
   void dispose() {
     _codigoCtrl.dispose();
     _matriculaCtrl.dispose();
     _marcaModeloCtrl.dispose();
-    _ubicacionCtrl.dispose();
     _observacionesCtrl.dispose();
     _itvCtrl.dispose();
     super.dispose();
@@ -96,7 +100,8 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
       codigoInterno: _codigoCtrl.text.trim(),
       matricula: _matriculaCtrl.text.trim(),
       tipo: _tipo,
-      ubicacionBase: _ubicacionCtrl.text.trim(),
+      ubicacionBase: _ubicacion?.label,
+      ubicacionBaseId: _ubicacion?.id,
       marcaModelo: _normalize(_marcaModeloCtrl.text),
       fechaItv: _fechaItv,
       observaciones: _normalize(_observacionesCtrl.text),
@@ -133,9 +138,11 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
     });
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.formMaxWidth,
       title: 'Nuevo vehículo',
       body: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
@@ -154,7 +161,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
                   TipoVehiculo.remolque => 'Remolque',
                 };
                 return ChoiceChip(
-                  key: ValueKey('alta_vehiculo_tipo_${t.wire}'),
+                  key: K.altaVehiculoTipoChip(t.wire),
                   label: Text(label),
                   selected: _tipo == t,
                   onSelected: (_) => setState(() => _tipo = t),
@@ -168,28 +175,27 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_vehiculo_codigo'),
+              key: K.altaVehiculoCodigo,
               label: 'Código interno',
               controller: _codigoCtrl,
               autofocus: true,
-              prefixIcon: Icons.qr_code_2,
+              prefixIcon: Symbols.qr_code_2,
               validator: (v) => _validateRequired(v, 'Código'),
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_vehiculo_matricula'),
+              key: K.altaVehiculoMatricula,
               label: 'Matrícula',
               controller: _matriculaCtrl,
-              prefixIcon: Icons.directions_car_outlined,
+              prefixIcon: Symbols.directions_car,
               validator: (v) => _validateRequired(v, 'Matrícula'),
             ),
             const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: const ValueKey('alta_vehiculo_ubicacion'),
-              label: 'Ubicación base',
-              controller: _ubicacionCtrl,
-              prefixIcon: Icons.location_on_outlined,
-              validator: (v) => _validateRequired(v, 'Ubicación'),
+            UbicacionSelectorField(
+              fieldKey: K.altaVehiculoUbicacion,
+              value: _ubicacion,
+              onChanged: (u) => setState(() => _ubicacion = u),
+              validator: (v) => v == null ? 'Ubicación obligatoria' : null,
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
@@ -198,43 +204,50 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_vehiculo_marca_modelo'),
+              key: K.altaVehiculoMarcaModelo,
               label: 'Marca y modelo',
               controller: _marcaModeloCtrl,
-              prefixIcon: Icons.commute_outlined,
+              prefixIcon: Symbols.commute,
             ),
             const SizedBox(height: AppSpacing.md),
-            GestureDetector(
-              key: const ValueKey('alta_vehiculo_itv'),
-              onTap: _pickItv,
-              child: AbsorbPointer(
-                child: AppTextField(
-                  label: 'Próxima ITV',
-                  controller: _itvCtrl,
-                  prefixIcon: Icons.event_outlined,
+            // Guía 28 §WCAG 4.1.2: rol real = botón que abre date
+            // picker, no TextField. Semantics fuerza la interpretación
+            // para el screen reader.
+            Semantics(
+              label: 'Próxima ITV',
+              button: true,
+              child: GestureDetector(
+                key: K.altaVehiculoItv,
+                onTap: _pickItv,
+                child: AbsorbPointer(
+                  child: AppTextField(
+                    label: 'Próxima ITV',
+                    controller: _itvCtrl,
+                    prefixIcon: Symbols.event,
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_vehiculo_observaciones'),
+              key: K.altaVehiculoObservaciones,
               label: 'Observaciones',
               controller: _observacionesCtrl,
-              prefixIcon: Icons.notes_outlined,
+              prefixIcon: Symbols.notes,
               maxLines: 3,
             ),
             const SizedBox(height: AppSpacing.xl),
             AppPrimaryButton(
-              key: const ValueKey('alta_vehiculo_submit'),
+              key: K.altaVehiculoSubmit,
               label: 'Registrar vehículo',
-              icon: Icons.directions_car_filled_outlined,
+              icon: Symbols.directions_car_filled,
               expanded: true,
               isLoading: asyncSubmit.isLoading,
               onPressed: asyncSubmit.isLoading ? null : _onSubmit,
             ),
             const SizedBox(height: AppSpacing.sm),
             AppSecondaryButton(
-              key: const ValueKey('alta_vehiculo_cancel'),
+              key: K.altaVehiculoCancel,
               label: 'Cancelar',
               expanded: true,
               onPressed: asyncSubmit.isLoading
@@ -258,7 +271,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite registrar vehículos.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

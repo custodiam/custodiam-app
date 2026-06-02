@@ -1,9 +1,11 @@
 // AltaMaterialPage (US-05-01). Form completo del catálogo de material.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
@@ -11,13 +13,16 @@ import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
+import '../../../../infrastructure/catalogo/catalogo_recurso.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/material_create.dart';
 import '../../domain/entities/tipo_material.dart';
 import '../viewmodels/alta_material_view_model.dart';
 import '../viewmodels/materiales_list_view_model.dart';
+import '../widgets/ubicacion_selector_field.dart';
 
 class AltaMaterialPage extends ConsumerWidget {
   const AltaMaterialPage({super.key});
@@ -48,8 +53,8 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
   final _numeroSerieCtrl = TextEditingController();
   final _categoriaCtrl = TextEditingController();
   final _cantidadCtrl = TextEditingController(text: '1');
-  final _ubicacionCtrl = TextEditingController();
   TipoMaterial _tipo = TipoMaterial.prestable;
+  CatalogoRecurso? _ubicacion;
 
   @override
   void dispose() {
@@ -59,7 +64,6 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
     _numeroSerieCtrl.dispose();
     _categoriaCtrl.dispose();
     _cantidadCtrl.dispose();
-    _ubicacionCtrl.dispose();
     super.dispose();
   }
 
@@ -86,7 +90,8 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
       nombre: _nombreCtrl.text.trim(),
       tipo: _tipo,
       cantidad: int.parse(_cantidadCtrl.text.trim()),
-      ubicacionBase: _ubicacionCtrl.text.trim(),
+      ubicacionBase: _ubicacion?.label,
+      ubicacionBaseId: _ubicacion?.id,
       descripcion: _normalize(_descripcionCtrl.text),
       codigo: _normalize(_codigoCtrl.text),
       numeroSerie: _normalize(_numeroSerieCtrl.text),
@@ -124,9 +129,11 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
     });
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.formMaxWidth,
       title: 'Nuevo material',
       body: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
@@ -144,7 +151,7 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
                   TipoMaterial.servicio => 'Servicio',
                 };
                 return ChoiceChip(
-                  key: ValueKey('alta_material_tipo_${t.wire}'),
+                  key: K.altaMaterialTipoChip(t.wire),
                   label: Text(label),
                   selected: _tipo == t,
                   onSelected: (_) => setState(() => _tipo = t),
@@ -158,29 +165,28 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_material_nombre'),
+              key: K.altaMaterialNombre,
               label: 'Nombre',
               controller: _nombreCtrl,
               autofocus: true,
-              prefixIcon: Icons.label_outline,
+              prefixIcon: Symbols.label,
               validator: (v) => _validateRequired(v, 'Nombre'),
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_material_cantidad'),
+              key: K.altaMaterialCantidad,
               label: 'Cantidad',
               controller: _cantidadCtrl,
               keyboardType: TextInputType.number,
-              prefixIcon: Icons.numbers,
+              prefixIcon: Symbols.numbers,
               validator: _validateCantidad,
             ),
             const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: const ValueKey('alta_material_ubicacion'),
-              label: 'Ubicación base',
-              controller: _ubicacionCtrl,
-              prefixIcon: Icons.location_on_outlined,
-              validator: (v) => _validateRequired(v, 'Ubicación'),
+            UbicacionSelectorField(
+              fieldKey: K.altaMaterialUbicacion,
+              value: _ubicacion,
+              onChanged: (u) => setState(() => _ubicacion = u),
+              validator: (v) => v == null ? 'Ubicación obligatoria' : null,
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
@@ -189,45 +195,45 @@ class _AltaMaterialFormState extends ConsumerState<_AltaMaterialForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_material_descripcion'),
+              key: K.altaMaterialDescripcion,
               label: 'Descripción',
               controller: _descripcionCtrl,
-              prefixIcon: Icons.description_outlined,
+              prefixIcon: Symbols.description,
               maxLines: 3,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_material_codigo'),
+              key: K.altaMaterialCodigo,
               label: 'Código (se genera automático si lo dejas vacío)',
               controller: _codigoCtrl,
-              prefixIcon: Icons.tag,
+              prefixIcon: Symbols.tag,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_material_numero_serie'),
+              key: K.altaMaterialNumeroSerie,
               label: 'Número de serie',
               controller: _numeroSerieCtrl,
-              prefixIcon: Icons.confirmation_number_outlined,
+              prefixIcon: Symbols.confirmation_number,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_material_categoria'),
+              key: K.altaMaterialCategoria,
               label: 'Categoría (ej. uniformidad, hidráulica…)',
               controller: _categoriaCtrl,
-              prefixIcon: Icons.category_outlined,
+              prefixIcon: Symbols.category,
             ),
             const SizedBox(height: AppSpacing.xl),
             AppPrimaryButton(
-              key: const ValueKey('alta_material_submit'),
+              key: K.altaMaterialSubmit,
               label: 'Registrar material',
-              icon: Icons.add_box_outlined,
+              icon: Symbols.add_box,
               expanded: true,
               isLoading: asyncSubmit.isLoading,
               onPressed: asyncSubmit.isLoading ? null : _onSubmit,
             ),
             const SizedBox(height: AppSpacing.sm),
             AppSecondaryButton(
-              key: const ValueKey('alta_material_cancel'),
+              key: K.altaMaterialCancel,
               label: 'Cancelar',
               expanded: true,
               onPressed: asyncSubmit.isLoading
@@ -251,7 +257,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite registrar material.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

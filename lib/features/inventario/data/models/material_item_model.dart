@@ -1,6 +1,7 @@
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/material_item.dart';
 import '../../domain/entities/tipo_material.dart';
+import 'asignacion_actual_model.dart';
 
 class MaterialItemModel {
   const MaterialItemModel._();
@@ -25,7 +26,8 @@ class MaterialItemModel {
       tipo: tipo,
       categoria: json['categoria'] as String?,
       cantidad: json['cantidad'] as int,
-      ubicacionBase: json['ubicacion_base'] as String,
+      ubicacionBase: json['ubicacion_base'] as String?,
+      ubicacionBaseId: json['ubicacion_base_id'] as String?,
       fechaAdquisicion: _date(json['fecha_adquisicion']),
       fechaProximaRevision: _date(json['fecha_proxima_revision']),
       fotoUrl: json['foto_url'] as String?,
@@ -33,6 +35,12 @@ class MaterialItemModel {
       observacionesIncidencia: json['observaciones_incidencia'] as String?,
       createdAt: _dateTime(json['created_at']),
       updatedAt: _dateTime(json['updated_at']),
+      asignacionesActivas: ((json['asignaciones_activas'] as List<dynamic>?) ??
+              const [])
+          .map((e) =>
+              AsignacionActualModel.fromJson(e as Map<String, dynamic>))
+          .toList(growable: false),
+      unidadesAsignadas: (json['unidades_asignadas'] as int?) ?? 0,
     );
   }
 

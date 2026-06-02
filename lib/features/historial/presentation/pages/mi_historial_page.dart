@@ -12,14 +12,19 @@
 // llegar a tocar la red.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_date_range_picker.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -84,18 +89,18 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
     return AppPageScaffold(
       title: 'Mi historial',
       actions: [
-        IconButton(
-          key: const ValueKey('mi_historial_filtro_fechas'),
+        AppIconButton(
+          key: K.miHistorialFiltroFechas,
           tooltip: 'Filtrar por fechas',
-          icon: const Icon(Icons.date_range),
+          icon: Symbols.date_range,
           onPressed: estadoActual == null
               ? null
               : () => _abrirDateRangePicker(context, estadoActual),
         ),
-        IconButton(
-          key: const ValueKey('mi_historial_refresh'),
+        AppIconButton(
+          key: K.miHistorialRefresh,
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Symbols.refresh,
           onPressed: () {
             ref.read(miHistorialViewModelProvider.notifier).refresh();
             ref.read(miResumenViewModelProvider.notifier).refresh();
@@ -117,13 +122,13 @@ class _MiHistorialBodyState extends ConsumerState<_MiHistorialBody> {
           Expanded(
             child: asyncHistorial.when(
               loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+                  const AppLoadingIndicator.fullScreen(),
               error: (error, _) {
                 if (error is VoluntarioNotFound) {
                   return AppEmptyState(
                     title: 'Sin perfil',
                     description: error.message,
-                    icon: Icons.person_outline,
+                    icon: Symbols.person,
                   );
                 }
                 final message = error is Failure
@@ -210,12 +215,12 @@ class _RangoActivoChip extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: InputChip(
-          key: const ValueKey('mi_historial_chip_rango_activo'),
-          avatar: Icon(Icons.date_range,
+          key: K.miHistorialChipRangoActivo,
+          avatar: Icon(Symbols.date_range,
               size: 18, color: theme.colorScheme.onSecondaryContainer),
           label: Text(label),
           backgroundColor: theme.colorScheme.secondaryContainer,
-          deleteIcon: const Icon(Icons.close, size: 18),
+          deleteIcon: const Icon(Symbols.close, size: 18),
           deleteButtonTooltipMessage: 'Quitar filtro de fechas',
           onDeleted: onLimpiar,
         ),
@@ -237,13 +242,13 @@ class _ResumenCard extends StatelessWidget {
       child: asyncResumen.when(
         loading: () => const SizedBox(
           height: 80,
-          child: Center(child: CircularProgressIndicator()),
+          child: AppLoadingIndicator.fullScreen(),
         ),
         error: (_, _) => Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: theme.colorScheme.errorContainer,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Text(
             'No se pudo cargar el resumen.',
@@ -254,7 +259,7 @@ class _ResumenCard extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: theme.colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -337,7 +342,7 @@ class _ListaContent extends ConsumerWidget {
       return const AppEmptyState(
         title: 'Sin actividad registrada',
         description: 'Aún no has generado eventos en tu historial.',
-        icon: Icons.history,
+        icon: Symbols.history,
       );
     }
 
@@ -357,7 +362,7 @@ class _ListaContent extends ConsumerWidget {
               if (index >= estado.eventos.length) {
                 return const Padding(
                   padding: EdgeInsets.all(AppSpacing.md),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: AppLoadingIndicator.fullScreen(),
                 );
               }
               return _EventoTile(evento: estado.eventos[index]);
@@ -392,7 +397,7 @@ class _FiltroTiposBar extends StatelessWidget {
               horizontal: AppSpacing.xs,
             ),
             child: ChoiceChip(
-              key: const ValueKey('mi_historial_filtro_todos'),
+              key: K.miHistorialFiltroTodos,
               label: const Text('Todos'),
               selected: seleccionados.isEmpty,
               onSelected: (_) => onChange(const []),
@@ -405,7 +410,7 @@ class _FiltroTiposBar extends StatelessWidget {
                 horizontal: AppSpacing.xs,
               ),
               child: ChoiceChip(
-                key: ValueKey('mi_historial_filtro_${tipo.wire}'),
+                key: K.miHistorialFiltroTipo(tipo.wire),
                 label: Text(tipo.etiqueta),
                 selected: seleccionados.contains(tipo),
                 onSelected: (sel) {
@@ -447,7 +452,7 @@ class _EventoTile extends StatelessWidget {
       trailing: evento.actorKeycloakId != null
           ? Tooltip(
               message: 'Actor: ${evento.actorKeycloakId}',
-              child: const Icon(Icons.person_outline, size: 18),
+              child: const Icon(Symbols.person, size: 18),
             )
           : null,
     );
@@ -456,27 +461,27 @@ class _EventoTile extends StatelessWidget {
   IconData _iconoDe(TipoEventoVoluntario tipo) {
     switch (tipo) {
       case TipoEventoVoluntario.alta:
-        return Icons.person_add_alt;
+        return Symbols.person_add_alt;
       case TipoEventoVoluntario.baja:
-        return Icons.person_off_outlined;
+        return Symbols.person_off;
       case TipoEventoVoluntario.anonimizacion:
-        return Icons.privacy_tip_outlined;
+        return Symbols.privacy_tip;
       case TipoEventoVoluntario.cambioRolAsignado:
-        return Icons.badge_outlined;
+        return Symbols.badge;
       case TipoEventoVoluntario.cambioRolRevocado:
-        return Icons.no_accounts_outlined;
+        return Symbols.no_accounts;
       case TipoEventoVoluntario.fichajeEntrada:
-        return Icons.login;
+        return Symbols.login;
       case TipoEventoVoluntario.fichajeSalida:
-        return Icons.logout;
+        return Symbols.logout;
       case TipoEventoVoluntario.inscripcionServicio:
-        return Icons.event_available_outlined;
+        return Symbols.event_available;
       case TipoEventoVoluntario.bajaInscripcion:
-        return Icons.event_busy_outlined;
+        return Symbols.event_busy;
       case TipoEventoVoluntario.asignacionMaterial:
-        return Icons.inventory_2_outlined;
+        return Symbols.inventory_2;
       case TipoEventoVoluntario.devolucionMaterial:
-        return Icons.assignment_return_outlined;
+        return Symbols.assignment_return;
     }
   }
 }
@@ -491,7 +496,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar el historial propio.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/core/ui/theme/app_theme.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/estado_voluntario.dart';
 import 'package:custodiam/features/voluntarios/domain/entities/voluntario.dart';
@@ -110,13 +111,13 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(
-        find.byKey(const ValueKey('alta_nombre')), 'Carlos');
+        find.byKey(K.altaVoluntarioNombreField), 'Carlos');
     await tester.enterText(
-        find.byKey(const ValueKey('alta_telefono')), '600');
+        find.byKey(K.altaVoluntarioTelefonoField), '600');
     await tester.enterText(
-        find.byKey(const ValueKey('alta_municipio')), 'Villanueva');
+        find.byKey(K.altaVoluntarioMunicipioField), 'Villanueva');
 
-    await tester.tap(find.byKey(const ValueKey('alta_submit')));
+    await tester.tap(find.byKey(K.altaVoluntarioSubmitButton));
     await tester.pump();
 
     expect(find.text('Fecha obligatoria'), findsOneWidget);
@@ -128,13 +129,13 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(
-        find.byKey(const ValueKey('alta_email')), 'no-arroba');
+        find.byKey(K.altaVoluntarioEmailField), 'no-arroba');
     await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('alta_submit')),
+      find.byKey(K.altaVoluntarioSubmitButton),
       400,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.byKey(const ValueKey('alta_submit')));
+    await tester.tap(find.byKey(K.altaVoluntarioSubmitButton));
     await tester.pump();
 
     expect(find.text('Email no válido'), findsOneWidget);

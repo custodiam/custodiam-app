@@ -8,7 +8,10 @@ enum TipoAsignacion {
   prestamo('prestamo'),
 
   /// Reservado para un servicio concreto (US-05-06).
-  servicio('servicio');
+  servicio('servicio'),
+
+  /// Dotación fija de material asignada permanentemente a un vehículo (PR3).
+  dotacionVehiculo('dotacion_vehiculo');
 
   const TipoAsignacion(this.wire);
 

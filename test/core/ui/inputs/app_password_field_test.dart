@@ -1,5 +1,6 @@
 import 'package:custodiam/core/ui/inputs/app_password_field.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../test_utils/test_app.dart';
@@ -11,7 +12,7 @@ void main() {
       await pumpRiverpod(tester, const AppPasswordField());
 
       expect(find.text('Contraseña'), findsOneWidget);
-      expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+      expect(find.byIcon(Symbols.lock), findsOneWidget);
     });
 
     testWidgets('starts obscured and toggles visibility on tap',
@@ -20,14 +21,14 @@ void main() {
 
       TextField field = tester.widget<TextField>(find.byType(TextField));
       expect(field.obscureText, isTrue);
-      expect(find.byIcon(Icons.visibility), findsOneWidget);
+      expect(find.byIcon(Symbols.visibility), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.visibility));
+      await tester.tap(find.byIcon(Symbols.visibility));
       await tester.pump();
 
       field = tester.widget<TextField>(find.byType(TextField));
       expect(field.obscureText, isFalse);
-      expect(find.byIcon(Icons.visibility_off), findsOneWidget);
+      expect(find.byIcon(Symbols.visibility_off), findsOneWidget);
     });
 
     testWidgets('writes through controller', (tester) async {

@@ -227,6 +227,7 @@ sealed class InventarioFailure extends Failure {
       EstadoIncidenciaInvalido;
   const factory InventarioFailure.asignacionNoEncontrada() =
       AsignacionNoEncontrada;
+  const factory InventarioFailure.recursoSolapado() = RecursoSolapado;
 }
 
 final class InventarioNotFound extends InventarioFailure {
@@ -270,6 +271,38 @@ final class EstadoIncidenciaInvalido extends InventarioFailure {
 final class AsignacionNoEncontrada extends InventarioFailure {
   const AsignacionNoEncontrada()
       : super('No hay una asignación activa para devolver.');
+}
+
+final class RecursoSolapado extends InventarioFailure {
+  const RecursoSolapado()
+      : super('El recurso ya está reservado por otro servicio en ese '
+            'intervalo de fechas.');
+}
+
+// ── Ubicaciones ──────────────────────────────────────────────────────
+
+sealed class UbicacionesFailure extends Failure {
+  const UbicacionesFailure([super.message]);
+
+  const factory UbicacionesFailure.notFound() = UbicacionNoEncontrada;
+  const factory UbicacionesFailure.nombreDuplicado() =
+      UbicacionNombreDuplicado;
+  const factory UbicacionesFailure.enUso() = UbicacionEnUso;
+}
+
+final class UbicacionNoEncontrada extends UbicacionesFailure {
+  const UbicacionNoEncontrada() : super('La ubicación ya no existe.');
+}
+
+final class UbicacionNombreDuplicado extends UbicacionesFailure {
+  const UbicacionNombreDuplicado()
+      : super('Ya existe una ubicación con ese nombre.');
+}
+
+final class UbicacionEnUso extends UbicacionesFailure {
+  const UbicacionEnUso()
+      : super('La ubicación está en uso por material o vehículos y no se '
+            'puede eliminar.');
 }
 
 // ── Disponibilidad ───────────────────────────────────────────────────

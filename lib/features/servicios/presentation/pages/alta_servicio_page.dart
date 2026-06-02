@@ -4,16 +4,21 @@
 // usuario al menos llegue, y validamos al enviar.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
+import '../../../../core/ui/maps/app_location_picker.dart';
+import '../../../../core/ui/maps/map_point.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/di/providers.dart';
@@ -24,23 +29,31 @@ import '../viewmodels/alta_servicio_view_model.dart';
 import '../viewmodels/servicios_list_view_model.dart';
 
 class AltaServicioPage extends ConsumerWidget {
-  const AltaServicioPage({super.key});
+  /// Tipo preseleccionado al abrir la página. Si `null`, arranca en
+  /// `preventivo`. Se propaga desde el query param `?tipo=` del router
+  /// para que la quick action "Crear emergencia" del home aterrice ya
+  /// con `emergencia` marcado.
+  final TipoServicio? tipoInicial;
+
+  const AltaServicioPage({super.key, this.tipoInicial});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const AppPermissionGate.anyOf(
-      anyOf: [
+    return AppPermissionGate.anyOf(
+      anyOf: const [
         Permission.serviciosCrearPreventivo,
         Permission.serviciosCrearEmergencia,
       ],
-      fallback: _ForbiddenScreen(),
-      child: _AltaServicioForm(),
+      fallback: const _ForbiddenScreen(),
+      child: _AltaServicioForm(tipoInicial: tipoInicial),
     );
   }
 }
 
 class _AltaServicioForm extends ConsumerStatefulWidget {
-  const _AltaServicioForm();
+  final TipoServicio? tipoInicial;
+
+  const _AltaServicioForm({this.tipoInicial});
 
   @override
   ConsumerState<_AltaServicioForm> createState() => _AltaServicioFormState();
@@ -56,9 +69,11 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
   final _notasVehiculosCtrl = TextEditingController();
   final _fechaInicioCtrl = TextEditingController();
   final _fechaFinCtrl = TextEditingController();
-  TipoServicio _tipo = TipoServicio.preventivo;
+  late TipoServicio _tipo = widget.tipoInicial ?? TipoServicio.preventivo;
   DateTime? _fechaInicio;
   DateTime? _fechaFin;
+  double? _ubicacionLat;
+  double? _ubicacionLng;
 
   @override
   void dispose() {
@@ -104,6 +119,26 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
     );
     if (time == null) return null;
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+  }
+
+  Future<void> _pickUbicacion() async {
+    final inicial = (_ubicacionLat != null && _ubicacionLng != null)
+        ? MapPoint(_ubicacionLat!, _ubicacionLng!)
+        : null;
+    final result = await showAppLocationPicker(
+      context,
+      ref,
+      inicial: inicial,
+      textoInicial: _ubicacionCtrl.text.trim(),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _ubicacionLat = result.lat;
+      _ubicacionLng = result.lng;
+      if (result.direccion != null && result.direccion!.isNotEmpty) {
+        _ubicacionCtrl.text = result.direccion!;
+      }
+    });
   }
 
   Future<void> _pickFechaInicio() async {
@@ -168,6 +203,8 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
       fechaInicio: _fechaInicio!,
       fechaFin: _fechaFin,
       ubicacion: _ubicacionCtrl.text.trim(),
+      ubicacionLat: _ubicacionLat,
+      ubicacionLng: _ubicacionLng,
       numeroVoluntarios:
           numeroVoluntariosRaw.isEmpty ? null : int.parse(numeroVoluntariosRaw),
       notasMaterial: _normalize(_notasMaterialCtrl.text),
@@ -205,9 +242,11 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
     });
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.formMaxWidth,
       title: 'Crear servicio',
       body: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
@@ -227,32 +266,75 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_servicio_titulo'),
+              key: K.altaServicioTitulo,
               label: 'Título',
               controller: _tituloCtrl,
               autofocus: true,
-              prefixIcon: Icons.title,
+              prefixIcon: Symbols.title,
               validator: (v) => _validateRequired(v, 'Título'),
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_servicio_ubicacion'),
+              key: K.altaServicioUbicacion,
               label: 'Ubicación',
               controller: _ubicacionCtrl,
-              prefixIcon: Icons.location_on_outlined,
+              prefixIcon: Symbols.location_on,
               validator: (v) => _validateRequired(v, 'Ubicación'),
+              // Alternativa no-mapa: el campo sigue siendo texto libre; el
+              // mapa es opcional para fijar coordenadas exactas (ADR-030).
+              suffixIcon: IconButton(
+                key: K.altaServicioUbicacionMapaBtn,
+                icon: const Icon(Symbols.map),
+                tooltip: 'Elegir en el mapa',
+                onPressed: _pickUbicacion,
+              ),
             ),
+            if (_ubicacionLat != null && _ubicacionLng != null)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Row(
+                  children: [
+                    Icon(
+                      Symbols.my_location,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        'Ubicación fijada en el mapa',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    TextButton(
+                      key: K.altaServicioQuitarCoordsBtn,
+                      onPressed: () => setState(() {
+                        _ubicacionLat = null;
+                        _ubicacionLng = null;
+                      }),
+                      child: const Text('Quitar'),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: AppSpacing.md),
-            GestureDetector(
-              key: const ValueKey('alta_servicio_fecha_inicio'),
-              onTap: _pickFechaInicio,
-              child: AbsorbPointer(
-                child: AppTextField(
-                  label: 'Fecha y hora de inicio',
-                  controller: _fechaInicioCtrl,
-                  prefixIcon: Icons.calendar_today_outlined,
-                  validator: (_) =>
-                      _fechaInicio == null ? 'Fecha obligatoria' : null,
+            // Guía 28 §WCAG 4.1.2: rol real = botón que abre date+time
+            // picker, no TextField. Semantics fuerza la interpretación
+            // para el screen reader.
+            Semantics(
+              label: 'Fecha y hora de inicio',
+              button: true,
+              child: GestureDetector(
+                key: K.altaServicioFechaInicioBtn,
+                onTap: _pickFechaInicio,
+                child: AbsorbPointer(
+                  child: AppTextField(
+                    label: 'Fecha y hora de inicio',
+                    controller: _fechaInicioCtrl,
+                    prefixIcon: Symbols.calendar_today,
+                    validator: (_) =>
+                        _fechaInicio == null ? 'Fecha obligatoria' : null,
+                  ),
                 ),
               ),
             ),
@@ -263,65 +345,69 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
-              key: const ValueKey('alta_servicio_descripcion'),
+              key: K.altaServicioDescripcion,
               label: 'Descripción',
               controller: _descripcionCtrl,
-              prefixIcon: Icons.description_outlined,
+              prefixIcon: Symbols.description,
               maxLines: 3,
             ),
             const SizedBox(height: AppSpacing.md),
-            GestureDetector(
-              key: const ValueKey('alta_servicio_fecha_fin'),
-              onTap: _pickFechaFin,
-              child: AbsorbPointer(
-                child: AppTextField(
-                  label: 'Fecha y hora de fin',
-                  controller: _fechaFinCtrl,
-                  prefixIcon: Icons.event_outlined,
+            Semantics(
+              label: 'Fecha y hora de fin',
+              button: true,
+              child: GestureDetector(
+                key: K.altaServicioFechaFinBtn,
+                onTap: _pickFechaFin,
+                child: AbsorbPointer(
+                  child: AppTextField(
+                    label: 'Fecha y hora de fin',
+                    controller: _fechaFinCtrl,
+                    prefixIcon: Symbols.event,
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_servicio_numero_voluntarios'),
+              key: K.altaServicioNumeroVoluntarios,
               label: 'Número de voluntarios necesarios',
               controller: _numeroVoluntariosCtrl,
               keyboardType: TextInputType.number,
-              prefixIcon: Icons.groups_outlined,
+              prefixIcon: Symbols.groups,
               validator: _validateNumeroVoluntarios,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_servicio_notas_material'),
+              key: K.altaServicioNotasMaterial,
               label: 'Notas sobre material',
               controller: _notasMaterialCtrl,
-              prefixIcon: Icons.inventory_2_outlined,
+              prefixIcon: Symbols.inventory_2,
               maxLines: 2,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
-              key: const ValueKey('alta_servicio_notas_vehiculos'),
+              key: K.altaServicioNotasVehiculos,
               label: 'Notas sobre vehículos',
               controller: _notasVehiculosCtrl,
-              prefixIcon: Icons.directions_car_outlined,
+              prefixIcon: Symbols.directions_car,
               maxLines: 2,
             ),
             const SizedBox(height: AppSpacing.xl),
             AppPrimaryButton(
-              key: const ValueKey('alta_servicio_submit'),
+              key: K.altaServicioSubmitBtn,
               label: _tipo == TipoServicio.emergencia
                   ? 'Crear emergencia'
                   : 'Crear servicio',
               icon: _tipo == TipoServicio.emergencia
-                  ? Icons.warning_amber_rounded
-                  : Icons.event_available,
+                  ? Symbols.warning_amber
+                  : Symbols.event_available,
               expanded: true,
               isLoading: asyncSubmit.isLoading,
               onPressed: asyncSubmit.isLoading ? null : _onSubmit,
             ),
             const SizedBox(height: AppSpacing.sm),
             AppSecondaryButton(
-              key: const ValueKey('alta_servicio_cancel'),
+              key: K.altaServicioCancelBtn,
               label: 'Cancelar',
               expanded: true,
               onPressed: asyncSubmit.isLoading
@@ -335,20 +421,34 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
   }
 }
 
-class _TipoSelector extends StatelessWidget {
+class _TipoSelector extends ConsumerWidget {
   final TipoServicio selected;
   final ValueChanged<TipoServicio> onChanged;
 
   const _TipoSelector({required this.selected, required this.onChanged});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Auditoría RBAC (29-may, hallazgo A4): `secretario` entra al alta
+    // por tener `serviciosCrearPreventivo` (gate `anyOf` exterior) pero
+    // no tiene `serviciosCrearEmergencia` (Decisión 4 RBAC). El selector
+    // ofrecía los cuatro tipos y al pulsar "Crear emergencia" recibía
+    // un snackbar danger (defensa en profundidad correcta, ver
+    // _AltaServicioFormState._submit). Mejor UX: no surfacear la
+    // opción inválida en origen. El snackbar se conserva por si el
+    // JWT cambia mid-sesión.
+    final user = ref.watch(authServiceProvider).currentUser;
+    final canEmergencia =
+        user?.hasPermission(Permission.serviciosCrearEmergencia) ?? false;
+    final tipos = TipoServicio.values
+        .where((t) => t != TipoServicio.emergencia || canEmergencia)
+        .toList(growable: false);
     return Wrap(
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
-      children: TipoServicio.values.map((t) {
+      children: tipos.map((t) {
         return ChoiceChip(
-          key: ValueKey('alta_servicio_tipo_${t.wire}'),
+          key: K.altaServicioTipoChip(t.wire),
           label: Text(_label(t)),
           selected: selected == t,
           onSelected: (_) => onChanged(t),
@@ -375,7 +475,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite crear servicios.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

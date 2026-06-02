@@ -9,17 +9,21 @@
 // AppSnackbar so the user understands why the change was rejected.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -49,9 +53,10 @@ class _EditarMiPerfilPageBody extends ConsumerWidget {
     final asyncProfile = ref.watch(miPerfilViewModelProvider);
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.formMaxWidth,
       title: 'Editar mis datos',
       body: asyncProfile.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) => AppErrorState(
           title: 'No se pudo cargar tu perfil',
           description: error is Failure ? error.message : null,
@@ -194,57 +199,57 @@ class _FormState extends ConsumerState<_Form> {
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           AppTextField(
-            key: const ValueKey('editar_perfil_telefono'),
+            key: K.editarMiPerfilTelefonoField,
             label: 'Teléfono',
             controller: _telefonoCtrl,
             keyboardType: TextInputType.phone,
-            prefixIcon: Icons.phone_outlined,
+            prefixIcon: Symbols.phone,
             validator: _validateTelefono,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('editar_perfil_email'),
+            key: K.editarMiPerfilEmailField,
             label: 'Email',
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
-            prefixIcon: Icons.email_outlined,
+            prefixIcon: Symbols.email,
             validator: _validateEmail,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('editar_perfil_municipio'),
+            key: K.editarMiPerfilMunicipioField,
             label: 'Municipio',
             controller: _municipioCtrl,
-            prefixIcon: Icons.location_city_outlined,
+            prefixIcon: Symbols.location_city,
             validator: _validateMunicipio,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('editar_perfil_direccion'),
+            key: K.editarMiPerfilDireccionField,
             label: 'Dirección',
             controller: _direccionCtrl,
-            prefixIcon: Icons.home_outlined,
+            prefixIcon: Symbols.home,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('editar_perfil_foto'),
+            key: K.editarMiPerfilFotoField,
             label: 'URL de foto',
             controller: _fotoCtrl,
             keyboardType: TextInputType.url,
-            prefixIcon: Icons.image_outlined,
+            prefixIcon: Symbols.image,
           ),
           const SizedBox(height: AppSpacing.xl),
           AppPrimaryButton(
-            key: const ValueKey('editar_perfil_submit'),
+            key: K.editarMiPerfilSubmitButton,
             label: 'Guardar',
-            icon: Icons.save_outlined,
+            icon: Symbols.save,
             expanded: true,
             isLoading: asyncSubmit.isLoading,
             onPressed: asyncSubmit.isLoading ? null : _onSubmit,
           ),
           const SizedBox(height: AppSpacing.sm),
           AppSecondaryButton(
-            key: const ValueKey('editar_perfil_cancel'),
+            key: K.editarMiPerfilCancelButton,
             label: 'Cancelar',
             expanded: true,
             onPressed: asyncSubmit.isLoading
@@ -267,7 +272,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite editar tus propios datos.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

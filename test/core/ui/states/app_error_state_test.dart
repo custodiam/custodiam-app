@@ -1,6 +1,6 @@
 import 'package:custodiam/core/ui/buttons/app_primary_button.dart';
 import 'package:custodiam/core/ui/states/app_error_state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../test_utils/test_app.dart';
@@ -11,7 +11,7 @@ void main() {
       await pumpRiverpod(tester, const AppErrorState());
 
       expect(find.text('Algo ha ido mal'), findsOneWidget);
-      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(find.byIcon(Symbols.error), findsOneWidget);
     });
 
     testWidgets('renders description when provided', (tester) async {

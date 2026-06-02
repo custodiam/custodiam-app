@@ -11,6 +11,12 @@ class ServicioCreate {
   final DateTime fechaInicio;
   final DateTime? fechaFin;
   final String ubicacion;
+
+  /// Coordenadas exactas de la ubicación (ADR-030). Opcionales: el
+  /// servicio puede crearse solo con la etiqueta de texto. El backend
+  /// exige que ambas vengan juntas o ninguna.
+  final double? ubicacionLat;
+  final double? ubicacionLng;
   final int? numeroVoluntarios;
   final String? notasMaterial;
   final String? notasVehiculos;
@@ -22,6 +28,8 @@ class ServicioCreate {
     required this.ubicacion,
     this.descripcion,
     this.fechaFin,
+    this.ubicacionLat,
+    this.ubicacionLng,
     this.numeroVoluntarios,
     this.notasMaterial,
     this.notasVehiculos,
@@ -38,6 +46,11 @@ class ServicioCreate {
     };
     if (descripcion != null) json['descripcion'] = descripcion;
     if (fechaFin != null) json['fecha_fin'] = fechaFin!.toIso8601String();
+    // Se mandan juntas o ninguna (regla del backend).
+    if (ubicacionLat != null && ubicacionLng != null) {
+      json['ubicacion_lat'] = ubicacionLat;
+      json['ubicacion_lng'] = ubicacionLng;
+    }
     if (numeroVoluntarios != null) {
       json['numero_voluntarios'] = numeroVoluntarios;
     }

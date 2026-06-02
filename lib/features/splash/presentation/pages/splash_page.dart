@@ -51,8 +51,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
         // en assets de marca antes que escalado fraccional.
         child: Image.asset(
           'assets/logo.png',
-          width: 160,
-          height: 160,
+          width: 240,
+          height: 240,
           semanticLabel: 'Custodiam',
         ),
       ),

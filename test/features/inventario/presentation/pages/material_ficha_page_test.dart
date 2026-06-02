@@ -1,0 +1,569 @@
+// Widget tests de MaterialFichaPage: gate RBAC + diálogos de asignación,
+// préstamo, devolución e incidencia (avería / pérdida).
+//
+// Patrón: pumpRiverpod (test_app.dart) inyecta el CurrentUser que dispara
+// el AppPermissionGate; los use cases se overridean con instancias reales
+// envolviendo un repo mock (mocktail). El selector de voluntario abre el
+// AppCatalogSearchPicker contra un VoluntariosCatalogoService mockeado.
+
+import 'package:custodiam/app/test_keys.dart';
+import 'package:custodiam/features/inventario/domain/entities/asignacion_actual.dart';
+import 'package:custodiam/features/inventario/domain/entities/asignacion_material.dart';
+import 'package:custodiam/features/inventario/domain/entities/estado_inventario.dart';
+import 'package:custodiam/features/inventario/domain/entities/material_item.dart';
+import 'package:custodiam/features/inventario/domain/entities/materiales_page.dart';
+import 'package:custodiam/features/inventario/domain/entities/tipo_asignacion.dart';
+import 'package:custodiam/features/inventario/domain/entities/tipo_material.dart';
+import 'package:custodiam/features/inventario/domain/entities/ubicacion.dart';
+import 'package:custodiam/features/inventario/domain/repositories/inventario_repository.dart';
+import 'package:custodiam/features/inventario/domain/usecases/asignar_material_a_voluntario.dart';
+import 'package:custodiam/features/inventario/domain/usecases/devolver_material.dart';
+import 'package:custodiam/features/inventario/domain/usecases/get_material.dart';
+import 'package:custodiam/features/inventario/domain/usecases/list_materiales.dart';
+import 'package:custodiam/features/inventario/domain/usecases/reportar_incidencia_material.dart';
+import 'package:custodiam/features/inventario/presentation/pages/material_ficha_page.dart';
+import 'package:custodiam/features/inventario/presentation/viewmodels/inventario_di.dart';
+import 'package:custodiam/features/inventario/presentation/viewmodels/ubicaciones_di.dart';
+import 'package:custodiam/infrastructure/auth/current_user.dart';
+import 'package:custodiam/infrastructure/catalogo/catalogo_recurso.dart';
+import 'package:custodiam/infrastructure/catalogo/voluntarios_catalogo_service.dart';
+import 'package:custodiam/infrastructure/di/providers.dart';
+import 'package:custodiam/infrastructure/error/result.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+import '../../../../test_utils/test_app.dart';
+
+class _MockRepo extends Mock implements InventarioRepository {}
+
+class _MockVoluntariosCatalogo extends Mock
+    implements VoluntariosCatalogoService {}
+
+const _materialId = 'm-1';
+const _voluntarioLabel = 'Ana García · 600111222';
+
+MaterialItem _material({
+  TipoMaterial tipo = TipoMaterial.prestable,
+  EstadoInventario estado = EstadoInventario.operativo,
+  String? ubicacionBaseId,
+}) {
+  return MaterialItem(
+    id: _materialId,
+    nombre: 'Casco de intervención',
+    tipo: tipo,
+    estado: estado,
+    cantidad: 5,
+    ubicacionBaseId: ubicacionBaseId,
+    asignacionesActivas: const <AsignacionActual>[],
+  );
+}
+
+AsignacionMaterial _asignacion() => AsignacionMaterial(
+      id: 'a-1',
+      materialId: _materialId,
+      tipo: TipoAsignacion.prestamo,
+      cantidad: 1,
+      fechaAsignacion: DateTime(2026, 5, 31),
+      activa: true,
+    );
+
+CurrentUser _user(List<String> roles) =>
+    CurrentUser(sub: '1', email: 'a@b.com', roles: roles);
+
+/// Avanza la cadena async de una acción con éxito (notifier → snackbar →
+/// refresh del listado) sin esperar el auto-dismiss de 4 s del SnackBar, que
+/// colgaría un `pumpAndSettle`. Helper compartido para no repetir el conteo
+/// de pumps caso a caso.
+Future<void> _settleAction(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
+void main() {
+  setUpAll(() {
+    // Necesario para los matchers `any(named:)` sobre enums en mocktail.
+    registerFallbackValue(TipoAsignacion.prestamo);
+    registerFallbackValue(EstadoInventario.averiado);
+  });
+
+  late _MockRepo repo;
+  late _MockVoluntariosCatalogo catalogoVoluntarios;
+
+  setUp(() {
+    repo = _MockRepo();
+    catalogoVoluntarios = _MockVoluntariosCatalogo();
+    // El picker pide la primera página al abrirse; devolvemos un voluntario.
+    when(() => catalogoVoluntarios.buscarVoluntarios(any(), any())).thenAnswer(
+      (_) async => const [
+        CatalogoRecurso(id: 'vol-99', label: _voluntarioLabel),
+      ],
+    );
+  });
+
+  // Monta la ficha con el material indicado y todos los use cases de la
+  // página apuntando al repo mock. `listMaterialesProvider` también se
+  // overridea: el `ref.listen` de la página refresca el listado tras una
+  // acción con éxito, y sin override esa recarga golpearía la red real.
+  Future<void> pump(
+    WidgetTester tester,
+    CurrentUser user, {
+    TipoMaterial tipo = TipoMaterial.prestable,
+    EstadoInventario estado = EstadoInventario.operativo,
+    String? ubicacionBaseId,
+    Ubicacion? ubicacionResuelta,
+  }) async {
+    // Superficie alta para que toda la columna de acciones del ListView
+    // quede dispuesta sin scroll — los tests tocan botones que de otro
+    // modo caerían bajo el fold con la superficie por defecto (800x600).
+    await tester.binding.setSurfaceSize(const Size(600, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    when(() => repo.getMaterial(_materialId)).thenAnswer(
+      (_) async => Success(
+        _material(tipo: tipo, estado: estado, ubicacionBaseId: ubicacionBaseId),
+      ),
+    );
+    when(() => repo.listMaterial(
+          skip: any(named: 'skip'),
+          limit: any(named: 'limit'),
+          query: any(named: 'query'),
+          estado: any(named: 'estado'),
+          tipo: any(named: 'tipo'),
+          categoria: any(named: 'categoria'),
+        )).thenAnswer(
+      (_) async => const Success(MaterialesPage(items: [], total: 0)),
+    );
+
+    await pumpRiverpod(
+      tester,
+      const MaterialFichaPage(materialId: _materialId),
+      currentUser: user,
+      overrides: [
+        getMaterialProvider.overrideWithValue(GetMaterial(repo)),
+        reportarIncidenciaMaterialProvider
+            .overrideWithValue(ReportarIncidenciaMaterial(repo)),
+        asignarMaterialAVoluntarioProvider
+            .overrideWithValue(AsignarMaterialAVoluntario(repo)),
+        devolverMaterialProvider.overrideWithValue(DevolverMaterial(repo)),
+        listMaterialesProvider.overrideWithValue(ListMateriales(repo)),
+        voluntariosCatalogoServiceProvider
+            .overrideWithValue(catalogoVoluntarios),
+        if (ubicacionResuelta != null)
+          ubicacionPorIdProvider.overrideWith((ref, id) async {
+            // Ata la ubicación resuelta al id que la ficha DEBE propagar: si la
+            // page pasara un id distinto (o null), el provider lanza, el botón
+            // no aparece y el test falla. Sin esta guarda el caso 'con coords'
+            // pasaría con cualquier id no nulo y no cubriría el cableado real
+            // page → UbicacionMapaButton.
+            if (id != ubicacionBaseId) {
+              throw StateError('id de ubicación inesperado: $id');
+            }
+            return ubicacionResuelta;
+          }),
+      ],
+      settle: false,
+    );
+    await tester.pumpAndSettle();
+  }
+
+  // Abre el picker desde el campo selector indicado y elige el voluntario que
+  // el catálogo mockeado devuelve, cerrando el picker con la selección.
+  Future<void> seleccionarVoluntario(
+    WidgetTester tester,
+    Key selectorKey,
+  ) async {
+    await tester.tap(find.byKey(selectorKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(_voluntarioLabel));
+    await tester.pumpAndSettle();
+  }
+
+  group('Gate RBAC inventario.ver', () {
+    testWidgets('a voluntario without inventario.ver sees the forbidden screen',
+        (tester) async {
+      await pump(tester, _user(['voluntario']));
+
+      expect(find.text('Sin acceso'), findsOneWidget);
+      // El AppPermissionGate corta antes del cuerpo: ni siquiera se carga
+      // el material.
+      verifyNever(() => repo.getMaterial(any()));
+    });
+  });
+
+  group('Visibilidad de acciones según tipo/rol', () {
+    testWidgets(
+        'personal + operativo: jefe_seccion ve "asignar personal"',
+        (tester) async {
+      await pump(
+        tester,
+        _user(['jefe_seccion']),
+        tipo: TipoMaterial.personal,
+      );
+
+      expect(find.byKey(K.materialFichaAsignarPersonal), findsOneWidget);
+    });
+
+    testWidgets(
+        'personal + operativo: jefe_equipo NO ve "asignar personal"',
+        (tester) async {
+      await pump(
+        tester,
+        _user(['jefe_equipo']),
+        tipo: TipoMaterial.personal,
+      );
+
+      // jefe_equipo carece de inventario.asignar_equipamiento_personal.
+      expect(find.byKey(K.materialFichaAsignarPersonal), findsNothing);
+    });
+
+    testWidgets(
+        'prestable + operativo: jefe_equipo ve "prestar"',
+        (tester) async {
+      await pump(tester, _user(['jefe_equipo']));
+
+      expect(find.byKey(K.materialFichaPrestar), findsOneWidget);
+    });
+
+    testWidgets(
+        'estado averiado: los botones de incidencia quedan ocultos',
+        (tester) async {
+      await pump(
+        tester,
+        _user(['jefe_equipo']),
+        estado: EstadoInventario.averiado,
+      );
+
+      expect(find.byKey(K.materialFichaAveria), findsNothing);
+      expect(find.byKey(K.materialFichaPerdida), findsNothing);
+    });
+
+    testWidgets(
+        'estado perdido: los botones de incidencia quedan ocultos',
+        (tester) async {
+      await pump(
+        tester,
+        _user(['jefe_equipo']),
+        estado: EstadoInventario.perdido,
+      );
+
+      expect(find.byKey(K.materialFichaAveria), findsNothing);
+      expect(find.byKey(K.materialFichaPerdida), findsNothing);
+    });
+  });
+
+  group('Diálogo prestar / asignar', () {
+    testWidgets('tapping prestar opens the dialog with its fields',
+        (tester) async {
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaPrestar));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(K.materialAsignarVoluntarioSelector), findsOneWidget);
+      expect(find.byKey(K.materialAsignarCantidad), findsOneWidget);
+      expect(find.byKey(K.materialAsignarConfirm), findsOneWidget);
+    });
+
+    testWidgets(
+        'sin voluntario seleccionado: warning snackbar, no repo call',
+        (tester) async {
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaPrestar));
+      await tester.pumpAndSettle();
+
+      // No seleccionamos voluntario. Confirmar.
+      await tester.tap(find.byKey(K.materialAsignarConfirm));
+      await tester.pump();
+
+      expect(find.text('Selecciona un voluntario.'), findsOneWidget);
+      verifyNever(() => repo.asignarMaterialAVoluntario(
+            any(),
+            voluntarioId: any(named: 'voluntarioId'),
+            tipo: any(named: 'tipo'),
+            cantidad: any(named: 'cantidad'),
+          ));
+    });
+
+    testWidgets(
+        'success: selecciona voluntario y llama al repo + success snackbar',
+        (tester) async {
+      when(() => repo.asignarMaterialAVoluntario(
+            any(),
+            voluntarioId: any(named: 'voluntarioId'),
+            tipo: any(named: 'tipo'),
+            cantidad: any(named: 'cantidad'),
+          )).thenAnswer((_) async => Success(_asignacion()));
+
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaPrestar));
+      await tester.pumpAndSettle();
+
+      await seleccionarVoluntario(tester, K.materialAsignarVoluntarioSelector);
+      await tester.enterText(find.byKey(K.materialAsignarCantidad), '2');
+      await tester.tap(find.byKey(K.materialAsignarConfirm));
+      await _settleAction(tester);
+
+      verify(() => repo.asignarMaterialAVoluntario(
+            _materialId,
+            voluntarioId: 'vol-99',
+            tipo: TipoAsignacion.prestamo,
+            cantidad: 2,
+          )).called(1);
+      expect(find.text('Asignación registrada.'), findsOneWidget);
+    });
+
+    testWidgets('al cancelar el diálogo no llama al repo', (tester) async {
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaPrestar));
+      await tester.pumpAndSettle();
+
+      // Cerrar por "Cancelar" desmonta el diálogo (rebuild durante la
+      // animación de cierre): el camino donde se manifestaba el
+      // use-after-dispose del controller. No debe tocar el repo ni petar.
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(K.materialAsignarConfirm), findsNothing);
+      verifyNever(() => repo.asignarMaterialAVoluntario(
+            any(),
+            voluntarioId: any(named: 'voluntarioId'),
+            tipo: any(named: 'tipo'),
+            cantidad: any(named: 'cantidad'),
+          ));
+    });
+
+    testWidgets(
+        'cantidad no numérica cae al fallback de 1 unidad',
+        (tester) async {
+      when(() => repo.asignarMaterialAVoluntario(
+            any(),
+            voluntarioId: any(named: 'voluntarioId'),
+            tipo: any(named: 'tipo'),
+            cantidad: any(named: 'cantidad'),
+          )).thenAnswer((_) async => Success(_asignacion()));
+
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaPrestar));
+      await tester.pumpAndSettle();
+
+      await seleccionarVoluntario(tester, K.materialAsignarVoluntarioSelector);
+      // 'abc' no parsea → int.tryParse(...) ?? 1.
+      await tester.enterText(find.byKey(K.materialAsignarCantidad), 'abc');
+      await tester.tap(find.byKey(K.materialAsignarConfirm));
+      await _settleAction(tester);
+
+      verify(() => repo.asignarMaterialAVoluntario(
+            _materialId,
+            voluntarioId: 'vol-99',
+            tipo: TipoAsignacion.prestamo,
+            cantidad: 1,
+          )).called(1);
+    });
+  });
+
+  group('Diálogo devolver', () {
+    testWidgets('tapping devolver opens the dialog with its fields',
+        (tester) async {
+      // secretario tiene inventario.registrar_devolucion y inventario.ver.
+      await pump(tester, _user(['secretario']));
+
+      await tester.tap(find.byKey(K.materialFichaDevolver));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(K.materialDevolverVoluntarioSelector), findsOneWidget);
+      expect(find.byKey(K.materialDevolverObservaciones), findsOneWidget);
+      expect(find.byKey(K.materialDevolverConfirm), findsOneWidget);
+    });
+
+    testWidgets(
+        'sin voluntario seleccionado: warning snackbar, no repo call',
+        (tester) async {
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaDevolver));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(K.materialDevolverConfirm));
+      await tester.pump();
+
+      expect(find.text('Selecciona un voluntario.'), findsOneWidget);
+      verifyNever(() => repo.devolverMaterial(
+            any(),
+            voluntarioId: any(named: 'voluntarioId'),
+            observaciones: any(named: 'observaciones'),
+          ));
+    });
+
+    testWidgets('success: selecciona voluntario y llama al repo + snackbar',
+        (tester) async {
+      when(() => repo.devolverMaterial(
+            any(),
+            voluntarioId: any(named: 'voluntarioId'),
+            observaciones: any(named: 'observaciones'),
+          )).thenAnswer((_) async => Success(_asignacion()));
+
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaDevolver));
+      await tester.pumpAndSettle();
+
+      await seleccionarVoluntario(tester, K.materialDevolverVoluntarioSelector);
+      await tester.tap(find.byKey(K.materialDevolverConfirm));
+      await _settleAction(tester);
+
+      verify(() => repo.devolverMaterial(
+            _materialId,
+            voluntarioId: 'vol-99',
+            observaciones: any(named: 'observaciones'),
+          )).called(1);
+      expect(find.text('Devolución registrada.'), findsOneWidget);
+    });
+  });
+
+  group('Diálogo incidencia — avería', () {
+    testWidgets(
+        'empty descripción: warning snackbar, no repo call',
+        (tester) async {
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaAveria));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(K.materialIncidenciaConfirm));
+      await tester.pump();
+
+      expect(find.text('La descripción es obligatoria.'), findsOneWidget);
+      verifyNever(() => repo.reportarIncidenciaMaterial(
+            any(),
+            nuevoEstado: any(named: 'nuevoEstado'),
+            descripcion: any(named: 'descripcion'),
+          ));
+    });
+
+    testWidgets(
+        'success: calls reportarIncidenciaMaterial with estado averiado',
+        (tester) async {
+      when(() => repo.reportarIncidenciaMaterial(
+            any(),
+            nuevoEstado: any(named: 'nuevoEstado'),
+            descripcion: any(named: 'descripcion'),
+          )).thenAnswer(
+        (_) async => Success(_material(estado: EstadoInventario.averiado)),
+      );
+
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaAveria));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(K.materialIncidenciaDescripcion),
+        'Correa rota',
+      );
+      await tester.tap(find.byKey(K.materialIncidenciaConfirm));
+      await tester.pumpAndSettle();
+
+      verify(() => repo.reportarIncidenciaMaterial(
+            _materialId,
+            nuevoEstado: EstadoInventario.averiado,
+            descripcion: 'Correa rota',
+          )).called(1);
+    });
+  });
+
+  group('Diálogo incidencia — pérdida', () {
+    testWidgets(
+        'empty descripción: warning snackbar, no repo call',
+        (tester) async {
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaPerdida));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(K.materialIncidenciaConfirm));
+      await tester.pump();
+
+      expect(find.text('La descripción es obligatoria.'), findsOneWidget);
+      verifyNever(() => repo.reportarIncidenciaMaterial(
+            any(),
+            nuevoEstado: any(named: 'nuevoEstado'),
+            descripcion: any(named: 'descripcion'),
+          ));
+    });
+
+    testWidgets(
+        'success: calls reportarIncidenciaMaterial with estado perdido',
+        (tester) async {
+      when(() => repo.reportarIncidenciaMaterial(
+            any(),
+            nuevoEstado: any(named: 'nuevoEstado'),
+            descripcion: any(named: 'descripcion'),
+          )).thenAnswer(
+        (_) async => Success(_material(estado: EstadoInventario.perdido)),
+      );
+
+      await pump(tester, _user(['jefe_equipo']));
+
+      await tester.tap(find.byKey(K.materialFichaPerdida));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(K.materialIncidenciaDescripcion),
+        'Extraviado en intervención',
+      );
+      await tester.tap(find.byKey(K.materialIncidenciaConfirm));
+      await tester.pumpAndSettle();
+
+      verify(() => repo.reportarIncidenciaMaterial(
+            _materialId,
+            nuevoEstado: EstadoInventario.perdido,
+            descripcion: 'Extraviado en intervención',
+          )).called(1);
+    });
+  });
+
+  group('Ver en el mapa', () {
+    testWidgets('sin ubicacionBaseId no se muestra el botón de mapa',
+        (tester) async {
+      await pump(tester, _user(['jefe_equipo']));
+
+      expect(find.byKey(K.materialFichaAbrirMapaBtn), findsNothing);
+    });
+
+    testWidgets(
+        'con una ubicación con coordenadas se muestra el botón de mapa',
+        (tester) async {
+      await pump(
+        tester,
+        _user(['jefe_equipo']),
+        ubicacionBaseId: 'u-1',
+        ubicacionResuelta: const Ubicacion(
+          id: 'u-1',
+          nombre: 'Base',
+          lat: 41.0,
+          lng: -0.5,
+        ),
+      );
+
+      expect(find.byKey(K.materialFichaAbrirMapaBtn), findsOneWidget);
+    });
+
+    testWidgets(
+        'con una ubicación sin coordenadas no se muestra el botón de mapa',
+        (tester) async {
+      await pump(
+        tester,
+        _user(['jefe_equipo']),
+        ubicacionBaseId: 'u-1',
+        ubicacionResuelta: const Ubicacion(id: 'u-1', nombre: 'Oficina'),
+      );
+
+      expect(find.byKey(K.materialFichaAbrirMapaBtn), findsNothing);
+    });
+  });
+}

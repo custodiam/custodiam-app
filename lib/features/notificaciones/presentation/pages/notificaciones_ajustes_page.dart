@@ -7,10 +7,13 @@
 // v0.1.0 (incluido el voluntario en prácticas).
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
@@ -56,7 +59,7 @@ class _AjustesBody extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Notificaciones',
       body: asyncState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) => AppErrorState(
           title: 'No se pudieron cargar los ajustes',
           description: error is Failure ? error.message : null,
@@ -92,7 +95,7 @@ class _AjustesContent extends ConsumerWidget {
         // desde la app por diseño. Se muestra disabled para dejarlo
         // explícito en la UI.
         SwitchListTile(
-          key: const ValueKey('notif_ajustes_emergencias'),
+          key: K.notifAjustesEmergencias,
           title: const Text('Emergencias'),
           subtitle: const Text(
             'Activadas siempre por seguridad. Para silenciarlas, '
@@ -101,13 +104,13 @@ class _AjustesContent extends ConsumerWidget {
           value: true,
           onChanged: null,
           secondary: Icon(
-            Icons.warning_amber_rounded,
+            Symbols.warning_amber,
             color: theme.colorScheme.error,
           ),
         ),
         const Divider(height: 1),
         SwitchListTile(
-          key: const ValueKey('notif_ajustes_nuevos_servicios'),
+          key: K.notifAjustesNuevosServicios,
           title: const Text('Nuevos servicios disponibles'),
           subtitle: const Text(
             'Aviso cuando se publica un servicio preventivo o de '
@@ -117,11 +120,11 @@ class _AjustesContent extends ConsumerWidget {
           onChanged: (v) => ref
               .read(notificacionesAjustesViewModelProvider.notifier)
               .setNuevosServicios(v),
-          secondary: const Icon(Icons.event_available_outlined),
+          secondary: const Icon(Symbols.event_available),
         ),
         const Divider(height: 1),
         SwitchListTile(
-          key: const ValueKey('notif_ajustes_recordatorios'),
+          key: K.notifAjustesRecordatorios,
           title: const Text('Recordatorios de mis servicios'),
           subtitle: const Text(
             'Aviso unas horas antes de un servicio en el que estás '
@@ -131,7 +134,7 @@ class _AjustesContent extends ConsumerWidget {
           onChanged: (v) => ref
               .read(notificacionesAjustesViewModelProvider.notifier)
               .setRecordatorios(v),
-          secondary: const Icon(Icons.alarm_outlined),
+          secondary: const Icon(Symbols.alarm),
         ),
       ],
     );
@@ -148,7 +151,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite configurar las notificaciones.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

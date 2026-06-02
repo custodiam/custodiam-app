@@ -2,7 +2,7 @@
 // optional CTA wired to AppPrimaryButton. See guide 27 §5.10.
 
 import 'package:flutter/material.dart';
-
+import 'package:material_symbols_icons/symbols.dart';
 import '../buttons/app_primary_button.dart';
 import '../tokens/app_spacing.dart';
 
@@ -17,7 +17,7 @@ class AppEmptyState extends StatelessWidget {
     super.key,
     required this.title,
     this.description,
-    this.icon = Icons.inbox_outlined,
+    this.icon = Symbols.inbox,
     this.actionLabel,
     this.onAction,
   });

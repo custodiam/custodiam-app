@@ -2,24 +2,34 @@
 // incidencia" (US-05-08/09 para vehículos).
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
+import '../../../../core/ui/buttons/app_primary_button.dart';
+import '../../../../core/ui/buttons/app_text_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_dialog.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
-import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/tipo_vehiculo.dart';
 import '../../domain/entities/vehiculo_item.dart';
 import '../viewmodels/vehiculo_ficha_view_model.dart';
 import '../viewmodels/vehiculos_list_view_model.dart';
+import '../widgets/asignacion_actual_section.dart';
+import '../widgets/dotacion_vehiculo_section.dart';
+import '../widgets/inventario_estado_badge.dart';
+import '../widgets/ubicacion_mapa_button.dart';
 
 class VehiculoFichaPage extends ConsumerWidget {
   final String vehiculoId;
@@ -65,7 +75,7 @@ class _VehiculoFichaBody extends ConsumerWidget {
     return asyncState.when(
       loading: () => const AppPageScaffold(
         title: 'Vehículo',
-        body: Center(child: CircularProgressIndicator()),
+        body: AppLoadingIndicator.fullScreen(),
       ),
       error: (error, _) => AppPageScaffold(
         title: 'Vehículo',
@@ -101,16 +111,17 @@ class _LoadedVehiculo extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authServiceProvider).currentUser;
-    final puedeReportar =
-        user?.hasPermission(Permission.inventarioReportarIncidencia) ?? false;
+    // Auditoría RBAC (29-may, hallazgo B3): se migra el check inline
+    // por permiso a `AppPermissionGate` para unificar el patrón con el
+    // resto de pages. El `if` por `estado` se conserva como regla de
+    // dominio (no RBAC).
     return AppPageScaffold(
       title: '${vehiculo.codigoInterno} · ${vehiculo.matricula}',
       actions: [
-        IconButton(
-          key: const ValueKey('vehiculo_ficha_refresh'),
+        AppIconButton(
+          key: K.vehiculoFichaRefresh,
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Symbols.refresh,
           onPressed: () => ref
               .read(vehiculoFichaViewModelProvider(vehiculo.id).notifier)
               .refresh(),
@@ -119,74 +130,90 @@ class _LoadedVehiculo extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          _EstadoBadge(estado: vehiculo.estado),
+          InventarioEstadoBadge(estado: vehiculo.estado),
           const SizedBox(height: AppSpacing.md),
           _InfoRow(
-            icon: Icons.commute_outlined,
+            icon: Symbols.commute,
             label: 'Tipo',
             value: _tipoLabel(vehiculo.tipo),
           ),
           if (vehiculo.marcaModelo != null)
             _InfoRow(
-              icon: Icons.directions_car_outlined,
+              icon: Symbols.directions_car,
               label: 'Marca y modelo',
               value: vehiculo.marcaModelo!,
             ),
           if (vehiculo.fechaItv != null)
             _InfoRow(
-              icon: Icons.event_outlined,
+              icon: Symbols.event,
               label: 'Próxima ITV',
               value: _formatDate(vehiculo.fechaItv!),
             ),
           _InfoRow(
-            icon: Icons.location_on_outlined,
+            icon: Symbols.location_on,
             label: 'Ubicación',
-            value: vehiculo.ubicacionBase,
+            value: vehiculo.ubicacionBase ?? 'Sin ubicación',
+          ),
+          UbicacionMapaButton(
+            buttonKey: K.vehiculoFichaAbrirMapaBtn,
+            ubicacionBaseId: vehiculo.ubicacionBaseId,
           ),
           if (vehiculo.observaciones != null &&
               vehiculo.observaciones!.isNotEmpty)
             _InfoRow(
-              icon: Icons.notes_outlined,
+              icon: Symbols.notes,
               label: 'Observaciones',
               value: vehiculo.observaciones!,
             ),
           if (vehiculo.observacionesIncidencia != null &&
               vehiculo.observacionesIncidencia!.isNotEmpty)
             _InfoRow(
-              icon: Icons.warning_amber_outlined,
+              icon: Symbols.warning_amber,
               label: 'Incidencia registrada',
               value: vehiculo.observacionesIncidencia!,
             ),
+          AsignacionActualSection(
+            asignaciones: vehiculo.asignacionActual != null
+                ? [vehiculo.asignacionActual!]
+                : const [],
+          ),
+          DotacionVehiculoSection(vehiculoId: vehiculo.id),
           const SizedBox(height: AppSpacing.lg),
-          if (puedeReportar &&
-              vehiculo.estado != EstadoInventario.averiado &&
-              vehiculo.estado != EstadoInventario.perdido) ...[
-            AppDestructiveButton(
-              key: const ValueKey('vehiculo_ficha_averia'),
-              label: 'Reportar avería',
-              icon: Icons.build_outlined,
-              expanded: true,
-              onPressed: () => _abrirIncidencia(
-                context,
-                ref,
-                EstadoInventario.averiado,
-                'Reportar avería',
+          if (vehiculo.estado != EstadoInventario.averiado &&
+              vehiculo.estado != EstadoInventario.perdido)
+            AppPermissionGate(
+              permission: Permission.inventarioReportarIncidencia,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppDestructiveButton(
+                    key: K.vehiculoFichaAveria,
+                    label: 'Reportar avería',
+                    icon: Symbols.build,
+                    expanded: true,
+                    onPressed: () => _abrirIncidencia(
+                      context,
+                      ref,
+                      EstadoInventario.averiado,
+                      'Reportar avería',
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppDestructiveButton(
+                    key: K.vehiculoFichaPerdida,
+                    label: 'Reportar pérdida',
+                    icon: Symbols.report,
+                    expanded: true,
+                    onPressed: () => _abrirIncidencia(
+                      context,
+                      ref,
+                      EstadoInventario.perdido,
+                      'Reportar pérdida',
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AppDestructiveButton(
-              key: const ValueKey('vehiculo_ficha_perdida'),
-              label: 'Reportar pérdida',
-              icon: Icons.report_outlined,
-              expanded: true,
-              onPressed: () => _abrirIncidencia(
-                context,
-                ref,
-                EstadoInventario.perdido,
-                'Reportar pérdida',
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -198,34 +225,17 @@ class _LoadedVehiculo extends ConsumerWidget {
     EstadoInventario nuevoEstado,
     String title,
   ) async {
-    final descripcionCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title),
-        content: AppTextField(
-          key: const ValueKey('vehiculo_incidencia_descripcion'),
-          label: 'Descripción de la incidencia',
-          controller: descripcionCtrl,
-          prefixIcon: Icons.notes_outlined,
-          maxLines: 4,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton.tonal(
-            key: const ValueKey('vehiculo_incidencia_confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Registrar'),
-          ),
-        ],
-      ),
+    // El diálogo es un StatefulWidget que libera su controller en
+    // dispose(), atado al ciclo de vida del diálogo. Disponerlo en un
+    // `finally` lo liberaría mientras la animación de cierre todavía
+    // rebuildea el campo con el controller ya liberado.
+    final descripcionRaw = await AppDialog.showBuilder<String>(
+      context,
+      builder: (_) => _IncidenciaVehiculoDialog(title: title),
     );
-    if (ok != true) return;
+    if (descripcionRaw == null) return;
     if (!context.mounted) return;
-    final descripcion = descripcionCtrl.text.trim();
+    final descripcion = descripcionRaw.trim();
     if (descripcion.isEmpty) {
       AppSnackbar.show(
         context,
@@ -240,6 +250,53 @@ class _LoadedVehiculo extends ConsumerWidget {
           nuevoEstado: nuevoEstado,
           descripcion: descripcion,
         );
+  }
+}
+
+/// Diálogo de incidencia (avería/pérdida) de vehículo. Devuelve la
+/// descripción cruda; la validación de vacío la hace la página tras
+/// cerrar. StatefulWidget para liberar el controller en dispose().
+class _IncidenciaVehiculoDialog extends StatefulWidget {
+  final String title;
+  const _IncidenciaVehiculoDialog({required this.title});
+
+  @override
+  State<_IncidenciaVehiculoDialog> createState() =>
+      _IncidenciaVehiculoDialogState();
+}
+
+class _IncidenciaVehiculoDialogState extends State<_IncidenciaVehiculoDialog> {
+  final _descripcionCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _descripcionCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppDialog(
+      title: widget.title,
+      content: AppTextField(
+        key: K.vehiculoIncidenciaDescripcion,
+        label: 'Descripción de la incidencia',
+        controller: _descripcionCtrl,
+        prefixIcon: Symbols.notes,
+        maxLines: 4,
+      ),
+      actions: [
+        AppTextButton(
+          label: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        AppPrimaryButton(
+          key: K.vehiculoIncidenciaConfirm,
+          label: 'Registrar',
+          onPressed: () => Navigator.of(context).pop(_descripcionCtrl.text),
+        ),
+      ],
+    );
   }
 }
 
@@ -285,49 +342,6 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-class _EstadoBadge extends StatelessWidget {
-  final EstadoInventario estado;
-  const _EstadoBadge({required this.estado});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (estado) {
-      EstadoInventario.operativo => (
-          theme.colorScheme.primaryContainer,
-          theme.colorScheme.onPrimaryContainer,
-          'Operativo',
-        ),
-      EstadoInventario.averiado => (
-          theme.colorScheme.errorContainer,
-          theme.colorScheme.onErrorContainer,
-          'Averiado',
-        ),
-      EstadoInventario.perdido => (
-          theme.colorScheme.surfaceContainerHighest,
-          theme.colorScheme.onSurfaceVariant,
-          'Perdido',
-        ),
-      EstadoInventario.enUso => (
-          theme.colorScheme.tertiaryContainer,
-          theme.colorScheme.onTertiaryContainer,
-          'En uso',
-        ),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(label, style: TextStyle(color: fg)),
-    );
-  }
-}
-
 class _ForbiddenScreen extends StatelessWidget {
   const _ForbiddenScreen();
 
@@ -338,7 +352,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar el inventario.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

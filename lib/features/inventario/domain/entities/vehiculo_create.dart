@@ -10,13 +10,17 @@ class VehiculoCreate {
   final DateTime? fechaItv;
   final String? fotoUrl;
   final String? observaciones;
-  final String ubicacionBase;
+  // Ubicación: el texto es legacy opcional; la referencia canónica es el FK
+  // al catálogo `ubicaciones` (PR2).
+  final String? ubicacionBase;
+  final String? ubicacionBaseId;
 
   const VehiculoCreate({
     required this.codigoInterno,
     required this.matricula,
     required this.tipo,
-    required this.ubicacionBase,
+    this.ubicacionBase,
+    this.ubicacionBaseId,
     this.marcaModelo,
     this.fechaItv,
     this.fotoUrl,
@@ -28,8 +32,9 @@ class VehiculoCreate {
       'codigo_interno': codigoInterno,
       'matricula': matricula,
       'tipo': tipo.wire,
-      'ubicacion_base': ubicacionBase,
     };
+    if (ubicacionBase != null) json['ubicacion_base'] = ubicacionBase;
+    if (ubicacionBaseId != null) json['ubicacion_base_id'] = ubicacionBaseId;
     if (marcaModelo != null) json['marca_modelo'] = marcaModelo;
     if (fechaItv != null) {
       final mm = fechaItv!.month.toString().padLeft(2, '0');

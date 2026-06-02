@@ -6,6 +6,9 @@
          etc. fail with "Failed host lookup". -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Ubicación del usuario para centrar el mapa y "cómo llegar"
+         (geolocator). Solo en uso, nunca en background (RGPD). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:label="custodiam"
@@ -68,6 +71,13 @@
                 <data android:scheme="https" android:host="app.custodiam.es" />
             </intent-filter>
         </activity>
+        <!-- API key de Google Maps (Android). El valor se inyecta en build
+             desde secrets.properties vía manifestPlaceholders; aquí nunca
+             va en claro. Restringir en GCP por package + SHA del certificado. -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

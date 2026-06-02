@@ -53,8 +53,7 @@ flutter analyze
 flutter test
 flutter test --coverage
 
-# Tests E2E (integration_test/)
-flutter test integration_test/all_tests.dart
+# Tests E2E móvil (Patrol) — en desarrollo (WIP), aún sin comando estable
 
 # Code generation continuo durante desarrollo
 dart run build_runner watch

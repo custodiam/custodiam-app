@@ -6,15 +6,23 @@
 // servicio → ficha detalle.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_date_range_picker.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -79,6 +87,27 @@ class _ServiciosListPageBodyState
         .search(_searchController.text.trim());
   }
 
+  Future<void> _abrirDateRangePicker(ServiciosListState? estado) async {
+    final hoy = DateTime.now();
+    final inicial = estado?.desde != null && estado?.hasta != null
+        ? DateTimeRange(start: estado!.desde!, end: estado.hasta!)
+        : null;
+    // Los servicios se planifican a futuro, así que el rango admite
+    // tanto pasado como porvenir: ±5 años en torno a hoy cubre con
+    // holgura cualquier servicio histórico o programado del piloto.
+    final range = await showAppDateRangePicker(
+      context: context,
+      firstDate: DateTime(hoy.year - 5, hoy.month, hoy.day),
+      lastDate: DateTime(hoy.year + 5, hoy.month, hoy.day),
+      initialDateRange: inicial,
+    );
+    if (range == null) return;
+    if (!mounted) return;
+    await ref
+        .read(serviciosListViewModelProvider.notifier)
+        .filterByDateRange(desde: range.start, hasta: range.end);
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncState = ref.watch(serviciosListViewModelProvider);
@@ -101,6 +130,7 @@ class _ServiciosListPageBodyState
     );
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.listMaxWidth,
       title: 'Servicios',
       actions: [
         const AppPermissionGate.anyOf(
@@ -110,10 +140,18 @@ class _ServiciosListPageBodyState
           ],
           child: _AltaServicioButton(),
         ),
-        IconButton(
-          key: const ValueKey('servicios_refresh_button'),
+        AppIconButton(
+          key: K.serviciosListFiltroFechasBtn,
+          tooltip: 'Filtrar por fechas',
+          icon: Symbols.date_range,
+          onPressed: asyncState.valueOrNull == null
+              ? null
+              : () => _abrirDateRangePicker(asyncState.valueOrNull),
+        ),
+        AppIconButton(
+          key: K.serviciosListRefreshBtn,
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Symbols.refresh,
           onPressed: () =>
               ref.read(serviciosListViewModelProvider.notifier).refresh(),
         ),
@@ -126,10 +164,10 @@ class _ServiciosListPageBodyState
               vertical: AppSpacing.sm,
             ),
             child: AppTextField(
-              key: const ValueKey('servicios_search_field'),
+              key: K.serviciosListSearchField,
               label: 'Buscar por título o ubicación',
               controller: _searchController,
-              prefixIcon: Icons.search,
+              prefixIcon: Symbols.search,
               textInputAction: TextInputAction.search,
               onEditingComplete: _submitSearch,
             ),
@@ -140,6 +178,14 @@ class _ServiciosListPageBodyState
                 .read(serviciosListViewModelProvider.notifier)
                 .filterByEstado(estado),
           ),
+          if (asyncState.valueOrNull?.tieneRangoFechas ?? false)
+            _RangoActivoChip(
+              desde: asyncState.valueOrNull!.desde,
+              hasta: asyncState.valueOrNull!.hasta,
+              onLimpiar: () => ref
+                  .read(serviciosListViewModelProvider.notifier)
+                  .filterByDateRange(),
+            ),
           const SizedBox(height: AppSpacing.sm),
           Expanded(child: _buildBody(asyncState)),
         ],
@@ -149,7 +195,7 @@ class _ServiciosListPageBodyState
 
   Widget _buildBody(AsyncValue<ServiciosListState> asyncState) {
     return asyncState.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const AppLoadingIndicator.fullScreen(),
       error: (error, _) {
         final message = error is Failure
             ? error.message
@@ -162,31 +208,53 @@ class _ServiciosListPageBodyState
         );
       },
       data: (state) {
+        Future<void> onRefresh() =>
+            ref.read(serviciosListViewModelProvider.notifier).refresh();
         if (state.items.isEmpty) {
-          return AppEmptyState(
-            title: 'Sin servicios',
-            description: state.query.isNotEmpty || state.estado != null
-                ? 'Prueba a cambiar la búsqueda o el filtro.'
-                : 'Aún no hay servicios disponibles.',
-            icon: Icons.event_outlined,
+          final hayFiltros = state.query.isNotEmpty ||
+              state.estado != null ||
+              state.tieneRangoFechas;
+          // ListView scrollable (no un widget estático) para que el gesto
+          // de deslizar-para-refrescar funcione también sin resultados.
+          return RefreshIndicator(
+            onRefresh: onRefresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xxl),
+                  child: AppEmptyState(
+                    title: 'Sin servicios',
+                    description: hayFiltros
+                        ? 'Prueba a cambiar la búsqueda o el filtro.'
+                        : 'Aún no hay servicios disponibles.',
+                    icon: Symbols.event,
+                  ),
+                ),
+              ],
+            ),
           );
         }
-        return ListView.separated(
-          key: const ValueKey('servicios_list_view'),
-          controller: _scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-          itemCount: state.items.length + (state.hasMore ? 1 : 0),
-          separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            if (index >= state.items.length) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-            final s = state.items[index];
-            return _ServicioTile(servicio: s);
-          },
+        return RefreshIndicator(
+          onRefresh: onRefresh,
+          child: ListView.separated(
+            key: K.serviciosListView,
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            itemCount: state.items.length + (state.hasMore ? 1 : 0),
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              if (index >= state.items.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  child: AppLoadingIndicator.fullScreen(),
+                );
+              }
+              final s = state.items[index];
+              return _ServicioTile(servicio: s);
+            },
+          ),
         );
       },
     );
@@ -198,10 +266,10 @@ class _AltaServicioButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      key: const ValueKey('servicios_alta_button'),
+    return AppIconButton(
+      key: K.serviciosListAltaBtn,
       tooltip: 'Crear servicio',
-      icon: const Icon(Icons.add),
+      icon: Symbols.add,
       onPressed: () => context.go('/servicios/alta'),
     );
   }
@@ -221,40 +289,102 @@ class _EstadoFilterRow extends StatelessWidget {
       child: Row(
         children: [
           ChoiceChip(
-            key: const ValueKey('servicios_filter_todos'),
+            key: K.serviciosListFilterTodosChip,
             label: const Text('Todos'),
             selected: selected == null,
             onSelected: (_) => onChanged(null),
           ),
           const SizedBox(width: AppSpacing.sm),
           ChoiceChip(
-            key: const ValueKey('servicios_filter_publicado'),
+            key: K.serviciosListFilterPublicadoChip,
             label: const Text('Publicados'),
             selected: selected == EstadoServicio.publicado,
             onSelected: (_) => onChanged(EstadoServicio.publicado),
           ),
           const SizedBox(width: AppSpacing.sm),
           ChoiceChip(
-            key: const ValueKey('servicios_filter_activo'),
+            key: K.serviciosListFilterActivoChip,
             label: const Text('Activos'),
             selected: selected == EstadoServicio.activo,
             onSelected: (_) => onChanged(EstadoServicio.activo),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          ChoiceChip(
-            key: const ValueKey('servicios_filter_borrador'),
-            label: const Text('Borradores'),
-            selected: selected == EstadoServicio.borrador,
-            onSelected: (_) => onChanged(EstadoServicio.borrador),
+          // Auditoría RBAC (29-may, hallazgo A3): el filtro `borrador`
+          // se ofrecía a cualquier rol con `serviciosVerPublicados` pero
+          // el backend no expone borradores ajenos, así que voluntarios
+          // /tesorero/secretario/etc filtraban a vacío siempre. Se
+          // gatea por los dos permisos de creación de servicio.
+          AppPermissionGate.anyOf(
+            anyOf: const [
+              Permission.serviciosCrearPreventivo,
+              Permission.serviciosCrearEmergencia,
+            ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(width: AppSpacing.sm),
+                ChoiceChip(
+                  key: K.serviciosListFilterBorradorChip,
+                  label: const Text('Borradores'),
+                  selected: selected == EstadoServicio.borrador,
+                  onSelected: (_) => onChanged(EstadoServicio.borrador),
+                ),
+              ],
+            ),
           ),
           const SizedBox(width: AppSpacing.sm),
           ChoiceChip(
-            key: const ValueKey('servicios_filter_cerrado'),
+            key: K.serviciosListFilterCerradoChip,
             label: const Text('Cerrados'),
             selected: selected == EstadoServicio.cerrado,
             onSelected: (_) => onChanged(EstadoServicio.cerrado),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RangoActivoChip extends StatelessWidget {
+  final DateTime? desde;
+  final DateTime? hasta;
+  final VoidCallback onLimpiar;
+
+  const _RangoActivoChip({
+    required this.desde,
+    required this.hasta,
+    required this.onLimpiar,
+  });
+
+  String _fmt(DateTime f) => DateFormat('dd/MM/yyyy', 'es_ES').format(f);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final label = desde != null && hasta != null
+        ? 'Del ${_fmt(desde!)} al ${_fmt(hasta!)}'
+        : desde != null
+            ? 'Desde ${_fmt(desde!)}'
+            : 'Hasta ${_fmt(hasta!)}';
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: InputChip(
+          key: K.serviciosListRangoActivoChip,
+          avatar: Icon(
+            Symbols.date_range,
+            size: 18,
+            color: theme.colorScheme.onSecondaryContainer,
+          ),
+          label: Text(label),
+          backgroundColor: theme.colorScheme.secondaryContainer,
+          deleteIcon: const Icon(Symbols.close, size: 18),
+          deleteButtonTooltipMessage: 'Quitar filtro de fechas',
+          onDeleted: onLimpiar,
+        ),
       ),
     );
   }
@@ -276,7 +406,7 @@ class _ServicioTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: ValueKey('servicios_item_${servicio.id}'),
+      key: K.serviciosListItem(servicio.id),
       leading: _TipoIcon(tipo: servicio.tipo),
       title: Text(
         servicio.titulo,
@@ -303,19 +433,19 @@ class _TipoIcon extends StatelessWidget {
     final theme = Theme.of(context);
     final (IconData icon, Color color) = switch (tipo) {
       TipoServicio.emergencia => (
-          Icons.warning_amber_rounded,
+          Symbols.warning_amber,
           theme.colorScheme.error,
         ),
       TipoServicio.preventivo => (
-          Icons.event,
+          Symbols.event,
           theme.colorScheme.primary,
         ),
       TipoServicio.formacion => (
-          Icons.school_outlined,
+          Symbols.school,
           theme.colorScheme.tertiary,
         ),
       TipoServicio.otro => (
-          Icons.bookmark_border,
+          Symbols.bookmark,
           theme.colorScheme.secondary,
         ),
     };
@@ -334,25 +464,30 @@ class _EstadoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (estado) {
+    // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
+    final (Color bg, Color fg, IconData icon, String label) = switch (estado) {
       EstadoServicio.borrador => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Symbols.edit_note,
           'Borrador',
         ),
       EstadoServicio.publicado => (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,
+          Symbols.campaign,
           'Publicado',
         ),
       EstadoServicio.activo => (
           theme.colorScheme.tertiaryContainer,
           theme.colorScheme.onTertiaryContainer,
+          Symbols.play_circle,
           'Activo',
         ),
       EstadoServicio.cerrado => (
           theme.colorScheme.surfaceContainerHighest,
           theme.colorScheme.onSurfaceVariant,
+          Symbols.lock,
           'Cerrado',
         ),
     };
@@ -363,9 +498,16 @@ class _EstadoBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Text(label, style: TextStyle(color: fg, fontSize: 12)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: theme.textTheme.labelSmall?.copyWith(color: fg)),
+        ],
+      ),
     );
   }
 }
@@ -381,7 +523,7 @@ class _ForbiddenScreen extends StatelessWidget {
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar los servicios. '
             'Si crees que es un error, contacta con un responsable.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

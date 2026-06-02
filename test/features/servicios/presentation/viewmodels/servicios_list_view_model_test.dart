@@ -22,6 +22,7 @@ ServicioSummary _s(String id, {String titulo = 'Servicio'}) {
     estado: EstadoServicio.publicado,
     fechaInicio: DateTime.utc(2026, 6, 10, 8),
     ubicacion: 'Zuera',
+    inscritosCount: 0,
   );
 }
 
@@ -130,6 +131,81 @@ void main() {
       final state = container.read(serviciosListViewModelProvider);
       expect(state.value!.query, 'feria');
       expect(state.value!.estado, EstadoServicio.publicado);
+    });
+
+    test('filterByDateRange forwards the range and keeps other filters',
+        () async {
+      when(() => repo.list(
+            skip: any(named: 'skip'),
+            limit: any(named: 'limit'),
+            query: any(named: 'query'),
+            estado: any(named: 'estado'),
+            tipo: any(named: 'tipo'),
+            desde: any(named: 'desde'),
+            hasta: any(named: 'hasta'),
+          )).thenAnswer((_) async => Success(ServiciosPage(
+            items: [_s('a')],
+            total: 1,
+          )));
+      final container = _container(repo);
+      await _settle(container);
+      await container
+          .read(serviciosListViewModelProvider.notifier)
+          .filterByEstado(EstadoServicio.publicado);
+
+      final desde = DateTime(2026, 6, 1);
+      final hasta = DateTime(2026, 6, 30);
+      await container
+          .read(serviciosListViewModelProvider.notifier)
+          .filterByDateRange(desde: desde, hasta: hasta);
+
+      final state = container.read(serviciosListViewModelProvider);
+      expect(state.value!.desde, desde);
+      expect(state.value!.hasta, hasta);
+      expect(state.value!.tieneRangoFechas, isTrue);
+      // El rango no descarta el estado ya activo.
+      expect(state.value!.estado, EstadoServicio.publicado);
+      verify(() => repo.list(
+            skip: 0,
+            limit: ServiciosListViewModel.pageSize,
+            query: null,
+            estado: EstadoServicio.publicado,
+            tipo: any(named: 'tipo'),
+            desde: desde,
+            hasta: hasta,
+          )).called(1);
+    });
+
+    test('filterByDateRange with no args clears the range', () async {
+      when(() => repo.list(
+            skip: any(named: 'skip'),
+            limit: any(named: 'limit'),
+            query: any(named: 'query'),
+            estado: any(named: 'estado'),
+            tipo: any(named: 'tipo'),
+            desde: any(named: 'desde'),
+            hasta: any(named: 'hasta'),
+          )).thenAnswer((_) async => Success(ServiciosPage(
+            items: [_s('a')],
+            total: 1,
+          )));
+      final container = _container(repo);
+      await _settle(container);
+      await container
+          .read(serviciosListViewModelProvider.notifier)
+          .filterByDateRange(
+            desde: DateTime(2026, 6, 1),
+            hasta: DateTime(2026, 6, 30),
+          );
+
+      await container
+          .read(serviciosListViewModelProvider.notifier)
+          .filterByDateRange();
+
+      final state = container.read(serviciosListViewModelProvider);
+      expect(state.value!.desde, isNull);
+      expect(state.value!.hasta, isNull);
+      expect(state.value!.tieneRangoFechas, isFalse);
     });
 
     test('loadMore appends a second page', () async {

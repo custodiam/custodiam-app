@@ -17,6 +17,8 @@ class ListServicios {
     String? query,
     EstadoServicio? estado,
     TipoServicio? tipo,
+    DateTime? desde,
+    DateTime? hasta,
   }) {
     return _repository.list(
       skip: skip,
@@ -24,6 +26,8 @@ class ListServicios {
       query: query,
       estado: estado,
       tipo: tipo,
+      desde: desde,
+      hasta: hasta,
     );
   }
 }

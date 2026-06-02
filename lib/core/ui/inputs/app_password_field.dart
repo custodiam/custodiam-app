@@ -2,7 +2,7 @@
 // AppTextField so styling stays consistent. See guide 27 §5.6.
 
 import 'package:flutter/material.dart';
-
+import 'package:material_symbols_icons/symbols.dart';
 import 'app_text_field.dart';
 
 class AppPasswordField extends StatefulWidget {
@@ -41,11 +41,11 @@ class _AppPasswordFieldState extends State<AppPasswordField> {
       textInputAction: widget.textInputAction,
       onEditingComplete: widget.onEditingComplete,
       autofocus: widget.autofocus,
-      prefixIcon: Icons.lock_outline,
+      prefixIcon: Symbols.lock,
       obscureText: _obscure,
       suffixIcon: IconButton(
         onPressed: () => setState(() => _obscure = !_obscure),
-        icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+        icon: Icon(_obscure ? Symbols.visibility : Symbols.visibility_off),
         tooltip: toggleTooltip,
       ),
     );

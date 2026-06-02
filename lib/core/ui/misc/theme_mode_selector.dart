@@ -1,13 +1,17 @@
-// Settings selector for ThemeMode (system / light / dark). The wiring
-// to the preferences feature lands later with EN-08-25; this component
-// only renders the radio group. See guide 27 §5.14.
+// Selector de ThemeMode (sistema / claro / oscuro) materializado como
+// un `SegmentedButton` Material 3 de tres opciones mutuamente
+// exclusivas. Sustituye al patrón anterior de `RadioListTile` apilados
+// porque visualmente ocupa una sola línea, permite ver las 3 opciones
+// a la vez y deja claro qué está activo sin pedir lectura adicional.
 //
-// Uses the RadioGroup ancestor API introduced in Flutter 3.32 — the
-// per-tile groupValue/onChanged parameters were deprecated in that
-// release.
+// API pública compatible con consumidores previos: el caller pasa el
+// `ThemeMode` activo y un `onChanged` que recibe el nuevo valor cada
+// vez que el usuario cambia la selección.
+//
+// Ver guía 27 §5.
 
 import 'package:flutter/material.dart';
-
+import 'package:material_symbols_icons/symbols.dart';
 class ThemeModeSelector extends StatelessWidget {
   final ThemeMode selected;
   final ValueChanged<ThemeMode> onChanged;
@@ -20,29 +24,31 @@ class ThemeModeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RadioGroup<ThemeMode>(
-      groupValue: selected,
-      onChanged: (value) {
-        if (value != null) onChanged(value);
+    return SegmentedButton<ThemeMode>(
+      segments: const [
+        ButtonSegment<ThemeMode>(
+          value: ThemeMode.system,
+          label: Text('Sistema'),
+          icon: Icon(Symbols.brightness_auto),
+        ),
+        ButtonSegment<ThemeMode>(
+          value: ThemeMode.light,
+          label: Text('Claro'),
+          icon: Icon(Symbols.light_mode),
+        ),
+        ButtonSegment<ThemeMode>(
+          value: ThemeMode.dark,
+          label: Text('Oscuro'),
+          icon: Icon(Symbols.dark_mode),
+        ),
+      ],
+      selected: <ThemeMode>{selected},
+      onSelectionChanged: (Set<ThemeMode> newSelection) {
+        if (newSelection.isNotEmpty) {
+          onChanged(newSelection.first);
+        }
       },
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          RadioListTile<ThemeMode>(
-            title: Text('Sistema (automático)'),
-            subtitle: Text('Sigue el ajuste del dispositivo'),
-            value: ThemeMode.system,
-          ),
-          RadioListTile<ThemeMode>(
-            title: Text('Claro'),
-            value: ThemeMode.light,
-          ),
-          RadioListTile<ThemeMode>(
-            title: Text('Oscuro'),
-            value: ThemeMode.dark,
-          ),
-        ],
-      ),
+      showSelectedIcon: false,
     );
   }
 }

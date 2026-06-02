@@ -34,6 +34,25 @@ class AppDialog extends StatelessWidget {
     );
   }
 
+  /// Abre un diálogo cuyo contenido es un widget propio del consumidor
+  /// (normalmente un StatefulWidget que posee sus TextEditingController y
+  /// los libera en `State.dispose()`). Encapsula `showDialog` para que las
+  /// features no lo invoquen directamente (guía 27 §8) y, a la vez, permite
+  /// que el diálogo tenga estado y ciclo de vida propios — lo que [show], al
+  /// recibir el contenido ya construido, no cubre. El `builder` debería
+  /// devolver un [AppDialog] para conservar el aspecto del Design System.
+  static Future<T?> showBuilder<T>(
+    BuildContext context, {
+    required WidgetBuilder builder,
+    bool barrierDismissible = true,
+  }) {
+    return showDialog<T>(
+      context: context,
+      barrierDismissible: barrierDismissible,
+      builder: builder,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(

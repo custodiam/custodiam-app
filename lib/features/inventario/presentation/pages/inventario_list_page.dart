@@ -3,17 +3,21 @@
 // y comparte el patrón de búsqueda + filtros + scroll paginado.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
+import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/material_summary.dart';
@@ -22,6 +26,8 @@ import '../../domain/entities/tipo_vehiculo.dart';
 import '../../domain/entities/vehiculo_summary.dart';
 import '../viewmodels/materiales_list_view_model.dart';
 import '../viewmodels/vehiculos_list_view_model.dart';
+import '../widgets/inventario_estado_avatar.dart';
+import '../widgets/ubicaciones_tab.dart';
 
 class InventarioListPage extends ConsumerWidget {
   const InventarioListPage({super.key});
@@ -41,8 +47,28 @@ class _InventarioListBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // La pestaña Ubicaciones es gestión solo-mandos: se muestra únicamente a
+    // quien tiene `ubicaciones.crear`. Por eso el TabBar tiene 2 o 3 pestañas
+    // según el rol (length dinámico); Material y Vehículos las ve todo el que
+    // tiene `inventario.ver`.
+    final user = ref.watch(authServiceProvider).currentUser;
+    final canUbicaciones =
+        user?.hasPermission(Permission.ubicacionesCrear) ?? false;
+
+    final tabs = <Widget>[
+      const Tab(icon: Icon(Symbols.inventory_2), text: 'Material'),
+      const Tab(icon: Icon(Symbols.directions_car), text: 'Vehículos'),
+      if (canUbicaciones)
+        const Tab(icon: Icon(Symbols.location_on), text: 'Ubicaciones'),
+    ];
+    final views = <Widget>[
+      const _MaterialesTab(),
+      const _VehiculosTab(),
+      if (canUbicaciones) const UbicacionesTab(),
+    ];
+
     return DefaultTabController(
-      length: 2,
+      length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Inventario'),
@@ -50,60 +76,67 @@ class _InventarioListBody extends ConsumerWidget {
           actions: const [
             _AltaMenuButton(),
           ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.inventory_2_outlined), text: 'Material'),
-              Tab(
-                icon: Icon(Icons.directions_car_outlined),
-                text: 'Vehículos',
-              ),
-            ],
-          ),
+          bottom: TabBar(tabs: tabs),
         ),
-        body: const SafeArea(
-          child: TabBarView(
-            children: [
-              _MaterialesTab(),
-              _VehiculosTab(),
-            ],
-          ),
+        body: SafeArea(
+          child: TabBarView(children: views),
         ),
       ),
     );
   }
 }
 
-class _AltaMenuButton extends StatelessWidget {
+class _AltaMenuButton extends ConsumerWidget {
   const _AltaMenuButton();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AppPermissionGate.anyOf(
       anyOf: const [
         Permission.inventarioRegistrarMaterial,
         Permission.inventarioRegistrarVehiculo,
       ],
       child: PopupMenuButton<String>(
-        key: const ValueKey('inventario_alta_menu'),
+        key: K.inventarioAltaMenu,
         tooltip: 'Registrar nuevo',
-        icon: const Icon(Icons.add),
+        icon: const Icon(Symbols.add),
         onSelected: (target) => context.go('/inventario/$target'),
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: 'material/alta',
-            child: ListTile(
-              leading: Icon(Icons.inventory_2_outlined),
-              title: Text('Nuevo material'),
-            ),
-          ),
-          const PopupMenuItem(
-            value: 'vehiculos/alta',
-            child: ListTile(
-              leading: Icon(Icons.directions_car_outlined),
-              title: Text('Nuevo vehículo'),
-            ),
-          ),
-        ],
+        // La auditoría RBAC (29-may, hallazgo A2) detectó que el gate
+        // exterior `anyOf` oculta el icono cuando faltan ambos permisos,
+        // pero los items no se filtran individualmente. jefe_equipo
+        // (con `inventarioRegistrarMaterial` pero NO
+        // `inventarioRegistrarVehiculo` por Decisión 9 del RBAC) veía
+        // "Nuevo vehículo" y comía 403 silencioso del backend.
+        // `AppPermissionGate` no puede envolver `PopupMenuItem` porque
+        // el menú no se reconstruye con `ref.watch`; filtramos en el
+        // itemBuilder leyendo el user en `ref.read`.
+        itemBuilder: (context) {
+          final user = ref.read(authServiceProvider).currentUser;
+          final canMaterial =
+              user?.hasPermission(Permission.inventarioRegistrarMaterial) ??
+                  false;
+          final canVehiculo =
+              user?.hasPermission(Permission.inventarioRegistrarVehiculo) ??
+                  false;
+          return <PopupMenuEntry<String>>[
+            if (canMaterial)
+              const PopupMenuItem<String>(
+                value: 'material/alta',
+                child: ListTile(
+                  leading: Icon(Symbols.inventory_2),
+                  title: Text('Nuevo material'),
+                ),
+              ),
+            if (canVehiculo)
+              const PopupMenuItem<String>(
+                value: 'vehiculos/alta',
+                child: ListTile(
+                  leading: Icon(Symbols.directions_car),
+                  title: Text('Nuevo vehículo'),
+                ),
+              ),
+          ];
+        },
       ),
     );
   }
@@ -171,10 +204,10 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
             vertical: AppSpacing.sm,
           ),
           child: AppTextField(
-            key: const ValueKey('inventario_material_search'),
+            key: K.inventarioMaterialSearch,
             label: 'Buscar por nombre o código',
             controller: _searchController,
-            prefixIcon: Icons.search,
+            prefixIcon: Symbols.search,
             textInputAction: TextInputAction.search,
             onEditingComplete: () => ref
                 .read(materialesListViewModelProvider.notifier)
@@ -237,7 +270,7 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
         Expanded(
           child: asyncState.when(
             loading: () =>
-                const Center(child: CircularProgressIndicator()),
+                const AppLoadingIndicator.fullScreen(),
             error: (error, _) => AppErrorState(
               title: 'No se pudo cargar el material',
               description: error is Failure ? error.message : null,
@@ -246,30 +279,49 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
                   .refresh(),
             ),
             data: (state) {
+              Future<void> onRefresh() => ref
+                  .read(materialesListViewModelProvider.notifier)
+                  .refresh();
               if (state.items.isEmpty) {
-                return const AppEmptyState(
-                  title: 'Sin material',
-                  description: 'No hay resultados para los filtros aplicados.',
-                  icon: Icons.inventory_2_outlined,
+                return RefreshIndicator(
+                  onRefresh: onRefresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.only(top: AppSpacing.xxl),
+                        child: AppEmptyState(
+                          title: 'Sin material',
+                          description:
+                              'No hay resultados para los filtros aplicados.',
+                          icon: Symbols.inventory_2,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               }
-              return ListView.separated(
-                key: const ValueKey('inventario_material_list_view'),
-                controller: _scrollController,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                itemCount: state.items.length + (state.hasMore ? 1 : 0),
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  if (index >= state.items.length) {
-                    return const Padding(
-                      padding:
-                          EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  return _MaterialTile(material: state.items[index]);
-                },
+              return RefreshIndicator(
+                onRefresh: onRefresh,
+                child: ListView.separated(
+                  key: K.inventarioMaterialListView,
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                  itemCount: state.items.length + (state.hasMore ? 1 : 0),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    if (index >= state.items.length) {
+                      return const Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: AppSpacing.md),
+                        child: AppLoadingIndicator.fullScreen(),
+                      );
+                    }
+                    return _MaterialTile(material: state.items[index]);
+                  },
+                ),
               );
             },
           ),
@@ -292,14 +344,16 @@ class _MaterialTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: ValueKey('inventario_material_item_${material.id}'),
-      leading: const CircleAvatar(child: Icon(Icons.inventory_2_outlined)),
+      key: K.inventarioMaterialItem(material.id),
+      leading: InventarioEstadoAvatar(
+        tipoIcon: Symbols.inventory_2,
+        estado: material.estado,
+      ),
       title: Text(material.nombre),
       subtitle: Text(
-        '${_tipoLabel(material.tipo)} · ${material.ubicacionBase}'
+        '${_tipoLabel(material.tipo)} · ${material.ubicacionBase ?? "Sin ubicación"}'
         '${material.codigo != null ? " · ${material.codigo}" : ""}',
       ),
-      trailing: _EstadoBadge(estado: material.estado),
       onTap: () => context.go('/inventario/material/${material.id}'),
     );
   }
@@ -368,10 +422,10 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
             vertical: AppSpacing.sm,
           ),
           child: AppTextField(
-            key: const ValueKey('inventario_vehiculo_search'),
+            key: K.inventarioVehiculoSearch,
             label: 'Buscar por código o matrícula',
             controller: _searchController,
-            prefixIcon: Icons.search,
+            prefixIcon: Symbols.search,
             textInputAction: TextInputAction.search,
             onEditingComplete: () => ref
                 .read(vehiculosListViewModelProvider.notifier)
@@ -382,7 +436,7 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
         Expanded(
           child: asyncState.when(
             loading: () =>
-                const Center(child: CircularProgressIndicator()),
+                const AppLoadingIndicator.fullScreen(),
             error: (error, _) => AppErrorState(
               title: 'No se pudieron cargar los vehículos',
               description: error is Failure ? error.message : null,
@@ -391,31 +445,49 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
                   .refresh(),
             ),
             data: (state) {
+              Future<void> onRefresh() => ref
+                  .read(vehiculosListViewModelProvider.notifier)
+                  .refresh();
               if (state.items.isEmpty) {
-                return const AppEmptyState(
-                  title: 'Sin vehículos',
-                  description:
-                      'No hay vehículos registrados con esos filtros.',
-                  icon: Icons.directions_car_outlined,
+                return RefreshIndicator(
+                  onRefresh: onRefresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.only(top: AppSpacing.xxl),
+                        child: AppEmptyState(
+                          title: 'Sin vehículos',
+                          description:
+                              'No hay vehículos registrados con esos filtros.',
+                          icon: Symbols.directions_car,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               }
-              return ListView.separated(
-                key: const ValueKey('inventario_vehiculo_list_view'),
-                controller: _scrollController,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                itemCount: state.items.length + (state.hasMore ? 1 : 0),
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  if (index >= state.items.length) {
-                    return const Padding(
-                      padding:
-                          EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  return _VehiculoTile(vehiculo: state.items[index]);
-                },
+              return RefreshIndicator(
+                onRefresh: onRefresh,
+                child: ListView.separated(
+                  key: K.inventarioVehiculoListView,
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                  itemCount: state.items.length + (state.hasMore ? 1 : 0),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    if (index >= state.items.length) {
+                      return const Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: AppSpacing.md),
+                        child: AppLoadingIndicator.fullScreen(),
+                      );
+                    }
+                    return _VehiculoTile(vehiculo: state.items[index]);
+                  },
+                ),
               );
             },
           ),
@@ -439,17 +511,21 @@ class _VehiculoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: ValueKey('inventario_vehiculo_item_${vehiculo.id}'),
-      leading: const CircleAvatar(child: Icon(Icons.directions_car_outlined)),
+      key: K.inventarioVehiculoItem(vehiculo.id),
+      leading: InventarioEstadoAvatar(
+        tipoIcon: Symbols.directions_car,
+        estado: vehiculo.estado,
+      ),
       title: Text('${vehiculo.codigoInterno} · ${vehiculo.matricula}'),
-      subtitle: Text('${_tipoLabel(vehiculo.tipo)} · ${vehiculo.ubicacionBase}'),
-      trailing: _EstadoBadge(estado: vehiculo.estado),
+      subtitle: Text(
+        '${_tipoLabel(vehiculo.tipo)} · ${vehiculo.ubicacionBase ?? "Sin ubicación"}',
+      ),
       onTap: () => context.go('/inventario/vehiculos/${vehiculo.id}'),
     );
   }
 }
 
-// ── Shared chip + badge ──────────────────────────────────────────────
+// ── Shared chip ──────────────────────────────────────────────────────
 
 class _Chip extends StatelessWidget {
   final String label;
@@ -472,49 +548,6 @@ class _Chip extends StatelessWidget {
   }
 }
 
-class _EstadoBadge extends StatelessWidget {
-  final EstadoInventario estado;
-  const _EstadoBadge({required this.estado});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final (Color bg, Color fg, String label) = switch (estado) {
-      EstadoInventario.operativo => (
-          theme.colorScheme.primaryContainer,
-          theme.colorScheme.onPrimaryContainer,
-          'Operativo',
-        ),
-      EstadoInventario.averiado => (
-          theme.colorScheme.errorContainer,
-          theme.colorScheme.onErrorContainer,
-          'Averiado',
-        ),
-      EstadoInventario.perdido => (
-          theme.colorScheme.surfaceContainerHighest,
-          theme.colorScheme.onSurfaceVariant,
-          'Perdido',
-        ),
-      EstadoInventario.enUso => (
-          theme.colorScheme.tertiaryContainer,
-          theme.colorScheme.onTertiaryContainer,
-          'En uso',
-        ),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(label, style: TextStyle(color: fg, fontSize: 12)),
-    );
-  }
-}
-
 class _ForbiddenScreen extends StatelessWidget {
   const _ForbiddenScreen();
 
@@ -525,7 +558,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar el inventario.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

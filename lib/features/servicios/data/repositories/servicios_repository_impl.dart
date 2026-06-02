@@ -10,11 +10,13 @@ import '../../../../infrastructure/network/api_client.dart';
 import '../../domain/entities/estado_servicio.dart';
 import '../../domain/entities/servicio.dart';
 import '../../domain/entities/servicio_create.dart';
+import '../../domain/entities/servicio_inventario.dart';
 import '../../domain/entities/servicios_page.dart';
 import '../../domain/entities/tipo_servicio.dart';
 import '../../domain/entities/voluntario_inscrito.dart';
 import '../../domain/repositories/servicios_repository.dart';
 import '../datasources/servicios_api.dart';
+import '../models/servicio_inventario_model.dart';
 import '../models/servicio_model.dart';
 import '../models/servicio_summary_model.dart';
 import '../models/voluntario_inscrito_model.dart';
@@ -31,6 +33,8 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
     String? query,
     EstadoServicio? estado,
     TipoServicio? tipo,
+    DateTime? desde,
+    DateTime? hasta,
   }) async {
     try {
       final response = await _api.list(
@@ -39,6 +43,8 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
         query: query,
         estado: estado,
         tipo: tipo,
+        desde: desde,
+        hasta: hasta,
       );
       final items = response.body
           .cast<Map<String, dynamic>>()
@@ -240,6 +246,101 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
       );
       return const Fail(NetworkFailure.unknown());
     }
+  }
+
+  @override
+  Future<Result<ServicioInventario>> getInventario(String id) async {
+    try {
+      final json = await _api.getInventario(id);
+      return Success(ServicioInventarioModel.fromJson(json));
+    } on ApiException catch (e) {
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'servicios.getInventario failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<void>> asignarMaterial(
+    String id, {
+    required String materialId,
+    int cantidad = 1,
+  }) async {
+    try {
+      await _api.asignarMaterial(id, {
+        'material_id': materialId,
+        'cantidad': cantidad,
+      });
+      return const Success(null);
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        return Fail(_mapAsignacion409(e, esVehiculo: false));
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'servicios.asignarMaterial failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<void>> asignarVehiculo(
+    String id, {
+    required String vehiculoId,
+  }) async {
+    try {
+      await _api.asignarVehiculo(id, {'vehiculo_id': vehiculoId});
+      return const Success(null);
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        return Fail(_mapAsignacion409(e, esVehiculo: true));
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'servicios.asignarVehiculo failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  /// Los POST de asignar a servicio agrupan varios 409. El de solape temporal
+  /// (Política A) llega como {"detail": {"mensaje": ..., "conflictos": [...]}},
+  /// el único con esa clave; el resto son detail planos.
+  Failure _mapAsignacion409(ApiException e, {required bool esVehiculo}) {
+    final detail = e.message.toLowerCase();
+    if (detail.contains('conflictos') ||
+        detail.contains('solapad') ||
+        detail.contains('ocupado')) {
+      return const InventarioFailure.recursoSolapado();
+    }
+    if (detail.contains('no operativo') ||
+        detail.contains('no está operativo')) {
+      return esVehiculo
+          ? const InventarioFailure.vehiculoNoOperativo()
+          : const InventarioFailure.materialNoOperativo();
+    }
+    if (detail.contains('cantidad')) {
+      return const InventarioFailure.cantidadInsuficiente();
+    }
+    if (detail.contains('tipo')) {
+      return const InventarioFailure.tipoIncompatible();
+    }
+    return NetworkFailure.serverError(e.statusCode);
   }
 
   Failure _mapApiException(ApiException e) {

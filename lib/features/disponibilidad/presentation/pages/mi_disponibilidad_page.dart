@@ -5,23 +5,30 @@
 // hoy aparecen deshabilitados (el backend devuelve 422 FechaPasada en
 // PUT, y el cliente espeja la regla para no enviar la request).
 //
-// La página se gata por `voluntariosVerPropio`; el toggle se gata
-// adicionalmente por `voluntariosDisponibilidadPropia` (ambos están en
-// el frozenset base operativo, así que en la práctica un voluntario
-// con acceso a la página también puede tocar).
+// La página se gata por `voluntariosDisponibilidadPropia`: quien lee
+// (secretario/tesorero) no necesita esta pantalla — para esos roles el
+// resumen vive en MiHistorialPage / MiPerfilPage. Esta pantalla es
+// estrictamente para gestionar. Antes había un doble gate
+// (página=voluntariosVerPropio + toggle=voluntariosDisponibilidadPropia)
+// que abría una versión sólo-lectura silenciosa para sec/tes; se
+// eliminó tras la auditoría RBAC del 29-may (hallazgo B2).
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
-import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/mes_disponibilidad.dart';
 import '../viewmodels/mi_disponibilidad_view_model.dart';
@@ -32,7 +39,7 @@ class MiDisponibilidadPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return const AppPermissionGate(
-      permission: Permission.voluntariosVerPropio,
+      permission: Permission.voluntariosDisponibilidadPropia,
       fallback: _ForbiddenScreen(),
       child: _MiDisponibilidadBody(),
     );
@@ -49,23 +56,23 @@ class _MiDisponibilidadBody extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Mi disponibilidad',
       actions: [
-        IconButton(
-          key: const ValueKey('mi_disponibilidad_refresh'),
+        AppIconButton(
+          key: K.miDisponibilidadRefresh,
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Symbols.refresh,
           onPressed: () => ref
               .read(miDisponibilidadViewModelProvider.notifier)
               .refresh(),
         ),
       ],
       body: asyncState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) {
           if (error is VoluntarioNotFound) {
             return AppEmptyState(
               title: 'Sin perfil',
               description: error.message,
-              icon: Icons.person_outline,
+              icon: Symbols.person,
             );
           }
           final message =
@@ -92,10 +99,6 @@ class _CalendarioContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(miDisponibilidadViewModelProvider.notifier);
-    final roles =
-        ref.watch(authServiceProvider).currentUser?.roles ?? const <String>[];
-    final tieneToggle = permissionsForRoles(roles)
-        .contains(Permission.voluntariosDisponibilidadPropia);
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -113,7 +116,11 @@ class _CalendarioContent extends ConsumerWidget {
           Expanded(
             child: _GrilladeDias(
               mes: mes,
-              habilitado: tieneToggle,
+              // El gate de la página garantiza el permiso, así que el
+              // toggle es siempre `true`; solo `esPasado` lo bloquea
+              // por día. Conservamos la propiedad por si en el futuro
+              // hay un modo readonly por estado (suspendido, baja...).
+              habilitado: true,
               onTap: (fecha) async {
                 final failure = await notifier.toggleDia(fecha);
                 if (failure != null && context.mounted) {
@@ -171,20 +178,20 @@ class _MesNavegacion extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        IconButton(
-          key: const ValueKey('mi_disponibilidad_prev_month'),
+        AppIconButton(
+          key: K.miDisponibilidadPrevMonth,
           tooltip: 'Mes anterior',
-          icon: const Icon(Icons.chevron_left),
+          icon: Symbols.chevron_left,
           onPressed: onPrev,
         ),
         Text(
           etiqueta[0].toUpperCase() + etiqueta.substring(1),
           style: theme.textTheme.titleLarge,
         ),
-        IconButton(
-          key: const ValueKey('mi_disponibilidad_next_month'),
+        AppIconButton(
+          key: K.miDisponibilidadNextMonth,
           tooltip: 'Mes siguiente',
-          icon: const Icon(Icons.chevron_right),
+          icon: Symbols.chevron_right,
           onPressed: onNext,
         ),
       ],
@@ -298,8 +305,15 @@ class _CeldaDia extends StatelessWidget {
       background = scheme.primary;
       foreground = scheme.onPrimary;
     } else if (esPasado) {
+      // Días pasados: fondo levemente más oscuro para señalar "no
+      // accionable", pero el texto va a tono completo del scheme. El
+      // alpha 0.5 anterior caía por debajo de WCAG 1.4.3 (4.5:1 AA)
+      // sobre el surfaceContainerHigh en dark theme — los números se
+      // veían pero no se leían cómodos. M3 ya garantiza el contraste
+      // de onSurfaceVariant/surfaceContainerHigh por construcción del
+      // ColorScheme, así que basta con dejar de manipular el alpha.
       background = scheme.surfaceContainerHigh;
-      foreground = scheme.onSurfaceVariant.withValues(alpha: 0.5);
+      foreground = scheme.onSurfaceVariant;
     } else {
       background = scheme.surfaceContainerLow;
       foreground = scheme.onSurface;
@@ -318,12 +332,12 @@ class _CeldaDia extends StatelessWidget {
         child: Material(
           color: background,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             side: border?.top ?? BorderSide.none,
           ),
           child: InkWell(
-            key: ValueKey('mi_disponibilidad_dia_$dia'),
-            borderRadius: BorderRadius.circular(8),
+            key: K.miDisponibilidadDia(dia),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             onTap: tappable ? () => onTap(fecha) : null,
             child: Center(
               child: Text(
@@ -358,7 +372,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite gestionar la disponibilidad propia.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

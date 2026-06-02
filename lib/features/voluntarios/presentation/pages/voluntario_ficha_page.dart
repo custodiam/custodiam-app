@@ -18,19 +18,24 @@
 //     caro. El diálogo se limita a recordarlo en el copy.
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_destructive_button.dart';
+import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_confirm_dialog.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
+import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/di/providers.dart';
@@ -80,21 +85,21 @@ class _VoluntarioFichaBody extends ConsumerWidget {
     return AppPageScaffold(
       title: 'Ficha de voluntario',
       actions: [
-        IconButton(
-          key: const ValueKey('voluntario_ficha_refresh'),
+        AppIconButton(
+          key: K.voluntarioFichaRefreshButton,
           tooltip: 'Recargar',
-          icon: const Icon(Icons.refresh),
+          icon: Symbols.refresh,
           onPressed: () => ref.read(provider.notifier).refresh(),
         ),
       ],
       body: asyncState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator.fullScreen(),
         error: (error, _) {
           if (error is VoluntarioNotFound) {
             return const AppEmptyState(
               title: 'Voluntario no encontrado',
               description: 'Es posible que haya sido eliminado.',
-              icon: Icons.person_off_outlined,
+              icon: Symbols.person_off,
             );
           }
           return AppErrorState(
@@ -206,9 +211,9 @@ class _BajaSection extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         if (!yaDeBaja)
           AppDestructiveButton(
-            key: const ValueKey('ficha_dar_baja'),
+            key: K.voluntarioFichaDarBajaButton,
             label: 'Dar de baja',
-            icon: Icons.person_off_outlined,
+            icon: Symbols.person_off,
             expanded: true,
             onPressed: isMutating
                 ? null
@@ -219,12 +224,12 @@ class _BajaSection extends ConsumerWidget {
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
               children: [
                 Icon(
-                  Icons.info_outline,
+                  Symbols.info,
                   size: 18,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -242,9 +247,9 @@ class _BajaSection extends ConsumerWidget {
           ),
         const SizedBox(height: AppSpacing.md),
         AppDestructiveButton(
-          key: const ValueKey('ficha_anonimizar'),
+          key: K.voluntarioFichaAnonimizarButton,
           label: 'Anonimizar (RGPD, irreversible)',
-          icon: Icons.privacy_tip_outlined,
+          icon: Symbols.privacy_tip,
           expanded: true,
           onPressed: isMutating ? null : () => _onAnonimizar(context, ref),
         ),
@@ -502,83 +507,93 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           Text('Datos del voluntario', style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.sm),
           AppTextField(
-            key: const ValueKey('ficha_nombre'),
+            key: K.voluntarioFichaNombreField,
             label: 'Nombre completo',
             controller: _nombreCtrl,
             enabled: widget.canEdit && !widget.isMutating,
-            prefixIcon: Icons.person_outline,
+            prefixIcon: Symbols.person,
             validator: (v) => _validateRequired(v, 'Nombre'),
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_telefono'),
+            key: K.voluntarioFichaTelefonoField,
             label: 'Teléfono',
             controller: _telefonoCtrl,
             enabled: widget.canEdit && !widget.isMutating,
             keyboardType: TextInputType.phone,
-            prefixIcon: Icons.phone_outlined,
+            prefixIcon: Symbols.phone,
             validator: (v) => _validateRequired(v, 'Teléfono'),
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_municipio'),
+            key: K.voluntarioFichaMunicipioField,
             label: 'Municipio',
             controller: _municipioCtrl,
             enabled: widget.canEdit && !widget.isMutating,
-            prefixIcon: Icons.location_city_outlined,
+            prefixIcon: Symbols.location_city,
             validator: (v) => _validateRequired(v, 'Municipio'),
           ),
           const SizedBox(height: AppSpacing.md),
-          GestureDetector(
-            key: const ValueKey('ficha_fecha_nacimiento'),
-            onTap: widget.canEdit && !widget.isMutating ? _pickDate : null,
-            child: AbsorbPointer(
-              child: AppTextField(
-                label: 'Fecha de nacimiento',
-                controller: _fechaCtrl,
-                enabled: widget.canEdit && !widget.isMutating,
-                prefixIcon: Icons.calendar_today_outlined,
+          // Guía 28 §WCAG 4.1.2: el GestureDetector envuelve un campo
+          // que el screen reader leería como TextField editable, pero
+          // su rol real es "botón que abre un date picker".
+          // `Semantics(button: true, label: ...)` fuerza la
+          // interpretación correcta.
+          Semantics(
+            label: 'Fecha de nacimiento',
+            button: true,
+            enabled: widget.canEdit && !widget.isMutating,
+            child: GestureDetector(
+              key: K.voluntarioFichaFechaNacimientoField,
+              onTap: widget.canEdit && !widget.isMutating ? _pickDate : null,
+              child: AbsorbPointer(
+                child: AppTextField(
+                  label: 'Fecha de nacimiento',
+                  controller: _fechaCtrl,
+                  enabled: widget.canEdit && !widget.isMutating,
+                  prefixIcon: Symbols.calendar_today,
+                ),
               ),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_dni'),
+            key: K.voluntarioFichaDniField,
             label: 'DNI',
             controller: _dniCtrl,
             enabled: widget.canEdit && !widget.isMutating,
-            prefixIcon: Icons.badge_outlined,
+            prefixIcon: Symbols.badge,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_email'),
+            key: K.voluntarioFichaEmailField,
             label: 'Email',
             controller: _emailCtrl,
             enabled: widget.canEdit && !widget.isMutating,
             keyboardType: TextInputType.emailAddress,
-            prefixIcon: Icons.email_outlined,
+            prefixIcon: Symbols.email,
             validator: _validateEmail,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_direccion'),
+            key: K.voluntarioFichaDireccionField,
             label: 'Dirección',
             controller: _direccionCtrl,
             enabled: widget.canEdit && !widget.isMutating,
-            prefixIcon: Icons.home_outlined,
+            prefixIcon: Symbols.home,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
-            key: const ValueKey('ficha_foto'),
+            key: K.voluntarioFichaFotoField,
             label: 'URL de foto',
             controller: _fotoCtrl,
             enabled: widget.canEdit && !widget.isMutating,
             keyboardType: TextInputType.url,
-            prefixIcon: Icons.image_outlined,
+            prefixIcon: Symbols.image,
           ),
           const SizedBox(height: AppSpacing.md),
           SwitchListTile(
-            key: const ValueKey('ficha_conductor'),
+            key: K.voluntarioFichaConductorSwitch,
             title: const Text('Conductor habilitado'),
             value: _conductorHabilitado,
             onChanged: widget.canEdit && !widget.isMutating
@@ -587,11 +602,11 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           ),
           const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<EstadoVoluntario>(
-            key: const ValueKey('ficha_estado'),
+            key: K.voluntarioFichaEstadoDropdown,
             initialValue: _estado,
             decoration: const InputDecoration(
               labelText: 'Estado',
-              prefixIcon: Icon(Icons.flag_outlined),
+              prefixIcon: Icon(Symbols.flag),
             ),
             items: const [
               DropdownMenuItem(
@@ -616,9 +631,9 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
           const SizedBox(height: AppSpacing.xl),
           if (widget.canEdit)
             AppPrimaryButton(
-              key: const ValueKey('ficha_save'),
+              key: K.voluntarioFichaSaveButton,
               label: 'Guardar cambios',
-              icon: Icons.save_outlined,
+              icon: Symbols.save,
               expanded: true,
               isLoading: widget.isMutating,
               onPressed: widget.isMutating ? null : _onSave,
@@ -694,7 +709,7 @@ class _RolesSectionState extends ConsumerState<_RolesSection> {
             children: [
               for (final a in widget.asignaciones)
                 InputChip(
-                  key: ValueKey('ficha_rol_chip_${a.rolId}'),
+                  key: K.voluntarioFichaRolChip(a.rolId),
                   label: Text(a.rolNombre),
                   onDeleted: widget.canEdit && !widget.isMutating ? () => _onQuitar(a.rolId) : null,
                 ),
@@ -703,11 +718,11 @@ class _RolesSectionState extends ConsumerState<_RolesSection> {
         const SizedBox(height: AppSpacing.md),
         if (widget.canEdit && !widget.isMutating && disponibles.isNotEmpty) ...[
           DropdownButtonFormField<String>(
-            key: const ValueKey('ficha_rol_selector'),
+            key: K.voluntarioFichaRolSelectorDropdown,
             initialValue: _seleccionado,
             decoration: const InputDecoration(
               labelText: 'Asignar nuevo rol',
-              prefixIcon: Icon(Icons.add_moderator_outlined),
+              prefixIcon: Icon(Symbols.add_moderator),
             ),
             items: [
               for (final r in disponibles)
@@ -717,9 +732,9 @@ class _RolesSectionState extends ConsumerState<_RolesSection> {
           ),
           const SizedBox(height: AppSpacing.sm),
           AppSecondaryButton(
-            key: const ValueKey('ficha_rol_asignar'),
+            key: K.voluntarioFichaRolAsignarButton,
             label: 'Asignar rol',
-            icon: Icons.add,
+            icon: Symbols.add,
             expanded: true,
             onPressed: _seleccionado == null ? null : _onAsignar,
           ),
@@ -745,7 +760,7 @@ class _ForbiddenScreen extends StatelessWidget {
       body: AppEmptyState(
         title: 'Sin acceso',
         description: 'Tu rol no permite consultar la ficha de otros voluntarios.',
-        icon: Icons.lock_outline,
+        icon: Symbols.lock,
       ),
     );
   }

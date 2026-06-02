@@ -62,6 +62,11 @@ key.properties
 *.jks
 *.keystore
 
+# Secrets (sops+age): el *.sops.env cifrado SÍ se commitea; los archivos
+# en claro que genera `just secrets` NO.
+/android/secrets.properties
+/ios/Flutter/Secrets.xcconfig
+
 # Patrol (EN-08-35) — artefactos del runner que no van al repo
 playwright-report/
 test-results/

@@ -7,12 +7,14 @@
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
+import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -70,6 +72,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final theme = Theme.of(context);
 
     return AppPageScaffold(
+      maxContentWidth: AppBreakpoints.formMaxWidth,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         child: Center(
@@ -77,7 +80,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.shield,
+                Symbols.shield,
                 size: 80,
                 color: theme.colorScheme.primary,
               ),
@@ -98,7 +101,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               const SizedBox(height: AppSpacing.xxl),
               AppPrimaryButton(
                 label: 'Iniciar sesión',
-                icon: Icons.login,
+                icon: Symbols.login,
                 expanded: true,
                 isLoading: authState.isLoading,
                 onPressed: authState.isLoading

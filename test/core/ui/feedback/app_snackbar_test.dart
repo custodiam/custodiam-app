@@ -1,6 +1,7 @@
 import 'package:custodiam/core/ui/feedback/app_snackbar.dart';
 import 'package:custodiam/core/ui/theme/extensions/app_semantic_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../test_utils/test_app.dart';
@@ -40,7 +41,7 @@ void main() {
       );
 
       expect(find.text('Cambios guardados'), findsOneWidget);
-      expect(find.byIcon(Icons.info_outline), findsOneWidget);
+      expect(find.byIcon(Symbols.info), findsOneWidget);
     });
 
     testWidgets('success variant uses semantic success colour',
@@ -58,7 +59,7 @@ void main() {
         snackBar.backgroundColor,
         snackContext.semanticColors.success,
       );
-      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+      expect(find.byIcon(Symbols.check_circle), findsOneWidget);
     });
 
     testWidgets('warning variant uses warning icon', (tester) async {
@@ -68,7 +69,7 @@ void main() {
         message: '¡Cuidado!',
       );
 
-      expect(find.byIcon(Icons.warning_amber_outlined), findsOneWidget);
+      expect(find.byIcon(Symbols.warning_amber), findsOneWidget);
     });
 
     testWidgets('danger variant uses error icon', (tester) async {
@@ -78,7 +79,7 @@ void main() {
         message: 'No se pudo guardar',
       );
 
-      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(find.byIcon(Symbols.error), findsOneWidget);
     });
   });
 }
