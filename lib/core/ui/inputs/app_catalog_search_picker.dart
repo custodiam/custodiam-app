@@ -69,14 +69,18 @@ class AppCatalogSearchPicker<T> extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      // Altura acotada explícita en lugar de FractionallySizedBox: bajo
-      // showModalBottomSheet(isScrollControlled: true) el builder recibe
-      // restricciones verticales laxas (la hoja se dimensiona al contenido),
-      // por lo que FractionallySizedBox no resolvía 0.85*alto y el
-      // Column→Expanded→ListView del cuerpo quedaba sin altura útil: la lista
-      // se poblaba pero no era interactiva ni desplazable. Con una caja de
-      // altura tight el Expanded recibe restricciones acotadas y la lista
-      // vuelve a responder.
+      // Montar en el navigator ROOT, igual que AppDialog/AppConfirmDialog
+      // (showDialog usa useRootNavigator:true por defecto). Sin esto, el sheet
+      // tomaba el default useRootNavigator:false y se empujaba en el navigator
+      // de la RAMA del StatefulShellRoute.indexedStack: la hoja se renderizaba
+      // dentro del subárbol de la rama, por debajo del shell, y no recibía
+      // input (el modal aparecía con su lista pero no dejaba seleccionar).
+      // Forzar el root lo alinea con los diálogos y garantiza que queda sobre
+      // todo y es interactivo en cualquier plataforma.
+      useRootNavigator: true,
+      // Altura acotada explícita: bajo isScrollControlled las restricciones
+      // verticales son laxas; una caja tight asegura que el
+      // Column→Expanded→ListView del cuerpo reciba altura útil.
       builder: (sheetContext) => SizedBox(
         height: MediaQuery.sizeOf(sheetContext).height * 0.85,
         child: AppCatalogSearchPicker<T>(
