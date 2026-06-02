@@ -41,6 +41,7 @@ import '../viewmodels/material_ficha_view_model.dart';
 import '../viewmodels/materiales_list_view_model.dart';
 import '../widgets/asignacion_actual_section.dart';
 import '../widgets/inventario_estado_badge.dart';
+import '../widgets/ubicacion_mapa_button.dart';
 import '../widgets/voluntario_selector_field.dart';
 
 class MaterialFichaPage extends ConsumerWidget {
@@ -175,6 +176,10 @@ class _LoadedMaterial extends ConsumerWidget {
             icon: Symbols.location_on,
             label: 'Ubicación',
             value: material.ubicacionBase ?? 'Sin ubicación',
+          ),
+          UbicacionMapaButton(
+            buttonKey: K.materialFichaAbrirMapaBtn,
+            ubicacionBaseId: material.ubicacionBaseId,
           ),
           if (material.descripcion != null &&
               material.descripcion!.isNotEmpty)

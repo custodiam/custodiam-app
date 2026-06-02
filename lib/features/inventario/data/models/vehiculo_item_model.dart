@@ -29,6 +29,7 @@ class VehiculoItemModel {
       fotoUrl: json['foto_url'] as String?,
       observaciones: json['observaciones'] as String?,
       ubicacionBase: json['ubicacion_base'] as String?,
+      ubicacionBaseId: json['ubicacion_base_id'] as String?,
       estado: estado,
       observacionesIncidencia: json['observaciones_incidencia'] as String?,
       createdAt: json['created_at'] != null

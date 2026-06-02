@@ -61,5 +61,18 @@ void main() {
       });
       expect(v.ubicacionBase, isNull);
     });
+
+    test('parsea ubicacion_base_id (FK del catálogo, E10)', () {
+      final v = VehiculoItemModel.fromJson({
+        ..._vehiculoRow(),
+        'ubicacion_base_id': 'u-1',
+      });
+      expect(v.ubicacionBaseId, 'u-1');
+    });
+
+    test('tolera ubicacion_base_id ausente', () {
+      final v = VehiculoItemModel.fromJson(_vehiculoRow());
+      expect(v.ubicacionBaseId, isNull);
+    });
   });
 }

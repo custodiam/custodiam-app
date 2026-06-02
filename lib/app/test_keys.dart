@@ -77,6 +77,8 @@ abstract final class K {
 
   // ---- Inventario — Ficha material --------------------------------------
   static const Key materialFichaRefresh = ValueKey('material_ficha_refresh');
+  static const Key materialFichaAbrirMapaBtn =
+      ValueKey('material_ficha_abrir_mapa');
   static const Key materialFichaAsignarPersonal =
       ValueKey('material_ficha_asignar_personal');
   static const Key materialFichaPrestar = ValueKey('material_ficha_prestar');
@@ -108,6 +110,8 @@ abstract final class K {
 
   // ---- Inventario — Ficha vehículo --------------------------------------
   static const Key vehiculoFichaRefresh = ValueKey('vehiculo_ficha_refresh');
+  static const Key vehiculoFichaAbrirMapaBtn =
+      ValueKey('vehiculo_ficha_abrir_mapa');
   static const Key vehiculoFichaAveria = ValueKey('vehiculo_ficha_averia');
   static const Key vehiculoFichaPerdida = ValueKey('vehiculo_ficha_perdida');
 
