@@ -148,5 +148,46 @@ void main() {
 
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     });
+
+    // Regresión del camino real show() → showModalBottomSheet, que antes no
+    // tenía cobertura: el resto de tests montan el picker directamente en un
+    // Scaffold (altura acotada) y por eso no detectaron el colapso de altura
+    // de la hoja modal. Aquí se abre por el flujo de producción y se verifica
+    // que la lista se puebla y un item es seleccionable, devolviendo su valor.
+    testWidgets('show() opens the modal sheet with interactive items',
+        (tester) async {
+      String? selected;
+      await pumpRiverpod(
+        tester,
+        Builder(
+          builder: (context) => Center(
+            child: GestureDetector(
+              onTap: () async {
+                selected = await AppCatalogSearchPicker.show<String>(
+                  context,
+                  title: 'Elegir material',
+                  onLoadPage: (q, p) async => p == 0 ? ['Casco', 'Botas'] : [],
+                  labelOf: (s) => s,
+                );
+              },
+              child: const Text('abrir'),
+            ),
+          ),
+        ),
+        settle: false,
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('abrir'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Casco'), findsOneWidget);
+      expect(find.text('Botas'), findsOneWidget);
+
+      await tester.tap(find.text('Botas'));
+      await tester.pumpAndSettle();
+
+      expect(selected, 'Botas');
+    });
   });
 }

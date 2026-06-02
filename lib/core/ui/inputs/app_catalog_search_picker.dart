@@ -69,8 +69,16 @@ class AppCatalogSearchPicker<T> extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (sheetContext) => FractionallySizedBox(
-        heightFactor: 0.85,
+      // Altura acotada explícita en lugar de FractionallySizedBox: bajo
+      // showModalBottomSheet(isScrollControlled: true) el builder recibe
+      // restricciones verticales laxas (la hoja se dimensiona al contenido),
+      // por lo que FractionallySizedBox no resolvía 0.85*alto y el
+      // Column→Expanded→ListView del cuerpo quedaba sin altura útil: la lista
+      // se poblaba pero no era interactiva ni desplazable. Con una caja de
+      // altura tight el Expanded recibe restricciones acotadas y la lista
+      // vuelve a responder.
+      builder: (sheetContext) => SizedBox(
+        height: MediaQuery.sizeOf(sheetContext).height * 0.85,
         child: AppCatalogSearchPicker<T>(
           title: title,
           searchHint: searchHint,
