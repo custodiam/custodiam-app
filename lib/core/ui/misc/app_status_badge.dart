@@ -14,6 +14,31 @@ import '../tokens/app_spacing.dart';
 
 enum AppStatusVariant { neutral, info, success, warning, danger }
 
+/// Colores (fondo, primer plano) de cada variante semántica de estado.
+/// Fuente ÚNICA del color por variante: cualquier superficie que represente
+/// un estado (el badge de texto, el avatar de los listados de inventario...)
+/// debe derivar el color por aquí para no desincronizarse. El color procede
+/// de `context.semanticColors`; el `neutral` cae en la superficie de Material.
+/// WCAG 1.4.1: el color nunca es el único canal — el llamante añade icono y/o
+/// texto.
+(Color bg, Color fg) appStatusVariantColors(
+  BuildContext context,
+  AppStatusVariant variant,
+) {
+  final semantic = context.semanticColors;
+  final scheme = Theme.of(context).colorScheme;
+  return switch (variant) {
+    AppStatusVariant.neutral => (
+        scheme.surfaceContainerHighest,
+        scheme.onSurfaceVariant,
+      ),
+    AppStatusVariant.info => (semantic.info, semantic.onInfo),
+    AppStatusVariant.success => (semantic.success, semantic.onSuccess),
+    AppStatusVariant.warning => (semantic.warning, semantic.onWarning),
+    AppStatusVariant.danger => (semantic.danger, semantic.onDanger),
+  };
+}
+
 class AppStatusBadge extends StatelessWidget {
   /// Texto del estado. La a11y lo lee automáticamente del `Text`.
   final String label;
@@ -35,17 +60,7 @@ class AppStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final semantic = context.semanticColors;
-    final (Color bg, Color fg) = switch (variant) {
-      AppStatusVariant.neutral => (
-          Theme.of(context).colorScheme.surfaceContainerHighest,
-          Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      AppStatusVariant.info => (semantic.info, semantic.onInfo),
-      AppStatusVariant.success => (semantic.success, semantic.onSuccess),
-      AppStatusVariant.warning => (semantic.warning, semantic.onWarning),
-      AppStatusVariant.danger => (semantic.danger, semantic.onDanger),
-    };
+    final (bg, fg) = appStatusVariantColors(context, variant);
 
     return Container(
       padding: const EdgeInsets.symmetric(
