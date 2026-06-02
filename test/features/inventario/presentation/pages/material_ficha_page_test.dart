@@ -3,9 +3,8 @@
 //
 // Patrón: pumpRiverpod (test_app.dart) inyecta el CurrentUser que dispara
 // el AppPermissionGate; los use cases se overridean con instancias reales
-// envolviendo un repo mock (mocktail). Cada caso abre el diálogo desde su
-// botón gateado por K.*, rellena los AppTextField y confirma, verificando
-// la llamada al repo o la validación que la bloquea.
+// envolviendo un repo mock (mocktail). El selector de voluntario abre el
+// AppCatalogSearchPicker contra un VoluntariosCatalogoService mockeado.
 
 import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/features/inventario/domain/entities/asignacion_actual.dart';
@@ -26,6 +25,9 @@ import 'package:custodiam/features/inventario/presentation/pages/material_ficha_
 import 'package:custodiam/features/inventario/presentation/viewmodels/inventario_di.dart';
 import 'package:custodiam/features/inventario/presentation/viewmodels/ubicaciones_di.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
+import 'package:custodiam/infrastructure/catalogo/catalogo_recurso.dart';
+import 'package:custodiam/infrastructure/catalogo/voluntarios_catalogo_service.dart';
+import 'package:custodiam/infrastructure/di/providers.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,7 +37,11 @@ import '../../../../test_utils/test_app.dart';
 
 class _MockRepo extends Mock implements InventarioRepository {}
 
+class _MockVoluntariosCatalogo extends Mock
+    implements VoluntariosCatalogoService {}
+
 const _materialId = 'm-1';
+const _voluntarioLabel = 'Ana García · 600111222';
 
 MaterialItem _material({
   TipoMaterial tipo = TipoMaterial.prestable,
@@ -82,9 +88,17 @@ void main() {
   });
 
   late _MockRepo repo;
+  late _MockVoluntariosCatalogo catalogoVoluntarios;
 
   setUp(() {
     repo = _MockRepo();
+    catalogoVoluntarios = _MockVoluntariosCatalogo();
+    // El picker pide la primera página al abrirse; devolvemos un voluntario.
+    when(() => catalogoVoluntarios.buscarVoluntarios(any(), any())).thenAnswer(
+      (_) async => const [
+        CatalogoRecurso(id: 'vol-99', label: _voluntarioLabel),
+      ],
+    );
   });
 
   // Monta la ficha con el material indicado y todos los use cases de la
@@ -133,6 +147,8 @@ void main() {
             .overrideWithValue(AsignarMaterialAVoluntario(repo)),
         devolverMaterialProvider.overrideWithValue(DevolverMaterial(repo)),
         listMaterialesProvider.overrideWithValue(ListMateriales(repo)),
+        voluntariosCatalogoServiceProvider
+            .overrideWithValue(catalogoVoluntarios),
         if (ubicacionResuelta != null)
           ubicacionPorIdProvider.overrideWith((ref, id) async {
             // Ata la ubicación resuelta al id que la ficha DEBE propagar: si la
@@ -148,6 +164,18 @@ void main() {
       ],
       settle: false,
     );
+    await tester.pumpAndSettle();
+  }
+
+  // Abre el picker desde el campo selector indicado y elige el voluntario que
+  // el catálogo mockeado devuelve, cerrando el picker con la selección.
+  Future<void> seleccionarVoluntario(
+    WidgetTester tester,
+    Key selectorKey,
+  ) async {
+    await tester.tap(find.byKey(selectorKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(_voluntarioLabel));
     await tester.pumpAndSettle();
   }
 
@@ -232,24 +260,24 @@ void main() {
       await tester.tap(find.byKey(K.materialFichaPrestar));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(K.materialAsignarVoluntarioId), findsOneWidget);
+      expect(find.byKey(K.materialAsignarVoluntarioSelector), findsOneWidget);
       expect(find.byKey(K.materialAsignarCantidad), findsOneWidget);
       expect(find.byKey(K.materialAsignarConfirm), findsOneWidget);
     });
 
     testWidgets(
-        'empty voluntarioId: warning snackbar, no repo call',
+        'sin voluntario seleccionado: warning snackbar, no repo call',
         (tester) async {
       await pump(tester, _user(['jefe_equipo']));
 
       await tester.tap(find.byKey(K.materialFichaPrestar));
       await tester.pumpAndSettle();
 
-      // No rellenamos el ID. Confirmar.
+      // No seleccionamos voluntario. Confirmar.
       await tester.tap(find.byKey(K.materialAsignarConfirm));
       await tester.pump();
 
-      expect(find.text('Indica el ID del voluntario.'), findsOneWidget);
+      expect(find.text('Selecciona un voluntario.'), findsOneWidget);
       verifyNever(() => repo.asignarMaterialAVoluntario(
             any(),
             voluntarioId: any(named: 'voluntarioId'),
@@ -259,7 +287,7 @@ void main() {
     });
 
     testWidgets(
-        'success: calls repo.asignarMaterialAVoluntario + success snackbar',
+        'success: selecciona voluntario y llama al repo + success snackbar',
         (tester) async {
       when(() => repo.asignarMaterialAVoluntario(
             any(),
@@ -273,14 +301,8 @@ void main() {
       await tester.tap(find.byKey(K.materialFichaPrestar));
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byKey(K.materialAsignarVoluntarioId),
-        'vol-99',
-      );
-      await tester.enterText(
-        find.byKey(K.materialAsignarCantidad),
-        '2',
-      );
+      await seleccionarVoluntario(tester, K.materialAsignarVoluntarioSelector);
+      await tester.enterText(find.byKey(K.materialAsignarCantidad), '2');
       await tester.tap(find.byKey(K.materialAsignarConfirm));
       await _settleAction(tester);
 
@@ -329,10 +351,7 @@ void main() {
       await tester.tap(find.byKey(K.materialFichaPrestar));
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byKey(K.materialAsignarVoluntarioId),
-        'vol-1',
-      );
+      await seleccionarVoluntario(tester, K.materialAsignarVoluntarioSelector);
       // 'abc' no parsea → int.tryParse(...) ?? 1.
       await tester.enterText(find.byKey(K.materialAsignarCantidad), 'abc');
       await tester.tap(find.byKey(K.materialAsignarConfirm));
@@ -340,7 +359,7 @@ void main() {
 
       verify(() => repo.asignarMaterialAVoluntario(
             _materialId,
-            voluntarioId: 'vol-1',
+            voluntarioId: 'vol-99',
             tipo: TipoAsignacion.prestamo,
             cantidad: 1,
           )).called(1);
@@ -356,13 +375,13 @@ void main() {
       await tester.tap(find.byKey(K.materialFichaDevolver));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(K.materialDevolverVoluntarioId), findsOneWidget);
+      expect(find.byKey(K.materialDevolverVoluntarioSelector), findsOneWidget);
       expect(find.byKey(K.materialDevolverObservaciones), findsOneWidget);
       expect(find.byKey(K.materialDevolverConfirm), findsOneWidget);
     });
 
     testWidgets(
-        'empty voluntarioId: warning snackbar, no repo call',
+        'sin voluntario seleccionado: warning snackbar, no repo call',
         (tester) async {
       await pump(tester, _user(['jefe_equipo']));
 
@@ -372,7 +391,7 @@ void main() {
       await tester.tap(find.byKey(K.materialDevolverConfirm));
       await tester.pump();
 
-      expect(find.text('Indica el ID del voluntario.'), findsOneWidget);
+      expect(find.text('Selecciona un voluntario.'), findsOneWidget);
       verifyNever(() => repo.devolverMaterial(
             any(),
             voluntarioId: any(named: 'voluntarioId'),
@@ -380,7 +399,7 @@ void main() {
           ));
     });
 
-    testWidgets('success: calls repo.devolverMaterial + success snackbar',
+    testWidgets('success: selecciona voluntario y llama al repo + snackbar',
         (tester) async {
       when(() => repo.devolverMaterial(
             any(),
@@ -393,16 +412,13 @@ void main() {
       await tester.tap(find.byKey(K.materialFichaDevolver));
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byKey(K.materialDevolverVoluntarioId),
-        'vol-7',
-      );
+      await seleccionarVoluntario(tester, K.materialDevolverVoluntarioSelector);
       await tester.tap(find.byKey(K.materialDevolverConfirm));
-      await tester.pump();
+      await _settleAction(tester);
 
       verify(() => repo.devolverMaterial(
             _materialId,
-            voluntarioId: 'vol-7',
+            voluntarioId: 'vol-99',
             observaciones: any(named: 'observaciones'),
           )).called(1);
       expect(find.text('Devolución registrada.'), findsOneWidget);

@@ -87,16 +87,16 @@ abstract final class K {
   static const Key materialFichaPerdida = ValueKey('material_ficha_perdida');
 
   // ---- Inventario — Ficha material (diálogo asignar) --------------------
-  static const Key materialAsignarVoluntarioId =
-      ValueKey('material_asignar_voluntario_id');
+  static const Key materialAsignarVoluntarioSelector =
+      ValueKey('material_asignar_voluntario_selector');
   static const Key materialAsignarCantidad =
       ValueKey('material_asignar_cantidad');
   static const Key materialAsignarConfirm =
       ValueKey('material_asignar_confirm');
 
   // ---- Inventario — Ficha material (diálogo devolver) ------------------
-  static const Key materialDevolverVoluntarioId =
-      ValueKey('material_devolver_voluntario_id');
+  static const Key materialDevolverVoluntarioSelector =
+      ValueKey('material_devolver_voluntario_selector');
   static const Key materialDevolverObservaciones =
       ValueKey('material_devolver_observaciones');
   static const Key materialDevolverConfirm =
