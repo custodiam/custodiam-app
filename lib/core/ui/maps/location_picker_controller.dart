@@ -35,10 +35,19 @@ class LocationPickerController extends ChangeNotifier {
   String get texto => _texto;
   String? get sugerenciaPendiente => _sugerenciaPendiente;
   bool get cargandoSugerencia => _cargandoSugerencia;
-  bool get puedeConfirmar => _point != null;
+  // Opción 3: se puede confirmar con un punto fijado O con texto libre. Lo
+  // único inválido es no tener ni punto ni texto.
+  bool get puedeConfirmar => _point != null || _texto.trim().isNotEmpty;
 
   void editarTexto(String value) {
     _texto = value;
+    // Opción 3 (coherencia forzada): editar el texto a mano lo convierte en la
+    // fuente de verdad y suelta el punto, porque no hay forward-geocoding que
+    // recoloque el marcador sobre el texto nuevo. Así el resultado nunca lleva
+    // un punto y un texto que describan lugares distintos. Re-fijar el marcador
+    // vuelve a establecer el punto (y reautorrellena el texto, caso A).
+    _point = null;
+    _sugerenciaPendiente = null;
     notifyListeners();
   }
 
@@ -101,11 +110,12 @@ class LocationPickerController extends ChangeNotifier {
 
   LocationPickResult? construirResultado() {
     final p = _point;
-    if (p == null) return null;
     final t = _texto.trim();
+    // Inválido solo si no hay ni punto ni texto.
+    if (p == null && t.isEmpty) return null;
     return LocationPickResult(
-      lat: p.lat,
-      lng: p.lng,
+      lat: p?.lat,
+      lng: p?.lng,
       direccion: t.isEmpty ? null : t,
     );
   }

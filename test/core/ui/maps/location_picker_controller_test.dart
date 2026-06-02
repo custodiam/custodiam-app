@@ -135,4 +135,33 @@ void main() {
       expect(c.construirResultado()!.direccion, isNull);
     });
   });
+
+  group('Opción 3: coherencia texto↔punto', () {
+    test('editar el texto a mano suelta el punto fijado', () async {
+      final geo = _FakeGeocoder('Plaza del Pilar');
+      final c = LocationPickerController(geocoder: geo);
+      await c.moverMarcador(punto); // punto + texto autorrelleno (caso A)
+      expect(c.point, isNotNull);
+
+      c.editarTexto('Otra dirección que escribo yo');
+
+      // El texto pasa a ser la fuente de verdad: el punto se suelta para que
+      // no queden coords que describan un lugar distinto del texto.
+      expect(c.point, isNull);
+      expect(c.sugerenciaPendiente, isNull);
+      expect(c.texto, 'Otra dirección que escribo yo');
+    });
+
+    test('se puede confirmar con solo texto (sin punto)', () {
+      final c = LocationPickerController(geocoder: _FakeGeocoder(null));
+      c.editarTexto('Pabellón municipal, puerta 3');
+
+      expect(c.point, isNull);
+      expect(c.puedeConfirmar, isTrue);
+      final r = c.construirResultado()!;
+      expect(r.lat, isNull);
+      expect(r.lng, isNull);
+      expect(r.direccion, 'Pabellón municipal, puerta 3');
+    });
+  });
 }

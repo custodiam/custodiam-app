@@ -123,14 +123,28 @@ void main() {
     );
   });
 
-  testWidgets('no muestra el botón de mapa cuando el servicio no tiene coords',
+  testWidgets(
+      'sin coordenadas, el botón de mapa enruta por la dirección textual',
       (tester) async {
-    await pumpFicha(tester, _servicio());
-
-    expect(
-      find.byKey(K.servicioFichaAbrirMapaBtn),
-      findsNothing,
+    // Opción 3: un servicio sin coords pero con dirección de texto SÍ ofrece
+    // el botón; la ruta la resuelve la app de mapas buscando ese texto.
+    final capturadas = <Uri>[];
+    await pumpFicha(
+      tester,
+      _servicio(), // ubicacion 'Zuera', sin lat/lng
+      extraOverrides: [
+        mapsLauncherProvider.overrideWithValue(_FakeMapsLauncher(capturadas)),
+      ],
     );
+
+    final boton = find.byKey(K.servicioFichaAbrirMapaBtn);
+    expect(boton, findsOneWidget);
+
+    await tester.tap(boton);
+    await tester.pumpAndSettle();
+
+    expect(capturadas, hasLength(1));
+    expect(capturadas.single, mapsDirectionsUriTexto('Zuera'));
   });
 
   testWidgets('"Cómo llegar" abre el deeplink de direcciones en móvil',

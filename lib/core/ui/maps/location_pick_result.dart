@@ -1,18 +1,21 @@
-// Resultado de elegir una ubicación en el AppLocationPicker: la
-// coordenada exacta (fuente de verdad en BD) y, opcionalmente, una
-// etiqueta de dirección legible para mostrar y guardar como texto.
+// Resultado de elegir una ubicación en el AppLocationPicker. Puede ser:
+//  - punto + etiqueta: coordenadas exactas (fuente de verdad en BD) más la
+//    dirección legible (reverse-geocodificada o escrita por el usuario), que
+//    SIEMPRE describen el mismo lugar (coherencia forzada en el controller);
+//  - solo texto: el usuario escribió una dirección libre sin fijar punto, así
+//    que `lat`/`lng` son null y la ruta se resolverá por búsqueda del texto.
 
 import 'package:flutter/foundation.dart';
 
 @immutable
 class LocationPickResult {
-  final double lat;
-  final double lng;
+  final double? lat;
+  final double? lng;
   final String? direccion;
 
   const LocationPickResult({
-    required this.lat,
-    required this.lng,
+    this.lat,
+    this.lng,
     this.direccion,
   });
 

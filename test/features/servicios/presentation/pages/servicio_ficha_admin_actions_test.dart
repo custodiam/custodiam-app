@@ -255,6 +255,8 @@ void main() {
         user: _jefeEquipo,
       );
 
+      await tester.ensureVisible(find.byKey(K.servicioFichaCerrarBtn));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(K.servicioFichaCerrarBtn));
       await tester.pumpAndSettle();
 
@@ -281,6 +283,8 @@ void main() {
         user: _jefeEquipo,
       );
 
+      await tester.ensureVisible(find.byKey(K.servicioFichaCerrarBtn));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(K.servicioFichaCerrarBtn));
       await tester.pumpAndSettle();
 
@@ -315,6 +319,8 @@ void main() {
         user: _jefeEquipo,
       );
 
+      await tester.ensureVisible(find.byKey(K.servicioFichaCerrarBtn));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(K.servicioFichaCerrarBtn));
       await tester.pumpAndSettle();
 
@@ -332,6 +338,8 @@ void main() {
         user: _jefeEquipo,
       );
 
+      await tester.ensureVisible(find.byKey(K.servicioFichaCerrarBtn));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(K.servicioFichaCerrarBtn));
       await tester.pumpAndSettle();
 

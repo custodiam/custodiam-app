@@ -158,11 +158,15 @@ class _LoadedFicha extends ConsumerWidget {
             label: 'Ubicación',
             value: servicio.ubicacion,
           ),
-          if (servicio.ubicacionLat != null && servicio.ubicacionLng != null)
+          if ((servicio.ubicacionLat != null && servicio.ubicacionLng != null) ||
+              servicio.ubicacion.trim().isNotEmpty)
             AbrirMapaButton(
               buttonKey: K.servicioFichaAbrirMapaBtn,
-              lat: servicio.ubicacionLat!,
-              lng: servicio.ubicacionLng!,
+              // Con coordenadas mandan ellas; si solo hay texto, la ruta se
+              // resuelve por búsqueda de la dirección escrita (Opción 3).
+              lat: servicio.ubicacionLat,
+              lng: servicio.ubicacionLng,
+              texto: servicio.ubicacion,
             ),
           _InfoRow(
             icon: Symbols.calendar_today,

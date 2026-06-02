@@ -16,8 +16,13 @@ import '../tokens/app_spacing.dart';
 import 'maps_launcher.dart';
 
 class AbrirMapaButton extends ConsumerWidget {
-  final double lat;
-  final double lng;
+  final double? lat;
+  final double? lng;
+
+  /// Dirección textual de respaldo (Opción 3): si no hay coordenadas pero sí
+  /// texto, la ruta/búsqueda se resuelve por el texto, que la app de mapas
+  /// geocodifica. Cuando hay coordenadas, mandan ellas (ADR-030).
+  final String? texto;
 
   /// Key del botón en sí, para que los tests lo localicen con precisión
   /// (la key del widget raíz caería sobre el `Align`, no sobre el botón).
@@ -25,14 +30,25 @@ class AbrirMapaButton extends ConsumerWidget {
 
   const AbrirMapaButton({
     super.key,
-    required this.lat,
-    required this.lng,
+    this.lat,
+    this.lng,
+    this.texto,
     this.buttonKey,
-  });
+  }) : assert(
+          (lat != null && lng != null) || (texto != null && texto != ''),
+          'AbrirMapaButton necesita coordenadas o un texto de dirección',
+        );
+
+  bool get _tieneCoords => lat != null && lng != null;
 
   Future<void> _abrir(BuildContext context, WidgetRef ref, bool esWeb) async {
     final launcher = ref.read(mapsLauncherProvider);
-    final uri = esWeb ? mapsShowUri(lat, lng) : mapsDirectionsUri(lat, lng);
+    final Uri uri;
+    if (_tieneCoords) {
+      uri = esWeb ? mapsShowUri(lat!, lng!) : mapsDirectionsUri(lat!, lng!);
+    } else {
+      uri = esWeb ? mapsShowUriTexto(texto!) : mapsDirectionsUriTexto(texto!);
+    }
     var ok = false;
     try {
       ok = await launcher.abrir(uri);
