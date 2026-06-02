@@ -69,8 +69,20 @@ class AppCatalogSearchPicker<T> extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (sheetContext) => FractionallySizedBox(
-        heightFactor: 0.85,
+      // Montar en el navigator ROOT, igual que AppDialog/AppConfirmDialog
+      // (showDialog usa useRootNavigator:true por defecto). Sin esto, el sheet
+      // tomaba el default useRootNavigator:false y se empujaba en el navigator
+      // de la RAMA del StatefulShellRoute.indexedStack: la hoja se renderizaba
+      // dentro del subárbol de la rama, por debajo del shell, y no recibía
+      // input (el modal aparecía con su lista pero no dejaba seleccionar).
+      // Forzar el root lo alinea con los diálogos y garantiza que queda sobre
+      // todo y es interactivo en cualquier plataforma.
+      useRootNavigator: true,
+      // Altura acotada explícita: bajo isScrollControlled las restricciones
+      // verticales son laxas; una caja tight asegura que el
+      // Column→Expanded→ListView del cuerpo reciba altura útil.
+      builder: (sheetContext) => SizedBox(
+        height: MediaQuery.sizeOf(sheetContext).height * 0.85,
         child: AppCatalogSearchPicker<T>(
           title: title,
           searchHint: searchHint,

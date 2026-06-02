@@ -157,7 +157,7 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
     if (resultado == null) {
       AppSnackbar.show(
         context,
-        message: 'Toca el mapa para fijar la ubicación.',
+        message: 'Fija un punto en el mapa o escribe una dirección.',
         variant: AppSnackbarVariant.warning,
       );
       return;

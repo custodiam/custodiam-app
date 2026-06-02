@@ -1,4 +1,5 @@
 {
   "API_BASE_URL": "https://api.custodiam.es/api/v1",
-  "KEYCLOAK_BASE_URL": "https://auth.custodiam.es"
+  "KEYCLOAK_BASE_URL": "https://auth.custodiam.es",
+  "FCM_VAPID_KEY": "BEKteeNyDo4WAs5T35kgWEXUQx1qKBIJTOwx21eNRrOO7RWG5AjYax_hWg194NJ6_4GkW-7Vvcy2gUL6OZYErKA"
 }
