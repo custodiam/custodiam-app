@@ -152,18 +152,20 @@ class _Body extends ConsumerWidget {
       context,
       title: 'Asignar recurso',
       content: const Text('¿Qué tipo de recurso quieres asignar al servicio?'),
-      actions: [
+      // actionsBuilder (no actions): el pop debe ir al navigator del diálogo
+      // (raíz), no al de la rama Servicios del shell. Ver AppDialog.show.
+      actionsBuilder: (dialogContext) => [
         AppTextButton(
           key: K.servicioRecursosTipoMaterialBtn,
           label: 'Material',
           icon: Symbols.inventory_2,
-          onPressed: () => Navigator.of(context).pop('material'),
+          onPressed: () => Navigator.of(dialogContext).pop('material'),
         ),
         AppTextButton(
           key: K.servicioRecursosTipoVehiculoBtn,
           label: 'Vehículo',
           icon: Symbols.directions_car,
-          onPressed: () => Navigator.of(context).pop('vehiculo'),
+          onPressed: () => Navigator.of(dialogContext).pop('vehiculo'),
         ),
       ],
     );
