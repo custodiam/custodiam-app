@@ -258,7 +258,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             message: 'Servicio "${created.titulo}" creado correctamente.',
             variant: AppSnackbarVariant.success,
           );
-          ref.read(serviciosListViewModelProvider.notifier).refresh();
+          ref.read(serviciosListViewModelProvider.notifier).reloadSilently();
           context.go('/servicios/${created.id}');
         },
         error: (error, _) {

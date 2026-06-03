@@ -79,10 +79,11 @@ class _ServicioFichaBody extends ConsumerWidget {
         },
       );
       // Cuando una acción se completa con éxito (estado AsyncData
-      // distinto al inicial), refrescamos también la lista en caché
-      // para que al volver atrás vea el estado actualizado.
+      // distinto al inicial), recargamos también la lista en caché —de
+      // forma silenciosa, sin spinner— para que al volver atrás vea el
+      // estado actualizado sin parpadeo durante la transición.
       if (prev?.isLoading == true && next.hasValue) {
-        ref.read(serviciosListViewModelProvider.notifier).refresh();
+        ref.read(serviciosListViewModelProvider.notifier).reloadSilently();
       }
     });
 

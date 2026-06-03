@@ -181,6 +181,25 @@ class ServiciosListViewModel extends AsyncNotifier<ServiciosListState> {
     );
   }
 
+  /// Recarga la primera página preservando los filtros activos SIN pasar por
+  /// `AsyncLoading`: mantiene los datos actuales visibles hasta que llega la
+  /// nueva página. Se usa tras crear un servicio o tras una acción en la
+  /// ficha, donde esta lista vive por debajo en el `IndexedStack` y un spinner
+  /// asomaría durante la transición (el parpadeo reportado). El refresco con
+  /// spinner (`refresh`) se reserva para el reintento/pull-to-refresh manual.
+  Future<void> reloadSilently() async {
+    final current = state.valueOrNull;
+    state = await AsyncValue.guard(
+      () => _fetchFirstPage(
+        query: current?.query ?? '',
+        estado: current?.estado,
+        tipo: current?.tipo,
+        desde: current?.desde,
+        hasta: current?.hasta,
+      ),
+    );
+  }
+
   Future<void> loadMore() async {
     final current = state.valueOrNull;
     if (current == null || current.isLoadingMore || !current.hasMore) {
