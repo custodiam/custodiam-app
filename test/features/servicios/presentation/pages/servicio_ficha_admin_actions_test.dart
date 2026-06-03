@@ -157,6 +157,26 @@ void main() {
     });
 
     testWidgets(
+        'en borrador, sin permiso de publicar, muestra el mensaje explicativo '
+        'en vez de un hueco vacío',
+        (tester) async {
+      // Caso real: el secretario (y aquí el voluntario) crea/abre un borrador
+      // pero no puede publicarlo. En vez de ocultar el botón en silencio
+      // ("no sale / se queda en borrador"), la ficha explica por qué.
+      await pumpFicha(
+        tester,
+        servicio: _servicio(estado: EstadoServicio.borrador),
+        user: _voluntario,
+      );
+
+      expect(find.byKey(K.servicioFichaPublicarBtn), findsNothing);
+      expect(
+        find.textContaining('Debe publicarlo un responsable'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
         'tampoco muestra convocar/cerrar sobre un servicio activo',
         (tester) async {
       await pumpFicha(
