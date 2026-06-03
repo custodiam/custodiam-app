@@ -187,15 +187,17 @@ class _DotacionBody extends ConsumerWidget {
         '¿Quitar "${dotacion.materialNombre}" de la dotación fija de este '
         'vehículo?',
       ),
-      actions: [
+      // actionsBuilder (no actions): el pop debe ir al navigator del diálogo
+      // (raíz), no al de la rama del shell. Ver AppDialog.show.
+      actionsBuilder: (dialogContext) => [
         AppTextButton(
           label: 'Cancelar',
-          onPressed: () => Navigator.of(context).pop(false),
+          onPressed: () => Navigator.of(dialogContext).pop(false),
         ),
         AppPrimaryButton(
           key: K.dotacionQuitarConfirm,
           label: 'Quitar',
-          onPressed: () => Navigator.of(context).pop(true),
+          onPressed: () => Navigator.of(dialogContext).pop(true),
         ),
       ],
     );

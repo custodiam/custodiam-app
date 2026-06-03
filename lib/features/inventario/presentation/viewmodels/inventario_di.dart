@@ -6,11 +6,15 @@ import '../../../../infrastructure/di/providers.dart';
 import '../../data/datasources/inventario_api.dart';
 import '../../data/repositories/inventario_repository_impl.dart';
 import '../../domain/repositories/inventario_repository.dart';
+import '../../domain/usecases/actualizar_material.dart';
+import '../../domain/usecases/actualizar_vehiculo.dart';
 import '../../domain/usecases/asignar_dotacion_vehiculo.dart';
 import '../../domain/usecases/asignar_material_a_voluntario.dart';
 import '../../domain/usecases/create_material.dart';
 import '../../domain/usecases/create_vehiculo.dart';
 import '../../domain/usecases/devolver_material.dart';
+import '../../domain/usecases/eliminar_material.dart';
+import '../../domain/usecases/eliminar_vehiculo.dart';
 import '../../domain/usecases/get_material.dart';
 import '../../domain/usecases/get_vehiculo.dart';
 import '../../domain/usecases/liberar_dotacion_vehiculo.dart';
@@ -40,6 +44,14 @@ final createMaterialProvider = Provider<CreateMaterial>((ref) {
   return CreateMaterial(ref.watch(inventarioRepositoryProvider));
 });
 
+final actualizarMaterialProvider = Provider<ActualizarMaterial>((ref) {
+  return ActualizarMaterial(ref.watch(inventarioRepositoryProvider));
+});
+
+final eliminarMaterialProvider = Provider<EliminarMaterial>((ref) {
+  return EliminarMaterial(ref.watch(inventarioRepositoryProvider));
+});
+
 final reportarIncidenciaMaterialProvider =
     Provider<ReportarIncidenciaMaterial>((ref) {
   return ReportarIncidenciaMaterial(ref.watch(inventarioRepositoryProvider));
@@ -64,6 +76,14 @@ final getVehiculoProvider = Provider<GetVehiculo>((ref) {
 
 final createVehiculoProvider = Provider<CreateVehiculo>((ref) {
   return CreateVehiculo(ref.watch(inventarioRepositoryProvider));
+});
+
+final actualizarVehiculoProvider = Provider<ActualizarVehiculo>((ref) {
+  return ActualizarVehiculo(ref.watch(inventarioRepositoryProvider));
+});
+
+final eliminarVehiculoProvider = Provider<EliminarVehiculo>((ref) {
+  return EliminarVehiculo(ref.watch(inventarioRepositoryProvider));
 });
 
 final reportarIncidenciaVehiculoProvider =

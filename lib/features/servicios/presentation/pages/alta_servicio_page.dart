@@ -1,7 +1,10 @@
-// AltaServicioPage (US-03-01 / US-03-02). Formulario para crear un
-// servicio. El permiso a aplicar depende del tipo seleccionado; el
-// gate de entrada acepta cualquiera de los dos (anyOf) para que el
-// usuario al menos llegue, y validamos al enviar.
+// AltaServicioPage (US-03-01 / US-03-02) y edición de servicio (A5). El mismo
+// formulario se reutiliza para alta y edición: con `servicioId` carga la
+// ficha, precarga los campos y, al guardar, hace PATCH parcial en lugar de
+// POST. El permiso a aplicar en alta depende del tipo seleccionado; el gate de
+// entrada acepta cualquiera de los dos (anyOf) para que el usuario al menos
+// llegue, y validamos al enviar. En edición el gate exige
+// `servicios.crear_preventivo` (mismo permiso que el PATCH del backend).
 
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -13,32 +16,49 @@ import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/maps/app_location_picker.dart';
 import '../../../../core/ui/maps/map_point.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
+import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
+import '../../../../infrastructure/error/result.dart';
 import '../../domain/entities/servicio_create.dart';
 import '../../domain/entities/tipo_servicio.dart';
 import '../viewmodels/alta_servicio_view_model.dart';
+import '../viewmodels/servicio_ficha_view_model.dart';
+import '../viewmodels/servicios_di.dart';
 import '../viewmodels/servicios_list_view_model.dart';
 
 class AltaServicioPage extends ConsumerWidget {
-  /// Tipo preseleccionado al abrir la página. Si `null`, arranca en
+  /// Tipo preseleccionado al abrir la página en alta. Si `null`, arranca en
   /// `preventivo`. Se propaga desde el query param `?tipo=` del router
   /// para que la quick action "Crear emergencia" del home aterrice ya
   /// con `emergencia` marcado.
   final TipoServicio? tipoInicial;
 
-  const AltaServicioPage({super.key, this.tipoInicial});
+  /// `null` ⇒ alta; con id ⇒ edición (se carga el servicio al entrar).
+  final String? servicioId;
+
+  const AltaServicioPage({super.key, this.tipoInicial, this.servicioId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // En edición solo aplica el permiso de PATCH (servicios.crear_preventivo);
+    // en alta seguimos aceptando cualquiera de los dos de creación.
+    if (servicioId != null) {
+      return AppPermissionGate(
+        permission: Permission.serviciosCrearPreventivo,
+        fallback: const _ForbiddenScreen(),
+        child: _AltaServicioForm(servicioId: servicioId),
+      );
+    }
     return AppPermissionGate.anyOf(
       anyOf: const [
         Permission.serviciosCrearPreventivo,
@@ -52,8 +72,11 @@ class AltaServicioPage extends ConsumerWidget {
 
 class _AltaServicioForm extends ConsumerStatefulWidget {
   final TipoServicio? tipoInicial;
+  final String? servicioId;
 
-  const _AltaServicioForm({this.tipoInicial});
+  const _AltaServicioForm({this.tipoInicial, this.servicioId});
+
+  bool get esEdicion => servicioId != null;
 
   @override
   ConsumerState<_AltaServicioForm> createState() => _AltaServicioFormState();
@@ -80,10 +103,55 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
   // distintos.
   String? _ubicacionTextoFijado;
 
+  // Estado de la edición (A5). El alta se mueve por el AsyncNotifier; el PATCH
+  // de edición usa estos flags locales, igual que la edición de material.
+  bool _cargando = false;
+  bool _guardando = false;
+  String? _errorCarga;
+
   @override
   void initState() {
     super.initState();
     _ubicacionCtrl.addListener(_onUbicacionTextChanged);
+    if (widget.esEdicion) _cargar();
+  }
+
+  Future<void> _cargar() async {
+    setState(() => _cargando = true);
+    final result =
+        await ref.read(getServicioByIdProvider).call(widget.servicioId!);
+    if (!mounted) return;
+    switch (result) {
+      case Success(:final value):
+        _tituloCtrl.text = value.titulo;
+        _descripcionCtrl.text = value.descripcion ?? '';
+        _ubicacionCtrl.text = value.ubicacion;
+        _numeroVoluntariosCtrl.text =
+            value.numeroVoluntarios?.toString() ?? '';
+        _notasMaterialCtrl.text = value.notasMaterial ?? '';
+        _notasVehiculosCtrl.text = value.notasVehiculos ?? '';
+        _fechaInicioCtrl.text = _formatDateTime(value.fechaInicio);
+        if (value.fechaFin != null) {
+          _fechaFinCtrl.text = _formatDateTime(value.fechaFin!);
+        }
+        setState(() {
+          _tipo = value.tipo;
+          _fechaInicio = value.fechaInicio;
+          _fechaFin = value.fechaFin;
+          _ubicacionLat = value.ubicacionLat;
+          _ubicacionLng = value.ubicacionLng;
+          // Si el servicio trae coordenadas, fijamos el texto de referencia
+          // para que el listener de coherencia no las suelte al precargar.
+          _ubicacionTextoFijado =
+              value.ubicacionLat != null ? value.ubicacion.trim() : null;
+          _cargando = false;
+        });
+      case Fail(:final failure):
+        setState(() {
+          _cargando = false;
+          _errorCarga = failure.message ?? 'No se pudo cargar el servicio.';
+        });
+    }
   }
 
   /// Si hay coords fijadas y el usuario escribe un texto que ya no coincide
@@ -213,6 +281,10 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
       );
       return;
     }
+    // Defensa en profundidad: el permiso necesario depende del tipo elegido,
+    // tanto al crear como al editar (el backend revalida igual). El selector
+    // de tipo ya oculta "emergencia" a quien no puede, pero el JWT podría
+    // cambiar mid-sesión.
     final user = ref.read(authServiceProvider).currentUser;
     final permisoNecesario = _tipo == TipoServicio.emergencia
         ? Permission.serviciosCrearEmergencia
@@ -227,6 +299,14 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
       );
       return;
     }
+    if (widget.esEdicion) {
+      _actualizar();
+    } else {
+      _crear();
+    }
+  }
+
+  void _crear() {
     final numeroVoluntariosRaw = _numeroVoluntariosCtrl.text.trim();
     final data = ServicioCreate(
       titulo: _tituloCtrl.text.trim(),
@@ -245,11 +325,69 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
     ref.read(altaServicioViewModelProvider.notifier).submit(data);
   }
 
+  Future<void> _actualizar() async {
+    setState(() => _guardando = true);
+    // Cuerpo parcial PATCH: enviamos los campos editables siempre (incluido
+    // null para limpiar los opcionales borrados), como en la edición de
+    // material. El backend aplica el patch con exclude_unset, así que una clave
+    // con null limpia la columna. No se envía `estado`: solo cambia por las
+    // transiciones (publicar/convocar/cerrar). Las coordenadas van juntas o
+    // ninguna (regla del backend).
+    final numeroVoluntariosRaw = _numeroVoluntariosCtrl.text.trim();
+    final campos = <String, dynamic>{
+      'titulo': _tituloCtrl.text.trim(),
+      'tipo': _tipo.wire,
+      'fecha_inicio': _fechaInicio!.toIso8601String(),
+      'fecha_fin': _fechaFin?.toIso8601String(),
+      'ubicacion': _ubicacionCtrl.text.trim(),
+      'ubicacion_lat': _ubicacionLat,
+      'ubicacion_lng': _ubicacionLng,
+      'numero_voluntarios':
+          numeroVoluntariosRaw.isEmpty ? null : int.parse(numeroVoluntariosRaw),
+      'descripcion': _normalize(_descripcionCtrl.text),
+      'notas_material': _normalize(_notasMaterialCtrl.text),
+      'notas_vehiculos': _normalize(_notasVehiculosCtrl.text),
+    };
+    final result = await ref
+        .read(actualizarServicioProvider)
+        .call(widget.servicioId!, campos);
+    if (!mounted) return;
+    switch (result) {
+      case Success(:final value):
+        // Refrescamos la ficha en caché y la lista para que reflejen los
+        // cambios al volver atrás, igual que en la edición de material.
+        ref
+            .read(servicioFichaViewModelProvider(value.id).notifier)
+            .refresh();
+        ref.read(serviciosListViewModelProvider.notifier).reloadSilently();
+        AppSnackbar.show(
+          context,
+          message: 'Servicio "${value.titulo}" actualizado.',
+          variant: AppSnackbarVariant.success,
+        );
+        context.go('/servicios/${value.id}');
+      case Fail(:final failure):
+        setState(() => _guardando = false);
+        AppSnackbar.show(
+          context,
+          message: failure.message ?? 'No se pudo actualizar el servicio.',
+          variant: AppSnackbarVariant.danger,
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncSubmit = ref.watch(altaServicioViewModelProvider);
+    final titulo = widget.esEdicion ? 'Editar servicio' : 'Crear servicio';
+    // En alta el spinner del botón lo gobierna el AsyncNotifier; en edición,
+    // el flag local _guardando del PATCH directo.
+    final isBusy = widget.esEdicion ? _guardando : asyncSubmit.isLoading;
 
+    // El AsyncNotifier de alta solo gobierna el modo creación; al editar el
+    // PATCH va por _actualizar y este listener no debe reaccionar.
     ref.listen(altaServicioViewModelProvider, (prev, next) {
+      if (widget.esEdicion) return;
       next.whenOrNull(
         data: (created) {
           if (created == null) return;
@@ -258,7 +396,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             message: 'Servicio "${created.titulo}" creado correctamente.',
             variant: AppSnackbarVariant.success,
           );
-          ref.read(serviciosListViewModelProvider.notifier).refresh();
+          ref.read(serviciosListViewModelProvider.notifier).reloadSilently();
           context.go('/servicios/${created.id}');
         },
         error: (error, _) {
@@ -273,9 +411,26 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
       );
     });
 
+    if (_cargando) {
+      return AppPageScaffold(
+        title: titulo,
+        body: const AppLoadingIndicator.fullScreen(),
+      );
+    }
+    if (_errorCarga != null) {
+      return AppPageScaffold(
+        title: titulo,
+        body: AppErrorState(
+          title: 'No se pudo cargar el servicio',
+          description: _errorCarga,
+          onRetry: _cargar,
+        ),
+      );
+    }
+
     return AppPageScaffold(
       maxContentWidth: AppBreakpoints.formMaxWidth,
-      title: 'Crear servicio',
+      title: titulo,
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -301,7 +456,7 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
               key: K.altaServicioTitulo,
               label: 'Título',
               controller: _tituloCtrl,
-              autofocus: true,
+              autofocus: !widget.esEdicion,
               prefixIcon: Symbols.title,
               validator: (v) => _validateRequired(v, 'Título'),
             ),
@@ -428,24 +583,34 @@ class _AltaServicioFormState extends ConsumerState<_AltaServicioForm> {
             const SizedBox(height: AppSpacing.xl),
             AppPrimaryButton(
               key: K.altaServicioSubmitBtn,
-              label: _tipo == TipoServicio.emergencia
-                  ? 'Crear emergencia'
-                  : 'Crear servicio',
-              icon: _tipo == TipoServicio.emergencia
-                  ? Symbols.warning_amber
-                  : Symbols.event_available,
+              label: widget.esEdicion
+                  ? 'Guardar cambios'
+                  : (_tipo == TipoServicio.emergencia
+                      ? 'Crear emergencia'
+                      : 'Crear servicio'),
+              icon: widget.esEdicion
+                  ? Symbols.save
+                  : (_tipo == TipoServicio.emergencia
+                      ? Symbols.warning_amber
+                      : Symbols.event_available),
               expanded: true,
-              isLoading: asyncSubmit.isLoading,
-              onPressed: asyncSubmit.isLoading ? null : _onSubmit,
+              isLoading: isBusy,
+              onPressed: isBusy ? null : _onSubmit,
             ),
             const SizedBox(height: AppSpacing.sm),
             AppSecondaryButton(
               key: K.altaServicioCancelBtn,
               label: 'Cancelar',
               expanded: true,
-              onPressed: asyncSubmit.isLoading
+              onPressed: isBusy
                   ? null
-                  : () => context.go('/servicios'),
+                  : () {
+                      if (widget.esEdicion) {
+                        context.go('/servicios/${widget.servicioId}');
+                      } else {
+                        context.go('/servicios');
+                      }
+                    },
             ),
           ],
         ),

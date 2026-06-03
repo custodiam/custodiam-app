@@ -2,6 +2,7 @@
 
 import '../../domain/entities/estado_servicio.dart';
 import '../../domain/entities/servicio.dart';
+import '../../domain/entities/tipo_inscripcion.dart';
 import '../../domain/entities/tipo_servicio.dart';
 
 class ServicioModel {
@@ -18,6 +19,12 @@ class ServicioModel {
     if (estado == null) {
       throw FormatException('Unknown estado from API: $estadoRaw');
     }
+    // A8: `mi_tipo_inscripcion` solo viene poblado si el usuario está
+    // inscrito; un valor desconocido se ignora (queda null) en vez de
+    // romper el parseo de toda la ficha.
+    final miTipoRaw = json['mi_tipo_inscripcion'] as String?;
+    final miTipoInscripcion =
+        miTipoRaw != null ? TipoInscripcion.fromWire(miTipoRaw) : null;
     return Servicio(
       id: json['id'] as String,
       titulo: json['titulo'] as String,
@@ -33,6 +40,8 @@ class ServicioModel {
       ubicacionLng: (json['ubicacion_lng'] as num?)?.toDouble(),
       numeroVoluntarios: json['numero_voluntarios'] as int?,
       inscritosCount: json['inscritos_count'] as int,
+      estoyInscrito: json['estoy_inscrito'] as bool? ?? false,
+      miTipoInscripcion: miTipoInscripcion,
       notasMaterial: json['notas_material'] as String?,
       notasVehiculos: json['notas_vehiculos'] as String?,
       observacionesCierre: json['observaciones_cierre'] as String?,

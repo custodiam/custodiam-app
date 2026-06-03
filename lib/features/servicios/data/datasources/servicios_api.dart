@@ -65,6 +65,25 @@ class ServiciosApi {
     return _client.post('/servicios', body);
   }
 
+  /// PATCH /servicios/{id} — actualización parcial (A5). El backend acepta
+  /// un cuerpo parcial (sin `estado`, que solo cambia por las transiciones).
+  Future<Map<String, dynamic>> update(String id, Map<String, dynamic> body) {
+    return _client.patch('/servicios/$id', body);
+  }
+
+  /// DELETE /servicios/{id} — borrado (A7). El backend responde 204 No
+  /// Content (cuerpo vacío). ApiClient.delete pasa por jsonDecode, que lanza
+  /// FormatException sobre el cuerpo vacío aunque la operación haya tenido
+  /// éxito; lo absorbemos aquí. Un fallo real (no-2xx, p. ej. el 409 cuando el
+  /// servicio tiene actividad) llega como ApiException y sí se propaga.
+  Future<void> delete(String id) async {
+    try {
+      await _client.delete('/servicios/$id');
+    } on FormatException {
+      return;
+    }
+  }
+
   Future<Map<String, dynamic>> publicar(String id) {
     return _client.post('/servicios/$id/publicar', const {});
   }

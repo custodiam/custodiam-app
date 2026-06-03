@@ -7,12 +7,14 @@ import '../../../../infrastructure/di/providers.dart';
 import '../../data/datasources/servicios_api.dart';
 import '../../data/repositories/servicios_repository_impl.dart';
 import '../../domain/repositories/servicios_repository.dart';
+import '../../domain/usecases/actualizar_servicio.dart';
 import '../../domain/usecases/asignar_material_servicio.dart';
 import '../../domain/usecases/asignar_vehiculo_servicio.dart';
 import '../../domain/usecases/cerrar_servicio.dart';
 import '../../domain/usecases/convocar_servicio.dart';
 import '../../domain/usecases/crear_servicio.dart';
 import '../../domain/usecases/desapuntarse_servicio.dart';
+import '../../domain/usecases/eliminar_servicio.dart';
 import '../../domain/usecases/get_inventario_servicio.dart';
 import '../../domain/usecases/get_servicio_by_id.dart';
 import '../../domain/usecases/inscribirse_servicio.dart';
@@ -38,6 +40,14 @@ final getServicioByIdProvider = Provider<GetServicioById>((ref) {
 
 final crearServicioProvider = Provider<CrearServicio>((ref) {
   return CrearServicio(ref.watch(serviciosRepositoryProvider));
+});
+
+final actualizarServicioProvider = Provider<ActualizarServicio>((ref) {
+  return ActualizarServicio(ref.watch(serviciosRepositoryProvider));
+});
+
+final eliminarServicioProvider = Provider<EliminarServicio>((ref) {
+  return EliminarServicio(ref.watch(serviciosRepositoryProvider));
 });
 
 final publicarServicioProvider = Provider<PublicarServicio>((ref) {

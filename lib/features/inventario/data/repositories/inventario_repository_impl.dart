@@ -1,6 +1,7 @@
 // Concrete InventarioRepository. Converts ApiException to
 // InventarioFailure variants (guide 26 §4).
 
+import 'dart:convert';
 import 'dart:developer' as dev;
 
 import '../../../../infrastructure/error/failure.dart';
@@ -94,6 +95,43 @@ class InventarioRepositoryImpl implements InventarioRepository {
       return Fail(_mapApiException(e));
     } catch (e, stack) {
       dev.log('inventario.createMaterial failed: $e',
+          name: 'API', error: e, stackTrace: stack);
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<MaterialItem>> updateMaterial(
+    String id,
+    Map<String, dynamic> campos,
+  ) async {
+    try {
+      final json = await _api.updateMaterial(id, campos);
+      return Success(MaterialItemModel.fromJson(json));
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        return Fail(InventarioFailure.conflicto(_detail(e)));
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log('inventario.updateMaterial failed: $e',
+          name: 'API', error: e, stackTrace: stack);
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteMaterial(String id) async {
+    try {
+      await _api.deleteMaterial(id);
+      return const Success(null);
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        return Fail(InventarioFailure.enUso(_detail(e)));
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log('inventario.deleteMaterial failed: $e',
           name: 'API', error: e, stackTrace: stack);
       return const Fail(NetworkFailure.unknown());
     }
@@ -247,6 +285,43 @@ class InventarioRepositoryImpl implements InventarioRepository {
   }
 
   @override
+  Future<Result<VehiculoItem>> updateVehiculo(
+    String id,
+    Map<String, dynamic> campos,
+  ) async {
+    try {
+      final json = await _api.updateVehiculo(id, campos);
+      return Success(VehiculoItemModel.fromJson(json));
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        return Fail(InventarioFailure.conflicto(_detail(e)));
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log('inventario.updateVehiculo failed: $e',
+          name: 'API', error: e, stackTrace: stack);
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteVehiculo(String id) async {
+    try {
+      await _api.deleteVehiculo(id);
+      return const Success(null);
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        return Fail(InventarioFailure.enUso(_detail(e)));
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log('inventario.deleteVehiculo failed: $e',
+          name: 'API', error: e, stackTrace: stack);
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
   Future<Result<VehiculoItem>> reportarIncidenciaVehiculo(
     String id, {
     required EstadoInventario nuevoEstado,
@@ -338,6 +413,22 @@ class InventarioRepositoryImpl implements InventarioRepository {
     if (e.statusCode == 401) return const AuthFailure.sessionExpired();
     if (e.statusCode == 404) return const InventarioFailure.notFound();
     return NetworkFailure.serverError(e.statusCode);
+  }
+
+  /// Extrae el `detail` legible de un error del backend. FastAPI serializa los
+  /// errores como `{"detail": "..."}`; `ApiException.message` es el cuerpo
+  /// crudo. Si el cuerpo no es ese JSON (o `detail` no es una cadena) se
+  /// devuelve `null` para que el [Failure] use su mensaje por defecto.
+  String? _detail(ApiException e) {
+    try {
+      final decoded = jsonDecode(e.message);
+      if (decoded is Map && decoded['detail'] is String) {
+        return decoded['detail'] as String;
+      }
+    } on FormatException {
+      // Cuerpo no-JSON: nos quedamos con el mensaje por defecto del Failure.
+    }
+    return null;
   }
 
   /// El POST /asignar agrupa varios 409 distintos del backend; los

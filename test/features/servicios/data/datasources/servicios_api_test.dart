@@ -57,4 +57,44 @@ void main() {
       expect(params['estado'], 'activo');
     });
   });
+
+  group('ServiciosApi.update (A5)', () {
+    test('PATCH /servicios/{id} con el cuerpo parcial', () async {
+      when(() => client.patch(any(), any()))
+          .thenAnswer((_) async => {'id': 'id-1'});
+
+      await api.update('id-1', {'titulo': 'Nuevo'});
+
+      verify(() => client.patch('/servicios/id-1', {'titulo': 'Nuevo'}))
+          .called(1);
+    });
+  });
+
+  group('ServiciosApi.delete (A7)', () {
+    test('DELETE /servicios/{id}', () async {
+      when(() => client.delete(any())).thenAnswer((_) async => {});
+
+      await api.delete('id-1');
+
+      verify(() => client.delete('/servicios/id-1')).called(1);
+    });
+
+    test('absorbe la FormatException del 204 (cuerpo vacío)', () async {
+      // ApiClient.delete pasa por jsonDecode, que lanza FormatException sobre
+      // el cuerpo vacío del 204 No Content aunque el borrado haya ido bien.
+      when(() => client.delete(any()))
+          .thenThrow(const FormatException('Unexpected end of input'));
+
+      // No debe propagar: termina normalmente.
+      await expectLater(api.delete('id-1'), completes);
+    });
+
+    test('propaga ApiException de un fallo real (p. ej. 409)', () async {
+      when(() => client.delete(any())).thenThrow(
+        ApiException(statusCode: 409, message: 'tiene actividad'),
+      );
+
+      await expectLater(api.delete('id-1'), throwsA(isA<ApiException>()));
+    });
+  });
 }

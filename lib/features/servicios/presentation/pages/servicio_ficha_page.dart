@@ -39,6 +39,7 @@ import '../../domain/entities/servicio.dart';
 import '../../domain/entities/tipo_servicio.dart';
 import '../viewmodels/servicio_ficha_view_model.dart';
 import '../viewmodels/servicios_list_view_model.dart';
+import '../widgets/personal_servicio_section.dart';
 import '../widgets/recursos_asignados_section.dart';
 
 class ServicioFichaPage extends ConsumerWidget {
@@ -79,10 +80,11 @@ class _ServicioFichaBody extends ConsumerWidget {
         },
       );
       // Cuando una acción se completa con éxito (estado AsyncData
-      // distinto al inicial), refrescamos también la lista en caché
-      // para que al volver atrás vea el estado actualizado.
+      // distinto al inicial), recargamos también la lista en caché —de
+      // forma silenciosa, sin spinner— para que al volver atrás vea el
+      // estado actualizado sin parpadeo durante la transición.
       if (prev?.isLoading == true && next.hasValue) {
-        ref.read(serviciosListViewModelProvider.notifier).refresh();
+        ref.read(serviciosListViewModelProvider.notifier).reloadSilently();
       }
     });
 
@@ -127,6 +129,18 @@ class _LoadedFicha extends ConsumerWidget {
     return AppPageScaffold(
       title: servicio.titulo,
       actions: [
+        // A5 Editar: mismo permiso que el PATCH del backend
+        // (servicios.crear_preventivo).
+        AppPermissionGate(
+          permission: Permission.serviciosCrearPreventivo,
+          child: AppIconButton(
+            key: K.servicioFichaEditarBtn,
+            tooltip: 'Editar',
+            icon: Symbols.edit,
+            onPressed: () =>
+                context.go('/servicios/${servicio.id}/editar'),
+          ),
+        ),
         AppIconButton(
           key: K.servicioFichaRefreshBtn,
           tooltip: 'Recargar',
@@ -139,11 +153,15 @@ class _LoadedFicha extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          Row(
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
             children: [
               _EstadoBadge(estado: servicio.estado),
-              const SizedBox(width: AppSpacing.sm),
               _TipoBadge(tipo: servicio.tipo),
+              // A8: indicador visible de inscripción propia. Icono + texto
+              // (no solo color, guía 28 §WCAG 1.4.1).
+              if (servicio.estoyInscrito) const _InscritoChip(),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -215,6 +233,13 @@ class _LoadedFicha extends ConsumerWidget {
             ),
           // — Recursos asignados al servicio (R1 / Opción 1B) —
           RecursosAsignadosSection(servicioId: servicio.id),
+          // — Personal del servicio (A9) — todos los operativos pueden verlo
+          // (servicios.ver_publicados); el backend recorta el teléfono según
+          // el rol de quien consulta.
+          AppPermissionGate(
+            permission: Permission.serviciosVerPublicados,
+            child: PersonalServicioSection(servicioId: servicio.id),
+          ),
           const SizedBox(height: AppSpacing.lg),
           // — Acciones para voluntarios (self-service) —
           _SelfServiceActions(servicio: servicio),
@@ -222,8 +247,77 @@ class _LoadedFicha extends ConsumerWidget {
           _AdminActions(servicio: servicio),
           // — Acceso a sección de fichaje (US-04-04 / US-04-01-02) —
           _FichajeShortcut(servicio: servicio),
+          // — Borrar servicio (A7), acción secundaria al pie de la ficha —
+          _BorrarAction(servicio: servicio),
         ],
       ),
+    );
+  }
+}
+
+/// A7 Borrar. Acción destructiva al pie de la ficha (no es la acción primaria:
+/// va separada y en estilo destructivo). Gateada por
+/// `servicios.crear_preventivo` —mismo permiso que el DELETE del backend—.
+/// Tras confirmar, si el borrado tiene éxito navega a la lista; si el backend
+/// devuelve 409 (servicio con actividad: "ciérralo en lugar de borrarlo")
+/// muestra el mensaje y NO navega.
+class _BorrarAction extends ConsumerWidget {
+  final Servicio servicio;
+
+  const _BorrarAction({required this.servicio});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final loading =
+        ref.watch(servicioFichaViewModelProvider(servicio.id)).isLoading;
+    return AppPermissionGate(
+      permission: Permission.serviciosCrearPreventivo,
+      child: Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.xl),
+        child: AppDestructiveButton(
+          key: K.servicioFichaBorrarBtn,
+          label: 'Borrar servicio',
+          icon: Symbols.delete,
+          expanded: true,
+          onPressed: loading ? null : () => _borrar(context, ref),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _borrar(BuildContext context, WidgetRef ref) async {
+    final ok = await AppConfirmDialog.show(
+      context,
+      title: 'Borrar servicio',
+      message:
+          '¿Seguro que quieres borrar "${servicio.titulo}"? Esta acción no se '
+          'puede deshacer. Si el servicio ya tiene actividad, ciérralo en lugar '
+          'de borrarlo.',
+      confirmLabel: 'Borrar',
+      isDestructive: true,
+    );
+    if (!ok || !context.mounted) return;
+    final failure = await ref
+        .read(servicioFichaViewModelProvider(servicio.id).notifier)
+        .eliminar();
+    if (!context.mounted) return;
+    if (failure == null) {
+      // Éxito: refrescamos la lista en caché y volvemos a ella.
+      ref.read(serviciosListViewModelProvider.notifier).reloadSilently();
+      AppSnackbar.show(
+        context,
+        message: 'Servicio borrado.',
+        variant: AppSnackbarVariant.success,
+      );
+      context.go('/servicios');
+      return;
+    }
+    // Fallo (incluido el 409 ServicioTieneActividad): mostramos el mensaje del
+    // backend y permanecemos en la ficha.
+    AppSnackbar.show(
+      context,
+      message: failure.message ?? 'No se pudo borrar el servicio.',
+      variant: AppSnackbarVariant.danger,
     );
   }
 }
@@ -292,9 +386,15 @@ class _SelfServiceActions extends ConsumerWidget {
         servicio.inscritosCount >= servicio.numeroVoluntarios!;
     final canApuntarse = puedeApuntarse && !aforoLleno;
 
+    // A8: "Apuntarme" solo si NO está ya inscrito; "Darme de baja" solo si
+    // SÍ lo está. Antes ambos botones aparecían a la vez en cuanto el estado
+    // admitía inscripción, sin reflejar la inscripción propia.
+    final mostrarApuntarse = puedeApuntarse && !servicio.estoyInscrito;
+    final mostrarDarseBaja = puedeApuntarse && servicio.estoyInscrito;
+
     return Column(
       children: [
-        if (puedeApuntarse)
+        if (mostrarApuntarse)
           AppPermissionGate(
             permission: Permission.serviciosApuntarsePropio,
             child: Padding(
@@ -312,15 +412,25 @@ class _SelfServiceActions extends ConsumerWidget {
                   isLoading: loading,
                   onPressed: (loading || !canApuntarse)
                       ? null
-                      : () => ref
-                          .read(servicioFichaViewModelProvider(servicio.id)
-                              .notifier)
-                          .apuntarse(),
+                      : () async {
+                          final ok = await ref
+                              .read(servicioFichaViewModelProvider(servicio.id)
+                                  .notifier)
+                              .apuntarse();
+                          if (!context.mounted) return;
+                          if (ok) {
+                            AppSnackbar.show(
+                              context,
+                              message: 'Te has apuntado al servicio.',
+                              variant: AppSnackbarVariant.success,
+                            );
+                          }
+                        },
                 ),
               ),
             ),
           ),
-        if (puedeApuntarse)
+        if (mostrarDarseBaja)
           AppPermissionGate(
             permission: Permission.serviciosDesapuntarsePropio,
             child: Padding(
@@ -343,10 +453,18 @@ class _SelfServiceActions extends ConsumerWidget {
                           isDestructive: true,
                         );
                         if (!ok) return;
-                        await ref
+                        final bajaOk = await ref
                             .read(servicioFichaViewModelProvider(servicio.id)
                                 .notifier)
                             .desapuntarse();
+                        if (!context.mounted) return;
+                        if (bajaOk) {
+                          AppSnackbar.show(
+                            context,
+                            message: 'Te has dado de baja del servicio.',
+                            variant: AppSnackbarVariant.success,
+                          );
+                        }
                       },
               ),
             ),
@@ -372,6 +490,19 @@ class _AdminActions extends ConsumerWidget {
     if (servicio.estado == EstadoServicio.borrador) {
       items.add(AppPermissionGate(
         permission: Permission.serviciosPublicar,
+        // Sin permiso de publicar, en vez de ocultar el botón en silencio
+        // (que se percibe como "no sale el botón / se queda en borrador"),
+        // explicamos por qué no puede publicarlo este rol.
+        fallback: Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Text(
+            'Este servicio está en borrador. Debe publicarlo un responsable '
+            'con permiso de publicación.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.only(top: AppSpacing.sm),
           child: AppPrimaryButton(
@@ -537,26 +668,46 @@ class _FichajeShortcut extends ConsumerWidget {
     if (!puedeFichar && !puedeVerVoluntarios) {
       return const SizedBox.shrink();
     }
+    // A10: en borrador todavía no hay asistencia que consultar ni fichaje
+    // posible (el servicio no se ha publicado), así que no ofrecemos el
+    // atajo; solo en publicado/activo/cerrado.
+    if (servicio.estado == EstadoServicio.borrador) {
+      return const SizedBox.shrink();
+    }
+
+    void irAFichaje() => context.go('/servicios/${servicio.id}/fichaje');
+
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Fichaje',
+            // A10: para quien solo puede consultar, el bloque es "Asistencia";
+            // "Fichaje" se reserva para quien efectivamente puede fichar.
+            puedeFichar ? 'Fichaje' : 'Asistencia',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: AppSpacing.sm),
-          AppPrimaryButton(
-            key: K.servicioFichaFichajeAccesoBtn,
-            label: puedeFichar
-                ? 'Fichar entrada / salida'
-                : 'Ver voluntarios fichados',
-            icon: puedeFichar ? Symbols.fingerprint : Symbols.list_alt,
-            expanded: true,
-            onPressed: () =>
-                context.go('/servicios/${servicio.id}/fichaje'),
-          ),
+          // A10: la acción de fichar (primaria) usa AppPrimaryButton; la de
+          // solo-consulta es secundaria, para no competir con la CTA real de
+          // la ficha.
+          if (puedeFichar)
+            AppPrimaryButton(
+              key: K.servicioFichaFichajeAccesoBtn,
+              label: 'Fichar entrada / salida',
+              icon: Symbols.fingerprint,
+              expanded: true,
+              onPressed: irAFichaje,
+            )
+          else
+            AppSecondaryButton(
+              key: K.servicioFichaFichajeAccesoBtn,
+              label: 'Ver asistencia',
+              icon: Symbols.list_alt,
+              expanded: true,
+              onPressed: irAFichaje,
+            ),
         ],
       ),
     );
@@ -667,6 +818,43 @@ class _TipoBadge extends StatelessWidget {
           Icon(icon, size: 16, color: fg),
           const SizedBox(width: AppSpacing.xs),
           Text(label, style: TextStyle(color: fg)),
+        ],
+      ),
+    );
+  }
+}
+
+/// A8: chip que confirma de un vistazo que el usuario está inscrito en el
+/// servicio. Icono + texto (no solo color, guía 28 §WCAG 1.4.1).
+class _InscritoChip extends StatelessWidget {
+  const _InscritoChip();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      key: K.servicioFichaInscritoChip,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Symbols.how_to_reg,
+            size: 16,
+            color: theme.colorScheme.onTertiaryContainer,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            'Inscrito',
+            style: TextStyle(color: theme.colorScheme.onTertiaryContainer),
+          ),
         ],
       ),
     );

@@ -240,5 +240,38 @@ void main() {
       expect(state.value!.items, hasLength(4));
       expect(state.value!.hasMore, isFalse);
     });
+
+    test('reloadSilently refreshes keeping the active filters', () async {
+      when(() => repo.list(
+            skip: any(named: 'skip'),
+            limit: any(named: 'limit'),
+            query: any(named: 'query'),
+            estado: any(named: 'estado'),
+            tipo: any(named: 'tipo'),
+            desde: any(named: 'desde'),
+            hasta: any(named: 'hasta'),
+          )).thenAnswer((_) async => Success(ServiciosPage(
+            items: [_s('a')],
+            total: 1,
+          )));
+      final container = _container(repo);
+      await _settle(container);
+      await container
+          .read(serviciosListViewModelProvider.notifier)
+          .search('feria');
+      await container
+          .read(serviciosListViewModelProvider.notifier)
+          .filterByEstado(EstadoServicio.publicado);
+
+      await container
+          .read(serviciosListViewModelProvider.notifier)
+          .reloadSilently();
+
+      // A diferencia de build(), reloadSilently NO resetea los filtros.
+      final state = container.read(serviciosListViewModelProvider);
+      expect(state, isA<AsyncData<ServiciosListState>>());
+      expect(state.value!.query, 'feria');
+      expect(state.value!.estado, EstadoServicio.publicado);
+    });
   });
 }

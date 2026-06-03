@@ -149,6 +149,8 @@ sealed class ServiciosFailure extends Failure {
   const factory ServiciosFailure.inscripcionNoPermitida() =
       InscripcionNoPermitida;
   const factory ServiciosFailure.noInscrito() = NoInscrito;
+  const factory ServiciosFailure.tieneActividad([String? message]) =
+      ServicioTieneActividad;
 }
 
 final class ServicioNotFound extends ServiciosFailure {
@@ -171,6 +173,16 @@ final class InscripcionNoPermitida extends ServiciosFailure {
 
 final class NoInscrito extends ServiciosFailure {
   const NoInscrito() : super('No estás apuntado a este servicio.');
+}
+
+/// 409 al borrar un servicio que ya tiene actividad (inscripciones, fichajes
+/// o recursos asignados). Conserva el mensaje del backend ("ciérralo en lugar
+/// de borrarlo"); si no llega, un texto por defecto equivalente.
+final class ServicioTieneActividad extends ServiciosFailure {
+  const ServicioTieneActividad([String? message])
+      : super(message ??
+            'El servicio tiene actividad registrada y no se puede borrar. '
+                'Ciérralo en lugar de borrarlo.');
 }
 
 // ── Fichaje ──────────────────────────────────────────────────────────
@@ -228,6 +240,9 @@ sealed class InventarioFailure extends Failure {
   const factory InventarioFailure.asignacionNoEncontrada() =
       AsignacionNoEncontrada;
   const factory InventarioFailure.recursoSolapado() = RecursoSolapado;
+  const factory InventarioFailure.enUso([String? message]) = RecursoEnUso;
+  const factory InventarioFailure.conflicto([String? message]) =
+      InventarioConflicto;
 }
 
 final class InventarioNotFound extends InventarioFailure {
@@ -277,6 +292,22 @@ final class RecursoSolapado extends InventarioFailure {
   const RecursoSolapado()
       : super('El recurso ya está reservado por otro servicio en ese '
             'intervalo de fechas.');
+}
+
+/// 409 al eliminar un material o vehículo que todavía tiene asignaciones
+/// activas. Conserva el mensaje del backend si llega; si no, un texto por
+/// defecto explicativo. Espeja [UbicacionEnUso] para el módulo de inventario.
+final class RecursoEnUso extends InventarioFailure {
+  const RecursoEnUso([String? message])
+      : super(message ??
+            'El recurso tiene asignaciones activas y no se puede eliminar.');
+}
+
+/// 409 genérico de inventario al actualizar (p. ej. código o matrícula
+/// duplicados). Conserva el mensaje del backend para mostrarlo tal cual.
+final class InventarioConflicto extends InventarioFailure {
+  const InventarioConflicto([String? message])
+      : super(message ?? 'La operación entra en conflicto con otro recurso.');
 }
 
 // ── Ubicaciones ──────────────────────────────────────────────────────

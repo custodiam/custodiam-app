@@ -135,6 +135,18 @@ abstract final class K {
       ValueKey('inventario_vehiculo_list_view');
   static Key inventarioVehiculoItem(String vehiculoId) =>
       ValueKey('inventario_vehiculo_item_$vehiculoId');
+  static Key inventarioMaterialAccionesBtn(String materialId) =>
+      ValueKey('inventario_material_acciones_$materialId');
+  static Key inventarioVehiculoAccionesBtn(String vehiculoId) =>
+      ValueKey('inventario_vehiculo_acciones_$vehiculoId');
+  static const Key inventarioMaterialEditarItem =
+      ValueKey('inventario_material_editar_item');
+  static const Key inventarioMaterialBorrarItem =
+      ValueKey('inventario_material_borrar_item');
+  static const Key inventarioVehiculoEditarItem =
+      ValueKey('inventario_vehiculo_editar_item');
+  static const Key inventarioVehiculoBorrarItem =
+      ValueKey('inventario_vehiculo_borrar_item');
 
   // ---- Inventario — Crear ubicación (diálogo) ---------------------------
   static const Key crearUbicacionNombre = ValueKey('crear_ubicacion_nombre');
@@ -235,6 +247,18 @@ abstract final class K {
       ValueKey('servicio_ficha_cerrar_confirm');
   static const Key servicioFichaFichajeAccesoBtn =
       ValueKey('servicio_ficha_fichaje_acceso');
+  static const Key servicioFichaEditarBtn =
+      ValueKey('servicio_ficha_editar');
+  static const Key servicioFichaBorrarBtn =
+      ValueKey('servicio_ficha_borrar');
+  static const Key servicioFichaInscritoChip =
+      ValueKey('servicio_ficha_inscrito_chip');
+
+  // ---- Servicios — Personal del servicio (A9) ---------------------------
+  static const Key servicioPersonalSection =
+      ValueKey('servicio_personal_section');
+  static Key servicioPersonalItem(String voluntarioId) =>
+      ValueKey('servicio_personal_item_$voluntarioId');
 
   // ---- Servicios — Recursos asignados -----------------------------------
   static const Key servicioRecursosAnadirBtn = ValueKey('recursos_anadir');

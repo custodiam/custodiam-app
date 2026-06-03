@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/test_keys.dart';
 import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_confirm_dialog.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
@@ -331,7 +332,7 @@ class _MaterialesTabState extends ConsumerState<_MaterialesTab> {
   }
 }
 
-class _MaterialTile extends StatelessWidget {
+class _MaterialTile extends ConsumerWidget {
   final MaterialSummary material;
   const _MaterialTile({required this.material});
 
@@ -341,8 +342,39 @@ class _MaterialTile extends StatelessWidget {
         TipoMaterial.servicio => 'Servicio',
       };
 
+  Future<void> _borrar(BuildContext context, WidgetRef ref) async {
+    final ok = await AppConfirmDialog.show(
+      context,
+      title: 'Eliminar material',
+      message:
+          '¿Eliminar "${material.nombre}"? Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      isDestructive: true,
+    );
+    if (!ok || !context.mounted) return;
+    final failure = await ref
+        .read(materialesListViewModelProvider.notifier)
+        .eliminar(material.id);
+    if (!context.mounted) return;
+    AppSnackbar.show(
+      context,
+      message: failure?.message ?? 'Material eliminado.',
+      variant: failure != null
+          ? AppSnackbarVariant.danger
+          : AppSnackbarVariant.success,
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // El listado lo ve todo el que tiene `inventario.ver` (incluido el
+    // tesorero solo-lectura); editar/borrar se ofrecen solo a quien tiene
+    // `inventario.registrar_material`. No gateamos la fila entera: el menú de
+    // acciones se omite cuando falta el permiso, en lugar de abrir un menú
+    // vacío.
+    final canGestionar = ref.watch(authServiceProvider).currentUser
+            ?.hasPermission(Permission.inventarioRegistrarMaterial) ??
+        false;
     return ListTile(
       key: K.inventarioMaterialItem(material.id),
       leading: InventarioEstadoAvatar(
@@ -354,6 +386,34 @@ class _MaterialTile extends StatelessWidget {
         '${_tipoLabel(material.tipo)} · ${material.ubicacionBase ?? "Sin ubicación"}'
         '${material.codigo != null ? " · ${material.codigo}" : ""}',
       ),
+      trailing: canGestionar
+          ? PopupMenuButton<String>(
+              key: K.inventarioMaterialAccionesBtn(material.id),
+              tooltip: 'Acciones del material',
+              icon: const Icon(Symbols.more_vert),
+              onSelected: (v) => v == 'editar'
+                  ? context.go('/inventario/material/${material.id}/editar')
+                  : _borrar(context, ref),
+              itemBuilder: (context) => const <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  key: K.inventarioMaterialEditarItem,
+                  value: 'editar',
+                  child: ListTile(
+                    leading: Icon(Symbols.edit),
+                    title: Text('Editar'),
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  key: K.inventarioMaterialBorrarItem,
+                  value: 'borrar',
+                  child: ListTile(
+                    leading: Icon(Symbols.delete),
+                    title: Text('Eliminar'),
+                  ),
+                ),
+              ],
+            )
+          : null,
       onTap: () => context.go('/inventario/material/${material.id}'),
     );
   }
@@ -497,7 +557,7 @@ class _VehiculosTabState extends ConsumerState<_VehiculosTab> {
   }
 }
 
-class _VehiculoTile extends StatelessWidget {
+class _VehiculoTile extends ConsumerWidget {
   final VehiculoSummary vehiculo;
   const _VehiculoTile({required this.vehiculo});
 
@@ -508,8 +568,36 @@ class _VehiculoTile extends StatelessWidget {
         TipoVehiculo.remolque => 'Remolque',
       };
 
+  Future<void> _borrar(BuildContext context, WidgetRef ref) async {
+    final ok = await AppConfirmDialog.show(
+      context,
+      title: 'Eliminar vehículo',
+      message: '¿Eliminar "${vehiculo.codigoInterno} · ${vehiculo.matricula}"? '
+          'Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      isDestructive: true,
+    );
+    if (!ok || !context.mounted) return;
+    final failure = await ref
+        .read(vehiculosListViewModelProvider.notifier)
+        .eliminar(vehiculo.id);
+    if (!context.mounted) return;
+    AppSnackbar.show(
+      context,
+      message: failure?.message ?? 'Vehículo eliminado.',
+      variant: failure != null
+          ? AppSnackbarVariant.danger
+          : AppSnackbarVariant.success,
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Mismo criterio que _MaterialTile: acciones ofrecidas solo a quien tiene
+    // `inventario.registrar_vehiculo`; el menú se omite si falta el permiso.
+    final canGestionar = ref.watch(authServiceProvider).currentUser
+            ?.hasPermission(Permission.inventarioRegistrarVehiculo) ??
+        false;
     return ListTile(
       key: K.inventarioVehiculoItem(vehiculo.id),
       leading: InventarioEstadoAvatar(
@@ -520,6 +608,34 @@ class _VehiculoTile extends StatelessWidget {
       subtitle: Text(
         '${_tipoLabel(vehiculo.tipo)} · ${vehiculo.ubicacionBase ?? "Sin ubicación"}',
       ),
+      trailing: canGestionar
+          ? PopupMenuButton<String>(
+              key: K.inventarioVehiculoAccionesBtn(vehiculo.id),
+              tooltip: 'Acciones del vehículo',
+              icon: const Icon(Symbols.more_vert),
+              onSelected: (v) => v == 'editar'
+                  ? context.go('/inventario/vehiculos/${vehiculo.id}/editar')
+                  : _borrar(context, ref),
+              itemBuilder: (context) => const <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  key: K.inventarioVehiculoEditarItem,
+                  value: 'editar',
+                  child: ListTile(
+                    leading: Icon(Symbols.edit),
+                    title: Text('Editar'),
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  key: K.inventarioVehiculoBorrarItem,
+                  value: 'borrar',
+                  child: ListTile(
+                    leading: Icon(Symbols.delete),
+                    title: Text('Eliminar'),
+                  ),
+                ),
+              ],
+            )
+          : null,
       onTap: () => context.go('/inventario/vehiculos/${vehiculo.id}'),
     );
   }

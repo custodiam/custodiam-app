@@ -299,6 +299,102 @@ void main() {
     });
   });
 
+  group('ServiciosRepositoryImpl.update', () {
+    test('forwards partial body and parses the response (A5)', () async {
+      when(() => api.update('id-1', any()))
+          .thenAnswer((_) async => _servicioRow(id: 'id-1'));
+
+      final result =
+          await repo.update('id-1', {'titulo': 'Preventivo carrera 2'});
+
+      switch (result) {
+        case Success(:final value):
+          expect(value.id, 'id-1');
+        case Fail():
+          fail('Expected Success');
+      }
+      verify(() => api.update('id-1', {'titulo': 'Preventivo carrera 2'}))
+          .called(1);
+    });
+
+    test('maps 404 to ServiciosFailure.notFound', () async {
+      when(() => api.update('id-1', any()))
+          .thenThrow(ApiException(statusCode: 404, message: 'gone'));
+
+      final result = await repo.update('id-1', const {});
+
+      expectFailure<Servicio>(result, ServicioNotFound);
+    });
+
+    test('maps 409 to tieneActividad preserving the backend detail', () async {
+      when(() => api.update('id-1', any())).thenThrow(
+        ApiException(
+          statusCode: 409,
+          message: '{"detail":"Ciérralo en lugar de borrarlo."}',
+        ),
+      );
+
+      final result = await repo.update('id-1', const {});
+
+      expectFailure<Servicio>(result, ServicioTieneActividad);
+      switch (result) {
+        case Fail(:final failure):
+          expect(failure.message, 'Ciérralo en lugar de borrarlo.');
+        case Success():
+          fail('Expected Fail');
+      }
+    });
+  });
+
+  group('ServiciosRepositoryImpl.delete', () {
+    test('returns Success on void (A7)', () async {
+      when(() => api.delete('id-1')).thenAnswer((_) async {});
+
+      final result = await repo.delete('id-1');
+
+      expect(result, isA<Success<void>>());
+      verify(() => api.delete('id-1')).called(1);
+    });
+
+    test('maps 404 to ServiciosFailure.notFound', () async {
+      when(() => api.delete('id-1'))
+          .thenThrow(ApiException(statusCode: 404, message: 'gone'));
+
+      final result = await repo.delete('id-1');
+
+      expectFailure<void>(result, ServicioNotFound);
+    });
+
+    test('maps 409 to tieneActividad preserving the backend detail', () async {
+      when(() => api.delete('id-1')).thenThrow(
+        ApiException(
+          statusCode: 409,
+          message: '{"detail":"El servicio tiene inscripciones; '
+              'ciérralo en lugar de borrarlo."}',
+        ),
+      );
+
+      final result = await repo.delete('id-1');
+
+      expectFailure<void>(result, ServicioTieneActividad);
+      switch (result) {
+        case Fail(:final failure):
+          expect(failure.message, contains('ciérralo en lugar de borrarlo'));
+        case Success():
+          fail('Expected Fail');
+      }
+    });
+
+    test('maps 401 to AuthFailure.sessionExpired', () async {
+      when(() => api.delete('id-1'))
+          .thenThrow(ApiException(statusCode: 401, message: 'expired'));
+
+      final result = await repo.delete('id-1');
+
+      expectFailure<void>(result, SessionExpired);
+    });
+  });
+
   group('ServiciosRepositoryImpl.publicar', () {
     test('maps 409 to ServiciosFailure.transicionInvalida with detail',
         () async {
