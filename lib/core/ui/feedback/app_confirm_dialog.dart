@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../buttons/app_destructive_button.dart';
 import '../buttons/app_primary_button.dart';
 import '../buttons/app_text_button.dart';
+import 'dialog_actions.dart';
 
 class AppConfirmDialog extends StatelessWidget {
   final String title;
@@ -49,9 +50,9 @@ class AppConfirmDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(title),
+      title: Center(child: Text(title, textAlign: TextAlign.center)),
       content: Text(message),
-      actions: [
+      actions: dialogActionsAsRow([
         AppTextButton(
           label: cancelLabel,
           onPressed: () => Navigator.of(context).pop(false),
@@ -66,7 +67,7 @@ class AppConfirmDialog extends StatelessWidget {
             label: confirmLabel,
             onPressed: () => Navigator.of(context).pop(true),
           ),
-      ],
+      ]),
     );
   }
 }

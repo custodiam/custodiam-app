@@ -4,6 +4,8 @@
 
 import 'package:flutter/material.dart';
 
+import 'dialog_actions.dart';
+
 class AppDialog extends StatelessWidget {
   final String title;
   final Widget content;
@@ -76,9 +78,11 @@ class AppDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(title),
+      title: Center(child: Text(title, textAlign: TextAlign.center)),
       content: content,
-      actions: actions,
+      // Two actions (the usual cancel/confirm pair) read better split 50/50.
+      // One-button or multi-button dialogs keep the default right alignment.
+      actions: actions.length == 2 ? dialogActionsAsRow(actions) : actions,
     );
   }
 }
