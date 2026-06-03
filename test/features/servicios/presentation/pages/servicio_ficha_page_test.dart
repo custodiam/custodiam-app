@@ -330,6 +330,24 @@ void main() {
     expect(find.text('2/5'), findsOneWidget);
   });
 
+  testWidgets('la ficha ofrece pull-to-refresh que recarga el servicio',
+      (tester) async {
+    final servicio = _servicio();
+    await pumpFicha(tester, servicio);
+    // El montaje inicial hace una primera carga.
+    verify(() => repo.getById(servicio.id)).called(1);
+
+    // El body es un RefreshIndicator; invocar su onRefresh (lo que dispara el
+    // gesto de deslizar hacia abajo) vuelve a pedir el servicio al backend.
+    final indicator = tester.widget<RefreshIndicator>(
+      find.byType(RefreshIndicator),
+    );
+    await indicator.onRefresh();
+    await tester.pumpAndSettle();
+
+    verify(() => repo.getById(servicio.id)).called(1);
+  });
+
   // ── A8: inscripción propia ──────────────────────────────────────────────
   group('A8 inscripción propia', () {
     testWidgets(

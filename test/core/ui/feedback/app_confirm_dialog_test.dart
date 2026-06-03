@@ -1,5 +1,6 @@
 import 'package:custodiam/core/ui/buttons/app_destructive_button.dart';
 import 'package:custodiam/core/ui/buttons/app_primary_button.dart';
+import 'package:custodiam/core/ui/buttons/app_text_button.dart';
 import 'package:custodiam/core/ui/feedback/app_confirm_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -107,6 +108,54 @@ void main() {
 
       expect(find.byType(AppDestructiveButton), findsOneWidget);
       expect(find.byType(AppPrimaryButton), findsNothing);
+    });
+
+    testWidgets('title is centered', (tester) async {
+      late BuildContext capturedContext;
+
+      await pumpRiverpod(
+        tester,
+        Builder(builder: (context) {
+          capturedContext = context;
+          return const SizedBox.shrink();
+        }),
+      );
+
+      AppConfirmDialog.show(
+        capturedContext,
+        title: 'Eliminar',
+        message: '¿Seguro?',
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Text>(find.text('Eliminar')).textAlign,
+          TextAlign.center);
+    });
+
+    testWidgets('actions split the dialog width 50/50', (tester) async {
+      late BuildContext capturedContext;
+
+      await pumpRiverpod(
+        tester,
+        Builder(builder: (context) {
+          capturedContext = context;
+          return const SizedBox.shrink();
+        }),
+      );
+
+      AppConfirmDialog.show(
+        capturedContext,
+        title: 'Eliminar',
+        message: '¿Seguro?',
+      );
+      await tester.pumpAndSettle();
+
+      final cancelWidth = tester.getSize(find.byType(AppTextButton)).width;
+      final confirmWidth = tester.getSize(find.byType(AppPrimaryButton)).width;
+      // Ambos botones ocupan la misma mitad del ancho del diálogo.
+      expect((cancelWidth - confirmWidth).abs(), lessThan(1.0));
+      // Y son anchos de verdad, no apelmazados a la derecha.
+      expect(cancelWidth, greaterThan(80));
     });
   });
 }
