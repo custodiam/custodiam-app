@@ -64,8 +64,7 @@ class _ServicioFichaBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncState =
-        ref.watch(servicioFichaViewModelProvider(servicioId));
+    final asyncState = ref.watch(servicioFichaViewModelProvider(servicioId));
 
     ref.listen(servicioFichaViewModelProvider(servicioId), (prev, next) {
       // Cuando una acción se completa con éxito, el view model reemplaza el
@@ -131,8 +130,7 @@ class _LoadedFicha extends ConsumerWidget {
             key: K.servicioFichaEditarBtn,
             tooltip: 'Editar',
             icon: Symbols.edit,
-            onPressed: () =>
-                context.go('/servicios/${servicio.id}/editar'),
+            onPressed: () => context.go('/servicios/${servicio.id}/editar'),
           ),
         ),
         AppIconButton(
@@ -144,106 +142,115 @@ class _LoadedFicha extends ConsumerWidget {
               .refresh(),
         ),
       ],
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        children: [
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.xs,
-            children: [
-              _EstadoBadge(estado: servicio.estado),
-              _TipoBadge(tipo: servicio.tipo),
-              // A8: indicador visible de inscripción propia. Icono + texto
-              // (no solo color, guía 28 §WCAG 1.4.1).
-              if (servicio.estoyInscrito) const _InscritoChip(),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          if (servicio.descripcion != null &&
-              servicio.descripcion!.isNotEmpty) ...[
-            Text(servicio.descripcion!, style: theme.textTheme.bodyMedium),
+      body: RefreshIndicator(
+        onRefresh: () => ref
+            .read(servicioFichaViewModelProvider(servicio.id).notifier)
+            .refresh(),
+        child: ListView(
+          // AlwaysScrollable para que el gesto de pull-to-refresh funcione
+          // aunque el contenido no llene la pantalla (patrón de las listas).
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.md),
+          children: [
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xs,
+              children: [
+                _EstadoBadge(estado: servicio.estado),
+                _TipoBadge(tipo: servicio.tipo),
+                // A8: indicador visible de inscripción propia. Icono + texto
+                // (no solo color, guía 28 §WCAG 1.4.1).
+                if (servicio.estoyInscrito) const _InscritoChip(),
+              ],
+            ),
             const SizedBox(height: AppSpacing.md),
+            if (servicio.descripcion != null &&
+                servicio.descripcion!.isNotEmpty) ...[
+              Text(servicio.descripcion!, style: theme.textTheme.bodyMedium),
+              const SizedBox(height: AppSpacing.md),
+            ],
+            const Divider(height: 1),
+            _InfoRow(
+              icon: Symbols.location_on,
+              label: 'Ubicación',
+              value: servicio.ubicacion,
+            ),
+            if ((servicio.ubicacionLat != null &&
+                    servicio.ubicacionLng != null) ||
+                servicio.ubicacion.trim().isNotEmpty)
+              AbrirMapaButton(
+                buttonKey: K.servicioFichaAbrirMapaBtn,
+                // Con coordenadas mandan ellas; si solo hay texto, la ruta se
+                // resuelve por búsqueda de la dirección escrita (Opción 3).
+                lat: servicio.ubicacionLat,
+                lng: servicio.ubicacionLng,
+                texto: servicio.ubicacion,
+              ),
+            _InfoRow(
+              icon: Symbols.calendar_today,
+              label: 'Inicio',
+              value: _formatDateTime(servicio.fechaInicio),
+            ),
+            if (servicio.fechaFin != null)
+              _InfoRow(
+                icon: Symbols.event,
+                label: 'Fin previsto',
+                value: _formatDateTime(servicio.fechaFin!),
+              ),
+            if (servicio.numeroVoluntarios != null)
+              _InfoRow(
+                icon: Symbols.groups,
+                label: 'Plazas',
+                value:
+                    '${servicio.inscritosCount}/${servicio.numeroVoluntarios}',
+              ),
+            if (servicio.notasMaterial != null &&
+                servicio.notasMaterial!.isNotEmpty)
+              _InfoRow(
+                icon: Symbols.inventory_2,
+                label: 'Material',
+                value: servicio.notasMaterial!,
+              ),
+            if (servicio.notasVehiculos != null &&
+                servicio.notasVehiculos!.isNotEmpty)
+              _InfoRow(
+                icon: Symbols.directions_car,
+                label: 'Vehículos',
+                value: servicio.notasVehiculos!,
+              ),
+            if (servicio.fechaCierre != null)
+              _InfoRow(
+                icon: Symbols.lock_clock,
+                label: 'Cerrado el',
+                value: _formatDateTime(servicio.fechaCierre!),
+              ),
+            if (servicio.observacionesCierre != null &&
+                servicio.observacionesCierre!.isNotEmpty)
+              _InfoRow(
+                icon: Symbols.notes,
+                label: 'Observaciones',
+                value: servicio.observacionesCierre!,
+              ),
+            // — Recursos asignados al servicio (R1 / Opción 1B) —
+            RecursosAsignadosSection(servicioId: servicio.id),
+            // — Personal del servicio (A9) — todos los operativos pueden verlo
+            // (servicios.ver_publicados); el backend recorta el teléfono según
+            // el rol de quien consulta.
+            AppPermissionGate(
+              permission: Permission.serviciosVerPublicados,
+              child: PersonalServicioSection(servicioId: servicio.id),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            // — Acciones para voluntarios (self-service) —
+            _SelfServiceActions(servicio: servicio),
+            // — Acciones para mandos (transiciones de estado) —
+            _AdminActions(servicio: servicio),
+            // — Acceso a sección de fichaje (US-04-04 / US-04-01-02) —
+            _FichajeShortcut(servicio: servicio),
+            // — Borrar servicio (A7), acción secundaria al pie de la ficha —
+            _BorrarAction(servicio: servicio),
           ],
-          const Divider(height: 1),
-          _InfoRow(
-            icon: Symbols.location_on,
-            label: 'Ubicación',
-            value: servicio.ubicacion,
-          ),
-          if ((servicio.ubicacionLat != null && servicio.ubicacionLng != null) ||
-              servicio.ubicacion.trim().isNotEmpty)
-            AbrirMapaButton(
-              buttonKey: K.servicioFichaAbrirMapaBtn,
-              // Con coordenadas mandan ellas; si solo hay texto, la ruta se
-              // resuelve por búsqueda de la dirección escrita (Opción 3).
-              lat: servicio.ubicacionLat,
-              lng: servicio.ubicacionLng,
-              texto: servicio.ubicacion,
-            ),
-          _InfoRow(
-            icon: Symbols.calendar_today,
-            label: 'Inicio',
-            value: _formatDateTime(servicio.fechaInicio),
-          ),
-          if (servicio.fechaFin != null)
-            _InfoRow(
-              icon: Symbols.event,
-              label: 'Fin previsto',
-              value: _formatDateTime(servicio.fechaFin!),
-            ),
-          if (servicio.numeroVoluntarios != null)
-            _InfoRow(
-              icon: Symbols.groups,
-              label: 'Plazas',
-              value:
-                  '${servicio.inscritosCount}/${servicio.numeroVoluntarios}',
-            ),
-          if (servicio.notasMaterial != null &&
-              servicio.notasMaterial!.isNotEmpty)
-            _InfoRow(
-              icon: Symbols.inventory_2,
-              label: 'Material',
-              value: servicio.notasMaterial!,
-            ),
-          if (servicio.notasVehiculos != null &&
-              servicio.notasVehiculos!.isNotEmpty)
-            _InfoRow(
-              icon: Symbols.directions_car,
-              label: 'Vehículos',
-              value: servicio.notasVehiculos!,
-            ),
-          if (servicio.fechaCierre != null)
-            _InfoRow(
-              icon: Symbols.lock_clock,
-              label: 'Cerrado el',
-              value: _formatDateTime(servicio.fechaCierre!),
-            ),
-          if (servicio.observacionesCierre != null &&
-              servicio.observacionesCierre!.isNotEmpty)
-            _InfoRow(
-              icon: Symbols.notes,
-              label: 'Observaciones',
-              value: servicio.observacionesCierre!,
-            ),
-          // — Recursos asignados al servicio (R1 / Opción 1B) —
-          RecursosAsignadosSection(servicioId: servicio.id),
-          // — Personal del servicio (A9) — todos los operativos pueden verlo
-          // (servicios.ver_publicados); el backend recorta el teléfono según
-          // el rol de quien consulta.
-          AppPermissionGate(
-            permission: Permission.serviciosVerPublicados,
-            child: PersonalServicioSection(servicioId: servicio.id),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          // — Acciones para voluntarios (self-service) —
-          _SelfServiceActions(servicio: servicio),
-          // — Acciones para mandos (transiciones de estado) —
-          _AdminActions(servicio: servicio),
-          // — Acceso a sección de fichaje (US-04-04 / US-04-01-02) —
-          _FichajeShortcut(servicio: servicio),
-          // — Borrar servicio (A7), acción secundaria al pie de la ficha —
-          _BorrarAction(servicio: servicio),
-        ],
+        ),
       ),
     );
   }
@@ -396,13 +403,15 @@ class _SelfServiceActionsState extends ConsumerState<_SelfServiceActions> {
     final loading = _enCurso;
     // El backend admite inscripción mientras el servicio está
     // publicado o activo (CU-04 / EN-03-04). En cerrado/borrador no.
-    final puedeApuntarse = servicio.estado == EstadoServicio.publicado ||
+    final puedeApuntarse =
+        servicio.estado == EstadoServicio.publicado ||
         servicio.estado == EstadoServicio.activo;
 
     // Gate de aforo (UI-only). null = aforo ilimitado → siempre
     // habilitado. El backend revalida la capacidad en la petición; esta
     // puerta solo evita ofrecer una acción que terminaría en 4xx.
-    final aforoLleno = servicio.numeroVoluntarios != null &&
+    final aforoLleno =
+        servicio.numeroVoluntarios != null &&
         servicio.inscritosCount >= servicio.numeroVoluntarios!;
     final canApuntarse = puedeApuntarse && !aforoLleno;
 
@@ -433,12 +442,15 @@ class _SelfServiceActionsState extends ConsumerState<_SelfServiceActions> {
                   onPressed: (loading || !canApuntarse)
                       ? null
                       : () => _ejecutar(
-                            () => ref
-                                .read(servicioFichaViewModelProvider(servicio.id)
-                                    .notifier)
-                                .apuntarse(),
-                            'Te has apuntado al servicio.',
-                          ),
+                          () => ref
+                              .read(
+                                servicioFichaViewModelProvider(
+                                  servicio.id,
+                                ).notifier,
+                              )
+                              .apuntarse(),
+                          'Te has apuntado al servicio.',
+                        ),
                 ),
               ),
             ),
@@ -468,8 +480,11 @@ class _SelfServiceActionsState extends ConsumerState<_SelfServiceActions> {
                         if (!ok || !mounted) return;
                         await _ejecutar(
                           () => ref
-                              .read(servicioFichaViewModelProvider(servicio.id)
-                                  .notifier)
+                              .read(
+                                servicioFichaViewModelProvider(
+                                  servicio.id,
+                                ).notifier,
+                              )
                               .desapuntarse(),
                           'Te has dado de baja del servicio.',
                         );
@@ -534,93 +549,105 @@ class _AdminActionsState extends ConsumerState<_AdminActions> {
     final items = <Widget>[];
 
     if (servicio.estado == EstadoServicio.borrador) {
-      items.add(AppPermissionGate(
-        permission: Permission.serviciosPublicar,
-        // Sin permiso de publicar, en vez de ocultar el botón en silencio
-        // (que se percibe como "no sale el botón / se queda en borrador"),
-        // explicamos por qué no puede publicarlo este rol.
-        fallback: Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.sm),
-          child: Text(
-            'Este servicio está en borrador. Debe publicarlo un responsable '
-            'con permiso de publicación.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+      items.add(
+        AppPermissionGate(
+          permission: Permission.serviciosPublicar,
+          // Sin permiso de publicar, en vez de ocultar el botón en silencio
+          // (que se percibe como "no sale el botón / se queda en borrador"),
+          // explicamos por qué no puede publicarlo este rol.
+          fallback: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: Text(
+              'Este servicio está en borrador. Debe publicarlo un responsable '
+              'con permiso de publicación.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.sm),
-          child: AppPrimaryButton(
-            key: K.servicioFichaPublicarBtn,
-            label: 'Publicar servicio',
-            icon: Symbols.public,
-            expanded: true,
-            isLoading: loading,
-            onPressed: loading
-                ? null
-                : () => _ejecutar(
+          child: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: AppPrimaryButton(
+              key: K.servicioFichaPublicarBtn,
+              label: 'Publicar servicio',
+              icon: Symbols.public,
+              expanded: true,
+              isLoading: loading,
+              onPressed: loading
+                  ? null
+                  : () => _ejecutar(
                       () => ref
-                          .read(servicioFichaViewModelProvider(servicio.id)
-                              .notifier)
+                          .read(
+                            servicioFichaViewModelProvider(
+                              servicio.id,
+                            ).notifier,
+                          )
                           .publicar(),
                       'Servicio publicado.',
                     ),
+            ),
           ),
         ),
-      ));
+      );
     }
 
     if (servicio.estado == EstadoServicio.publicado ||
         servicio.estado == EstadoServicio.activo) {
-      items.add(AppPermissionGate(
-        permission: Permission.serviciosConvocar,
-        child: Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.sm),
-          child: AppSecondaryButton(
-            key: K.servicioFichaConvocarBtn,
-            label: 'Convocar voluntarios disponibles',
-            icon: Symbols.campaign,
-            expanded: true,
-            onPressed: loading
-                ? null
-                : () async {
-                    final ok = await AppConfirmDialog.show(
-                      context,
-                      title: 'Convocar voluntarios',
-                      message:
-                          'Se convocará a todos los voluntarios activos disponibles. '
-                          '¿Continuar?',
-                      confirmLabel: 'Convocar',
-                    );
-                    if (!ok || !mounted) return;
-                    await _ejecutar(
-                      () => ref
-                          .read(servicioFichaViewModelProvider(servicio.id)
-                              .notifier)
-                          .convocarTodos(),
-                      'Voluntarios convocados.',
-                    );
-                  },
+      items.add(
+        AppPermissionGate(
+          permission: Permission.serviciosConvocar,
+          child: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: AppSecondaryButton(
+              key: K.servicioFichaConvocarBtn,
+              label: 'Convocar voluntarios disponibles',
+              icon: Symbols.campaign,
+              expanded: true,
+              onPressed: loading
+                  ? null
+                  : () async {
+                      final ok = await AppConfirmDialog.show(
+                        context,
+                        title: 'Convocar voluntarios',
+                        message:
+                            'Se convocará a todos los voluntarios activos disponibles. '
+                            '¿Continuar?',
+                        confirmLabel: 'Convocar',
+                      );
+                      if (!ok || !mounted) return;
+                      await _ejecutar(
+                        () => ref
+                            .read(
+                              servicioFichaViewModelProvider(
+                                servicio.id,
+                              ).notifier,
+                            )
+                            .convocarTodos(),
+                        'Voluntarios convocados.',
+                      );
+                    },
+            ),
           ),
         ),
-      ));
+      );
     }
 
     if (servicio.estado == EstadoServicio.activo) {
-      items.add(AppPermissionGate(
-        permission: Permission.serviciosCerrar,
-        child: Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.sm),
-          child: AppDestructiveButton(
-            key: K.servicioFichaCerrarBtn,
-            label: 'Cerrar servicio',
-            icon: Symbols.lock,
-            expanded: true,
-            onPressed: loading ? null : () => _abrirCerrarDialog(servicio.id),
+      items.add(
+        AppPermissionGate(
+          permission: Permission.serviciosCerrar,
+          child: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: AppDestructiveButton(
+              key: K.servicioFichaCerrarBtn,
+              label: 'Cerrar servicio',
+              icon: Symbols.lock,
+              expanded: true,
+              onPressed: loading ? null : () => _abrirCerrarDialog(servicio.id),
+            ),
           ),
         ),
-      ));
+      );
     }
 
     return Column(children: items);
@@ -738,11 +765,12 @@ class _FichajeShortcut extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authServiceProvider).currentUser;
     final esActivo = servicio.estado == EstadoServicio.activo;
-    final puedeFichar = esActivo &&
+    final puedeFichar =
+        esActivo &&
         (user?.hasPermission(Permission.fichajeFicharPropio) ?? false);
     final puedeVerVoluntarios =
         user?.hasPermission(Permission.fichajeVerVoluntariosEnServicio) ??
-            false;
+        false;
 
     if (!puedeFichar && !puedeVerVoluntarios) {
       return const SizedBox.shrink();
@@ -803,29 +831,29 @@ class _EstadoBadge extends StatelessWidget {
     // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
     final (Color bg, Color fg, IconData icon, String label) = switch (estado) {
       EstadoServicio.borrador => (
-          theme.colorScheme.surfaceContainerHighest,
-          theme.colorScheme.onSurfaceVariant,
-          Symbols.edit_note,
-          'Borrador',
-        ),
+        theme.colorScheme.surfaceContainerHighest,
+        theme.colorScheme.onSurfaceVariant,
+        Symbols.edit_note,
+        'Borrador',
+      ),
       EstadoServicio.publicado => (
-          theme.colorScheme.primaryContainer,
-          theme.colorScheme.onPrimaryContainer,
-          Symbols.campaign,
-          'Publicado',
-        ),
+        theme.colorScheme.primaryContainer,
+        theme.colorScheme.onPrimaryContainer,
+        Symbols.campaign,
+        'Publicado',
+      ),
       EstadoServicio.activo => (
-          theme.colorScheme.tertiaryContainer,
-          theme.colorScheme.onTertiaryContainer,
-          Symbols.play_circle,
-          'Activo',
-        ),
+        theme.colorScheme.tertiaryContainer,
+        theme.colorScheme.onTertiaryContainer,
+        Symbols.play_circle,
+        'Activo',
+      ),
       EstadoServicio.cerrado => (
-          theme.colorScheme.surfaceContainerHighest,
-          theme.colorScheme.onSurfaceVariant,
-          Symbols.lock,
-          'Cerrado',
-        ),
+        theme.colorScheme.surfaceContainerHighest,
+        theme.colorScheme.onSurfaceVariant,
+        Symbols.lock,
+        'Cerrado',
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -858,29 +886,29 @@ class _TipoBadge extends StatelessWidget {
     // Guía 28 §WCAG 1.4.1: icono + color + texto, no solo color.
     final (Color bg, Color fg, IconData icon, String label) = switch (tipo) {
       TipoServicio.emergencia => (
-          theme.colorScheme.errorContainer,
-          theme.colorScheme.onErrorContainer,
-          Symbols.warning_amber,
-          'Emergencia',
-        ),
+        theme.colorScheme.errorContainer,
+        theme.colorScheme.onErrorContainer,
+        Symbols.warning_amber,
+        'Emergencia',
+      ),
       TipoServicio.preventivo => (
-          theme.colorScheme.primaryContainer,
-          theme.colorScheme.onPrimaryContainer,
-          Symbols.shield,
-          'Preventivo',
-        ),
+        theme.colorScheme.primaryContainer,
+        theme.colorScheme.onPrimaryContainer,
+        Symbols.shield,
+        'Preventivo',
+      ),
       TipoServicio.formacion => (
-          theme.colorScheme.secondaryContainer,
-          theme.colorScheme.onSecondaryContainer,
-          Symbols.school,
-          'Formación',
-        ),
+        theme.colorScheme.secondaryContainer,
+        theme.colorScheme.onSecondaryContainer,
+        Symbols.school,
+        'Formación',
+      ),
       TipoServicio.otro => (
-          theme.colorScheme.surfaceContainerHighest,
-          theme.colorScheme.onSurfaceVariant,
-          Symbols.event,
-          'Otro',
-        ),
+        theme.colorScheme.surfaceContainerHighest,
+        theme.colorScheme.onSurfaceVariant,
+        Symbols.event,
+        'Otro',
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(
