@@ -174,6 +174,148 @@ void main() {
     });
   });
 
+  group('updateMaterial', () {
+    test('forwards body and parses response', () async {
+      when(() => api.updateMaterial('m-1', any()))
+          .thenAnswer((_) async => _materialRow());
+
+      final result =
+          await repo.updateMaterial('m-1', {'nombre': 'Casco azul'});
+
+      switch (result) {
+        case Success(:final value):
+          expect(value.id, 'm-1');
+        case Fail():
+          fail('Expected Success');
+      }
+      expect(result, isA<Success<MaterialItem>>());
+      verify(() => api.updateMaterial('m-1', {'nombre': 'Casco azul'}))
+          .called(1);
+    });
+
+    test('maps 404 to notFound', () async {
+      when(() => api.updateMaterial('m-1', any()))
+          .thenThrow(ApiException(statusCode: 404, message: 'gone'));
+
+      final result = await repo.updateMaterial('m-1', const {});
+
+      expectFailure<MaterialItem>(result, InventarioNotFound);
+    });
+
+    test('maps 409 to conflicto with backend detail', () async {
+      when(() => api.updateMaterial('m-1', any())).thenThrow(
+        ApiException(
+          statusCode: 409,
+          message: '{"detail":"Código duplicado"}',
+        ),
+      );
+
+      final result = await repo.updateMaterial('m-1', const {});
+
+      expectFailure<MaterialItem>(result, InventarioConflicto);
+      switch (result) {
+        case Fail(:final failure):
+          expect(failure.message, 'Código duplicado');
+        case Success():
+          fail('Expected Fail');
+      }
+    });
+  });
+
+  group('deleteMaterial', () {
+    test('returns Success on void', () async {
+      when(() => api.deleteMaterial('m-1')).thenAnswer((_) async {});
+
+      final result = await repo.deleteMaterial('m-1');
+
+      expect(result, isA<Success<void>>());
+      verify(() => api.deleteMaterial('m-1')).called(1);
+    });
+
+    test('maps 409 to enUso with backend detail', () async {
+      when(() => api.deleteMaterial('m-1')).thenThrow(
+        ApiException(
+          statusCode: 409,
+          message: '{"detail":"Tiene asignaciones activas"}',
+        ),
+      );
+
+      final result = await repo.deleteMaterial('m-1');
+
+      expectFailure<void>(result, RecursoEnUso);
+      switch (result) {
+        case Fail(:final failure):
+          expect(failure.message, 'Tiene asignaciones activas');
+        case Success():
+          fail('Expected Fail');
+      }
+    });
+
+    test('maps 401 to sessionExpired', () async {
+      when(() => api.deleteMaterial('m-1'))
+          .thenThrow(ApiException(statusCode: 401, message: 'expired'));
+
+      final result = await repo.deleteMaterial('m-1');
+
+      expectFailure<void>(result, SessionExpired);
+    });
+  });
+
+  group('updateVehiculo + deleteVehiculo', () {
+    test('updateVehiculo parses response', () async {
+      when(() => api.updateVehiculo('v-1', any()))
+          .thenAnswer((_) async => _vehiculoRow());
+
+      final result =
+          await repo.updateVehiculo('v-1', {'matricula': '9999ZZZ'});
+
+      switch (result) {
+        case Success(:final value):
+          expect(value.id, 'v-1');
+        case Fail():
+          fail('Expected Success');
+      }
+      expect(result, isA<Success<VehiculoItem>>());
+    });
+
+    test('updateVehiculo maps 409 to conflicto with detail', () async {
+      when(() => api.updateVehiculo('v-1', any())).thenThrow(
+        ApiException(
+          statusCode: 409,
+          message: '{"detail":"Matrícula duplicada"}',
+        ),
+      );
+
+      final result = await repo.updateVehiculo('v-1', const {});
+
+      expectFailure<VehiculoItem>(result, InventarioConflicto);
+      switch (result) {
+        case Fail(:final failure):
+          expect(failure.message, 'Matrícula duplicada');
+        case Success():
+          fail('Expected Fail');
+      }
+    });
+
+    test('deleteVehiculo returns Success on void', () async {
+      when(() => api.deleteVehiculo('v-1')).thenAnswer((_) async {});
+
+      final result = await repo.deleteVehiculo('v-1');
+
+      expect(result, isA<Success<void>>());
+    });
+
+    test('deleteVehiculo maps 409 to enUso', () async {
+      when(() => api.deleteVehiculo('v-1')).thenThrow(
+        ApiException(statusCode: 409, message: 'en uso'),
+      );
+
+      final result = await repo.deleteVehiculo('v-1');
+
+      expectFailure<void>(result, RecursoEnUso);
+    });
+  });
+
   group('reportarIncidenciaMaterial', () {
     test('maps 409 to estadoFinal', () async {
       when(() => api.reportarIncidenciaMaterial('m-1', any()))

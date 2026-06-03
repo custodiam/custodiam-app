@@ -15,7 +15,8 @@ class VoluntarioInscritoModel {
     return VoluntarioInscrito(
       voluntarioId: json['voluntario_id'] as String,
       nombre: json['nombre'] as String,
-      telefono: json['telefono'] as String,
+      // El backend oculta el teléfono a quien no es mando; llega null.
+      telefono: json['telefono'] as String?,
       tipo: tipo,
       fecha: DateTime.parse(json['fecha'] as String),
     );

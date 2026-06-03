@@ -1,20 +1,25 @@
 import 'package:custodiam/app/test_keys.dart';
 import 'package:custodiam/core/ui/buttons/app_primary_button.dart';
+import 'package:custodiam/core/ui/buttons/app_secondary_button.dart';
 import 'package:custodiam/core/ui/maps/maps_launcher.dart';
 import 'package:custodiam/features/servicios/domain/entities/estado_servicio.dart';
 import 'package:custodiam/features/servicios/domain/entities/servicio.dart';
+import 'package:custodiam/features/servicios/domain/entities/tipo_inscripcion.dart';
 import 'package:custodiam/features/servicios/domain/entities/tipo_servicio.dart';
 import 'package:custodiam/features/servicios/domain/entities/servicio_inventario.dart';
+import 'package:custodiam/features/servicios/domain/entities/voluntario_inscrito.dart';
 import 'package:custodiam/features/servicios/domain/repositories/servicios_repository.dart';
 import 'package:custodiam/features/servicios/domain/entities/servicios_page.dart';
 import 'package:custodiam/features/servicios/domain/usecases/get_inventario_servicio.dart';
 import 'package:custodiam/features/servicios/domain/usecases/get_servicio_by_id.dart';
 import 'package:custodiam/features/servicios/domain/usecases/inscribirse_servicio.dart';
 import 'package:custodiam/features/servicios/domain/usecases/list_servicios.dart';
+import 'package:custodiam/features/servicios/domain/usecases/list_voluntarios_servicio.dart';
 import 'package:custodiam/features/servicios/presentation/pages/servicio_ficha_page.dart';
 import 'package:custodiam/features/servicios/presentation/viewmodels/servicios_di.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -42,6 +47,15 @@ const _voluntario = CurrentUser(
   roles: ['voluntario'],
 );
 
+// Rol de solo-consulta para A10: el secretario puede ver el personal del
+// servicio (fichaje.ver_voluntarios_en_servicio) pero NO puede fichar
+// (no tiene fichaje.fichar_propio).
+const _secretario = CurrentUser(
+  sub: 's2',
+  email: 'sec@e',
+  roles: ['secretario'],
+);
+
 Servicio _servicio({
   String id = 'id-1',
   EstadoServicio estado = EstadoServicio.publicado,
@@ -49,6 +63,8 @@ Servicio _servicio({
   int inscritosCount = 0,
   double? ubicacionLat,
   double? ubicacionLng,
+  bool estoyInscrito = false,
+  TipoInscripcion? miTipoInscripcion,
 }) {
   return Servicio(
     id: id,
@@ -61,6 +77,8 @@ Servicio _servicio({
     ubicacionLng: ubicacionLng,
     numeroVoluntarios: numeroVoluntarios,
     inscritosCount: inscritosCount,
+    estoyInscrito: estoyInscrito,
+    miTipoInscripcion: miTipoInscripcion,
   );
 }
 
@@ -75,6 +93,8 @@ void main() {
     WidgetTester tester,
     Servicio servicio, {
     List<Override> extraOverrides = const [],
+    CurrentUser currentUser = _voluntario,
+    List<VoluntarioInscrito> voluntarios = const [],
   }) async {
     when(() => repo.getById(servicio.id))
         .thenAnswer((_) async => Success(servicio));
@@ -86,15 +106,19 @@ void main() {
         ),
       ),
     );
+    when(() => repo.listVoluntarios(servicio.id))
+        .thenAnswer((_) async => Success(voluntarios));
     await pumpRiverpod(
       tester,
       ServicioFichaPage(servicioId: servicio.id),
       wrapInScaffold: false,
-      currentUser: _voluntario,
+      currentUser: currentUser,
       overrides: [
         getServicioByIdProvider.overrideWithValue(GetServicioById(repo)),
         getInventarioServicioProvider
             .overrideWithValue(GetInventarioServicio(repo)),
+        listVoluntariosServicioProvider
+            .overrideWithValue(ListVoluntariosServicio(repo)),
         ...extraOverrides,
       ],
     );
@@ -268,5 +292,156 @@ void main() {
 
     expect(find.text('Plazas'), findsOneWidget);
     expect(find.text('2/5'), findsOneWidget);
+  });
+
+  // ── A8: inscripción propia ──────────────────────────────────────────────
+  group('A8 inscripción propia', () {
+    testWidgets(
+        'inscrito muestra chip "Inscrito" y oculta el botón "Apuntarme"',
+        (tester) async {
+      await pumpFicha(
+        tester,
+        _servicio(
+          numeroVoluntarios: 5,
+          inscritosCount: 3,
+          estoyInscrito: true,
+          miTipoInscripcion: TipoInscripcion.inscrito,
+        ),
+      );
+
+      expect(find.byKey(K.servicioFichaInscritoChip), findsOneWidget);
+      expect(find.text('Inscrito'), findsWidgets);
+      expect(find.byKey(K.servicioFichaApuntarseBtn), findsNothing);
+      // El botón de baja sí aparece para quien ya está inscrito.
+      expect(find.byKey(K.servicioFichaDesapuntarseBtn), findsOneWidget);
+    });
+
+    testWidgets(
+        'no inscrito muestra "Apuntarme" y oculta el chip y "Darme de baja"',
+        (tester) async {
+      await pumpFicha(
+        tester,
+        _servicio(numeroVoluntarios: 5, inscritosCount: 3),
+      );
+
+      expect(find.byKey(K.servicioFichaApuntarseBtn), findsOneWidget);
+      expect(find.byKey(K.servicioFichaInscritoChip), findsNothing);
+      expect(find.byKey(K.servicioFichaDesapuntarseBtn), findsNothing);
+    });
+  });
+
+  // ── A9: personal del servicio ───────────────────────────────────────────
+  group('A9 personal del servicio', () {
+    testWidgets(
+        'pinta los nombres y muestra el teléfono solo cuando viene no-nulo',
+        (tester) async {
+      await pumpFicha(
+        tester,
+        _servicio(),
+        voluntarios: [
+          VoluntarioInscrito(
+            voluntarioId: 'v-1',
+            nombre: 'Ana Mando',
+            telefono: '600111222',
+            tipo: TipoInscripcion.convocado,
+            fecha: DateTime.utc(2026, 6, 10, 7),
+          ),
+          VoluntarioInscrito(
+            voluntarioId: 'v-2',
+            nombre: 'Bea Operativa',
+            telefono: null,
+            tipo: TipoInscripcion.inscrito,
+            fecha: DateTime.utc(2026, 6, 10, 8),
+          ),
+        ],
+      );
+
+      expect(find.byKey(K.servicioPersonalSection), findsOneWidget);
+      expect(find.text('Ana Mando'), findsOneWidget);
+      expect(find.text('Bea Operativa'), findsOneWidget);
+      // El teléfono del mando se muestra; el del operativo sin teléfono no.
+      expect(find.textContaining('600111222'), findsOneWidget);
+      expect(find.textContaining('601'), findsNothing);
+      expect(find.byKey(K.servicioPersonalItem('v-1')), findsOneWidget);
+      expect(find.byKey(K.servicioPersonalItem('v-2')), findsOneWidget);
+    });
+
+    testWidgets('sin inscritos muestra el mensaje de lista vacía',
+        (tester) async {
+      await pumpFicha(tester, _servicio());
+
+      expect(find.byKey(K.servicioPersonalSection), findsOneWidget);
+      expect(
+        find.text('Todavía no hay nadie inscrito ni convocado.'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  // ── A10: atajo de fichaje / asistencia ──────────────────────────────────
+  group('A10 atajo fichaje/asistencia', () {
+    testWidgets(
+        'rol de solo-consulta ve "Asistencia" y un botón secundario '
+        '"Ver asistencia"', (tester) async {
+      await pumpFicha(
+        tester,
+        _servicio(estado: EstadoServicio.activo),
+        currentUser: _secretario,
+      );
+
+      // Encabezado del bloque y label del botón.
+      expect(find.text('Asistencia'), findsOneWidget);
+      expect(find.text('Fichaje'), findsNothing);
+      final boton = find.byKey(K.servicioFichaFichajeAccesoBtn);
+      expect(boton, findsOneWidget);
+      // La variante de solo-consulta usa un botón secundario, no el primario.
+      expect(
+        tester.widget(boton),
+        isA<AppSecondaryButton>(),
+      );
+      expect(find.text('Ver asistencia'), findsOneWidget);
+    });
+
+    testWidgets('rol que sí puede fichar conserva "Fichaje" y botón primario',
+        (tester) async {
+      // jefe_equipo puede fichar (hereda fichaje.fichar_propio) en activo.
+      const jefeEquipo = CurrentUser(
+        sub: 'j',
+        email: 'j@e',
+        roles: ['jefe_equipo'],
+      );
+      await pumpFicha(
+        tester,
+        _servicio(estado: EstadoServicio.activo),
+        currentUser: jefeEquipo,
+      );
+
+      // La ficha de un mando es más larga (acciones de convocar/cerrar), así
+      // que el atajo de fichaje queda al final del ListView (lazy): hay que
+      // desplazarse hasta él antes de comprobarlo.
+      final boton = find.byKey(K.servicioFichaFichajeAccesoBtn);
+      await tester.scrollUntilVisible(
+        boton,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Fichaje'), findsOneWidget);
+      expect(tester.widget(boton), isA<AppPrimaryButton>());
+      expect(find.text('Fichar entrada / salida'), findsOneWidget);
+    });
+
+    testWidgets('el atajo no se muestra en servicios en borrador',
+        (tester) async {
+      await pumpFicha(
+        tester,
+        _servicio(estado: EstadoServicio.borrador),
+        currentUser: _secretario,
+      );
+
+      expect(find.byKey(K.servicioFichaFichajeAccesoBtn), findsNothing);
+      expect(find.text('Asistencia'), findsNothing);
+    });
   });
 }

@@ -1,4 +1,8 @@
-// AltaVehiculoPage (US-05-02).
+// AltaVehiculoPage (US-05-02) y edición de vehículo (A6). El mismo formulario
+// sirve para alta y edición: con `vehiculoId` carga la ficha, precarga el
+// formulario y al guardar hace PATCH parcial en lugar de POST. Gateada por
+// `inventario.registrar_vehiculo`, el permiso que el backend exige para crear
+// y actualizar.
 
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -10,35 +14,46 @@ import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_secondary_button.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
+import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
+import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/catalogo/catalogo_recurso.dart';
 import '../../../../infrastructure/error/failure.dart';
+import '../../../../infrastructure/error/result.dart';
 import '../../domain/entities/tipo_vehiculo.dart';
 import '../../domain/entities/vehiculo_create.dart';
 import '../viewmodels/alta_vehiculo_view_model.dart';
+import '../viewmodels/inventario_di.dart';
 import '../viewmodels/vehiculos_list_view_model.dart';
 import '../widgets/ubicacion_selector_field.dart';
 
 class AltaVehiculoPage extends ConsumerWidget {
-  const AltaVehiculoPage({super.key});
+  /// `null` ⇒ alta; con id ⇒ edición (se carga el vehículo al entrar).
+  final String? vehiculoId;
+
+  const AltaVehiculoPage({super.key, this.vehiculoId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const AppPermissionGate(
+    return AppPermissionGate(
       permission: Permission.inventarioRegistrarVehiculo,
-      fallback: _ForbiddenScreen(),
-      child: _AltaVehiculoForm(),
+      fallback: const _ForbiddenScreen(),
+      child: _AltaVehiculoForm(vehiculoId: vehiculoId),
     );
   }
 }
 
 class _AltaVehiculoForm extends ConsumerStatefulWidget {
-  const _AltaVehiculoForm();
+  final String? vehiculoId;
+
+  const _AltaVehiculoForm({this.vehiculoId});
+
+  bool get esEdicion => vehiculoId != null;
 
   @override
   ConsumerState<_AltaVehiculoForm> createState() =>
@@ -56,6 +71,16 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
   DateTime? _fechaItv;
   CatalogoRecurso? _ubicacion;
 
+  bool _cargando = false;
+  bool _guardando = false;
+  String? _errorCarga;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.esEdicion) _cargar();
+  }
+
   @override
   void dispose() {
     _codigoCtrl.dispose();
@@ -64,6 +89,51 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
     _observacionesCtrl.dispose();
     _itvCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _cargar() async {
+    setState(() => _cargando = true);
+    final result =
+        await ref.read(getVehiculoProvider).call(widget.vehiculoId!);
+    if (!mounted) return;
+    switch (result) {
+      case Success(:final value):
+        _codigoCtrl.text = value.codigoInterno;
+        _matriculaCtrl.text = value.matricula;
+        _marcaModeloCtrl.text = value.marcaModelo ?? '';
+        _observacionesCtrl.text = value.observaciones ?? '';
+        setState(() {
+          _tipo = value.tipo;
+          _fechaItv = value.fechaItv;
+          if (value.fechaItv != null) {
+            _itvCtrl.text = _formatearFecha(value.fechaItv!);
+          }
+          _ubicacion = (value.ubicacionBaseId != null)
+              ? CatalogoRecurso(
+                  id: value.ubicacionBaseId!,
+                  label: value.ubicacionBase ?? value.ubicacionBaseId!,
+                )
+              : null;
+          _cargando = false;
+        });
+      case Fail(:final failure):
+        setState(() {
+          _cargando = false;
+          _errorCarga = failure.message ?? 'No se pudo cargar el vehículo.';
+        });
+    }
+  }
+
+  String _formatearFecha(DateTime d) {
+    final dd = d.day.toString().padLeft(2, '0');
+    final mm = d.month.toString().padLeft(2, '0');
+    return '$dd/$mm/${d.year}';
+  }
+
+  String _fechaWire(DateTime d) {
+    final mm = d.month.toString().padLeft(2, '0');
+    final dd = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$mm-$dd';
   }
 
   String? _normalize(String raw) {
@@ -88,14 +158,20 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
     if (picked == null) return;
     setState(() {
       _fechaItv = picked;
-      final dd = picked.day.toString().padLeft(2, '0');
-      final mm = picked.month.toString().padLeft(2, '0');
-      _itvCtrl.text = '$dd/$mm/${picked.year}';
+      _itvCtrl.text = _formatearFecha(picked);
     });
   }
 
   void _onSubmit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (widget.esEdicion) {
+      _actualizar();
+    } else {
+      _crear();
+    }
+  }
+
+  void _crear() {
     final data = VehiculoCreate(
       codigoInterno: _codigoCtrl.text.trim(),
       matricula: _matriculaCtrl.text.trim(),
@@ -109,11 +185,49 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
     ref.read(altaVehiculoViewModelProvider.notifier).submit(data);
   }
 
+  Future<void> _actualizar() async {
+    setState(() => _guardando = true);
+    final campos = <String, dynamic>{
+      'codigo_interno': _codigoCtrl.text.trim(),
+      'matricula': _matriculaCtrl.text.trim(),
+      'tipo': _tipo.wire,
+      'ubicacion_base_id': _ubicacion?.id,
+      'ubicacion_base': _ubicacion?.label,
+      'marca_modelo': _normalize(_marcaModeloCtrl.text),
+      'fecha_itv': _fechaItv != null ? _fechaWire(_fechaItv!) : null,
+      'observaciones': _normalize(_observacionesCtrl.text),
+    };
+    final result = await ref
+        .read(actualizarVehiculoProvider)
+        .call(widget.vehiculoId!, campos);
+    if (!mounted) return;
+    switch (result) {
+      case Success(:final value):
+        ref.read(vehiculosListViewModelProvider.notifier).refresh();
+        AppSnackbar.show(
+          context,
+          message: 'Vehículo ${value.codigoInterno} actualizado.',
+          variant: AppSnackbarVariant.success,
+        );
+        context.go('/inventario/vehiculos/${value.id}');
+      case Fail(:final failure):
+        setState(() => _guardando = false);
+        AppSnackbar.show(
+          context,
+          message: failure.message ?? 'No se pudo actualizar el vehículo.',
+          variant: AppSnackbarVariant.danger,
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncSubmit = ref.watch(altaVehiculoViewModelProvider);
+    final titulo = widget.esEdicion ? 'Editar vehículo' : 'Nuevo vehículo';
+    final isBusy = widget.esEdicion ? _guardando : asyncSubmit.isLoading;
 
     ref.listen(altaVehiculoViewModelProvider, (prev, next) {
+      if (widget.esEdicion) return;
       next.whenOrNull(
         data: (created) {
           if (created == null) return;
@@ -137,9 +251,26 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
       );
     });
 
+    if (_cargando) {
+      return AppPageScaffold(
+        title: titulo,
+        body: const AppLoadingIndicator.fullScreen(),
+      );
+    }
+    if (_errorCarga != null) {
+      return AppPageScaffold(
+        title: titulo,
+        body: AppErrorState(
+          title: 'No se pudo cargar el vehículo',
+          description: _errorCarga,
+          onRetry: _cargar,
+        ),
+      );
+    }
+
     return AppPageScaffold(
       maxContentWidth: AppBreakpoints.formMaxWidth,
-      title: 'Nuevo vehículo',
+      title: titulo,
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -178,7 +309,7 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
               key: K.altaVehiculoCodigo,
               label: 'Código interno',
               controller: _codigoCtrl,
-              autofocus: true,
+              autofocus: !widget.esEdicion,
               prefixIcon: Symbols.qr_code_2,
               validator: (v) => _validateRequired(v, 'Código'),
             ),
@@ -239,20 +370,30 @@ class _AltaVehiculoFormState extends ConsumerState<_AltaVehiculoForm> {
             const SizedBox(height: AppSpacing.xl),
             AppPrimaryButton(
               key: K.altaVehiculoSubmit,
-              label: 'Registrar vehículo',
-              icon: Symbols.directions_car_filled,
+              label: widget.esEdicion
+                  ? 'Guardar cambios'
+                  : 'Registrar vehículo',
+              icon: widget.esEdicion
+                  ? Symbols.save
+                  : Symbols.directions_car_filled,
               expanded: true,
-              isLoading: asyncSubmit.isLoading,
-              onPressed: asyncSubmit.isLoading ? null : _onSubmit,
+              isLoading: isBusy,
+              onPressed: isBusy ? null : _onSubmit,
             ),
             const SizedBox(height: AppSpacing.sm),
             AppSecondaryButton(
               key: K.altaVehiculoCancel,
               label: 'Cancelar',
               expanded: true,
-              onPressed: asyncSubmit.isLoading
+              onPressed: isBusy
                   ? null
-                  : () => context.go('/inventario'),
+                  : () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/inventario');
+                      }
+                    },
             ),
           ],
         ),

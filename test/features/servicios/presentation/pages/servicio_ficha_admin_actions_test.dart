@@ -30,6 +30,7 @@ import 'package:custodiam/features/servicios/domain/usecases/convocar_servicio.d
 import 'package:custodiam/features/servicios/domain/usecases/get_inventario_servicio.dart';
 import 'package:custodiam/features/servicios/domain/usecases/get_servicio_by_id.dart';
 import 'package:custodiam/features/servicios/domain/usecases/list_servicios.dart';
+import 'package:custodiam/features/servicios/domain/usecases/list_voluntarios_servicio.dart';
 import 'package:custodiam/features/servicios/domain/usecases/publicar_servicio.dart';
 import 'package:custodiam/features/servicios/presentation/pages/servicio_ficha_page.dart';
 import 'package:custodiam/features/servicios/presentation/viewmodels/servicios_di.dart';
@@ -111,6 +112,10 @@ void main() {
         ),
       ),
     );
+    // La sección "Personal del servicio" (A9) carga la lista de voluntarios;
+    // la dejamos vacía para no tocar la red real.
+    when(() => repo.listVoluntarios(servicio.id))
+        .thenAnswer((_) async => const Success([]));
     await pumpRiverpod(
       tester,
       ServicioFichaPage(servicioId: servicio.id),
@@ -120,6 +125,8 @@ void main() {
         getServicioByIdProvider.overrideWithValue(GetServicioById(repo)),
         getInventarioServicioProvider
             .overrideWithValue(GetInventarioServicio(repo)),
+        listVoluntariosServicioProvider
+            .overrideWithValue(ListVoluntariosServicio(repo)),
         publicarServicioProvider.overrideWithValue(PublicarServicio(repo)),
         convocarServicioProvider.overrideWithValue(ConvocarServicio(repo)),
         cerrarServicioProvider.overrideWithValue(CerrarServicio(repo)),

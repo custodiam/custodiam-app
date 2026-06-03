@@ -41,6 +41,25 @@ class InventarioApi {
     return _client.post('/inventario/material', body);
   }
 
+  Future<Map<String, dynamic>> updateMaterial(
+    String id,
+    Map<String, dynamic> body,
+  ) {
+    return _client.patch('/inventario/material/$id', body);
+  }
+
+  Future<void> deleteMaterial(String id) async {
+    try {
+      await _client.delete('/inventario/material/$id');
+    } on FormatException {
+      // El backend devuelve 204 No Content (cuerpo vacío). ApiClient.delete
+      // pasa por jsonDecode, que lanza FormatException sobre el cuerpo vacío
+      // aunque la operación haya tenido éxito; lo absorbemos aquí. Un fallo
+      // real (no-2xx) llega como ApiException y sí se propaga.
+      return;
+    }
+  }
+
   Future<Map<String, dynamic>> reportarIncidenciaMaterial(
     String id,
     Map<String, dynamic> body,
@@ -87,6 +106,22 @@ class InventarioApi {
 
   Future<Map<String, dynamic>> createVehiculo(Map<String, dynamic> body) {
     return _client.post('/inventario/vehiculos', body);
+  }
+
+  Future<Map<String, dynamic>> updateVehiculo(
+    String id,
+    Map<String, dynamic> body,
+  ) {
+    return _client.patch('/inventario/vehiculos/$id', body);
+  }
+
+  Future<void> deleteVehiculo(String id) async {
+    try {
+      await _client.delete('/inventario/vehiculos/$id');
+    } on FormatException {
+      // 204 No Content: mismo motivo que deleteMaterial.
+      return;
+    }
   }
 
   Future<Map<String, dynamic>> reportarIncidenciaVehiculo(

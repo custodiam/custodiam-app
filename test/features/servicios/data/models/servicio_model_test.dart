@@ -1,5 +1,6 @@
 import 'package:custodiam/features/servicios/data/models/servicio_model.dart';
 import 'package:custodiam/features/servicios/domain/entities/estado_servicio.dart';
+import 'package:custodiam/features/servicios/domain/entities/tipo_inscripcion.dart';
 import 'package:custodiam/features/servicios/domain/entities/tipo_servicio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -54,6 +55,37 @@ void main() {
 
       expect(servicio.ubicacionLat, 41.0);
       expect(servicio.ubicacionLng, 0.0);
+    });
+  });
+
+  group('ServicioModel.fromJson inscripción propia (A8)', () {
+    test('mapea estoy_inscrito y mi_tipo_inscripcion cuando vienen', () {
+      final servicio = ServicioModel.fromJson({
+        ..._row(),
+        'estoy_inscrito': true,
+        'mi_tipo_inscripcion': 'convocado',
+      });
+
+      expect(servicio.estoyInscrito, isTrue);
+      expect(servicio.miTipoInscripcion, TipoInscripcion.convocado);
+    });
+
+    test('por defecto no inscrito cuando el backend omite los campos', () {
+      final servicio = ServicioModel.fromJson(_row());
+
+      expect(servicio.estoyInscrito, isFalse);
+      expect(servicio.miTipoInscripcion, isNull);
+    });
+
+    test('mi_tipo_inscripcion null deja el tipo en null aun inscrito', () {
+      final servicio = ServicioModel.fromJson({
+        ..._row(),
+        'estoy_inscrito': true,
+        'mi_tipo_inscripcion': null,
+      });
+
+      expect(servicio.estoyInscrito, isTrue);
+      expect(servicio.miTipoInscripcion, isNull);
     });
   });
 }
