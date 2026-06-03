@@ -2,10 +2,12 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../infrastructure/error/failure.dart';
 import '../../../../infrastructure/error/result.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/tipo_vehiculo.dart';
 import '../../domain/entities/vehiculo_summary.dart';
+import '../../domain/usecases/eliminar_vehiculo.dart';
 import '../../domain/usecases/list_vehiculos.dart';
 import 'inventario_di.dart';
 
@@ -53,6 +55,7 @@ class VehiculosListViewModel extends AsyncNotifier<VehiculosListState> {
   static const int pageSize = 50;
 
   ListVehiculos get _list => ref.read(listVehiculosProvider);
+  EliminarVehiculo get _eliminar => ref.read(eliminarVehiculoProvider);
 
   @override
   Future<VehiculosListState> build() {
@@ -134,6 +137,20 @@ class VehiculosListViewModel extends AsyncNotifier<VehiculosListState> {
         )),
       Fail(:final failure) => AsyncError(failure, StackTrace.current),
     };
+  }
+
+  /// Borra un vehículo y refresca la lista. Devuelve el [Failure] si falla
+  /// (p. ej. [InventarioFailure.enUso] ante el 409 de "tiene asignaciones")
+  /// para que la UI lo comunique, o null si tuvo éxito.
+  Future<Failure?> eliminar(String id) async {
+    final result = await _eliminar(id);
+    switch (result) {
+      case Success():
+        await refresh();
+        return null;
+      case Fail(:final failure):
+        return failure;
+    }
   }
 }
 

@@ -32,6 +32,16 @@ abstract class ServiciosRepository {
   /// → borrador, emergencia → activo.
   Future<Result<Servicio>> create(ServicioCreate data);
 
+  /// PATCH /servicios/{id} — actualización parcial (A5). [campos] solo
+  /// lleva las claves a modificar (sin `estado`). 404 → notFound, 409 →
+  /// ServiciosFailure.tieneActividad con el mensaje del backend.
+  Future<Result<Servicio>> update(String id, Map<String, dynamic> campos);
+
+  /// DELETE /servicios/{id} — borrado (A7). 404 → notFound. 409 cuando el
+  /// servicio tiene actividad (inscripciones/fichajes/recursos) →
+  /// ServiciosFailure.tieneActividad con el mensaje del backend.
+  Future<Result<void>> delete(String id);
+
   /// POST /servicios/{id}/publicar (US-03-03). 409 maps to
   /// ServiciosFailure.transicionInvalida.
   Future<Result<Servicio>> publicar(String id);

@@ -2,6 +2,7 @@
 // Failure variants. Per guide 26 §4 the rest of the app never sees
 // ApiException directly.
 
+import 'dart:convert';
 import 'dart:developer' as dev;
 
 import '../../../../infrastructure/error/failure.dart';
@@ -95,6 +96,54 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
     } catch (e, stack) {
       dev.log(
         'servicios.create failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<Servicio>> update(
+    String id,
+    Map<String, dynamic> campos,
+  ) async {
+    try {
+      final json = await _api.update(id, campos);
+      return Success(ServicioModel.fromJson(json));
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        return Fail(ServiciosFailure.tieneActividad(_detail(e)));
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'servicios.update failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<void>> delete(String id) async {
+    try {
+      await _api.delete(id);
+      return const Success(null);
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        // El servicio tiene actividad (inscripciones/fichajes/recursos): el
+        // backend devuelve "ciérralo en lugar de borrarlo". Conservamos ese
+        // mensaje para mostrarlo tal cual en la ficha.
+        return Fail(ServiciosFailure.tieneActividad(_detail(e)));
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'servicios.delete failed: $e',
         name: 'API',
         error: e,
         stackTrace: stack,
@@ -351,6 +400,22 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
       return const ServiciosFailure.notFound();
     }
     return NetworkFailure.serverError(e.statusCode);
+  }
+
+  /// Extrae el `detail` legible de un 409 cuando el backend lo serializa como
+  /// `{"detail": "..."}`. Devuelve `null` si el cuerpo no es ese JSON (o
+  /// `detail` no es cadena), para que el [Failure] use su mensaje por defecto.
+  /// Espeja el helper homónimo del módulo de inventario.
+  String? _detail(ApiException e) {
+    try {
+      final decoded = jsonDecode(e.message);
+      if (decoded is Map && decoded['detail'] is String) {
+        return decoded['detail'] as String;
+      }
+    } on FormatException {
+      // Cuerpo no-JSON: nos quedamos con el mensaje por defecto del Failure.
+    }
+    return null;
   }
 
   /// El backend devuelve un cuerpo JSON con la forma {"detail": "..."}

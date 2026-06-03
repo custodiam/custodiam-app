@@ -29,6 +29,18 @@ abstract class InventarioRepository {
   });
   Future<Result<MaterialItem>> getMaterial(String id);
   Future<Result<MaterialItem>> createMaterial(MaterialCreate data);
+
+  /// Actualiza parcialmente un material (PATCH). [campos] solo lleva las
+  /// claves a modificar (cuerpo parcial del backend). Mapea 404 → notFound y
+  /// 409 → conflicto con el mensaje del backend (p. ej. código duplicado).
+  Future<Result<MaterialItem>> updateMaterial(
+    String id,
+    Map<String, dynamic> campos,
+  );
+
+  /// Elimina un material. El backend responde 204; un 409 indica que el
+  /// material todavía tiene asignaciones activas.
+  Future<Result<void>> deleteMaterial(String id);
   Future<Result<MaterialItem>> reportarIncidenciaMaterial(
     String id, {
     required EstadoInventario nuevoEstado,
@@ -56,6 +68,17 @@ abstract class InventarioRepository {
   });
   Future<Result<VehiculoItem>> getVehiculo(String id);
   Future<Result<VehiculoItem>> createVehiculo(VehiculoCreate data);
+
+  /// Actualiza parcialmente un vehículo (PATCH). Mismo contrato de errores que
+  /// [updateMaterial] (404 → notFound, 409 → conflicto con mensaje, p. ej.
+  /// matrícula duplicada).
+  Future<Result<VehiculoItem>> updateVehiculo(
+    String id,
+    Map<String, dynamic> campos,
+  );
+
+  /// Elimina un vehículo. 204 en éxito; 409 si tiene asignaciones activas.
+  Future<Result<void>> deleteVehiculo(String id);
   Future<Result<VehiculoItem>> reportarIncidenciaVehiculo(
     String id, {
     required EstadoInventario nuevoEstado,

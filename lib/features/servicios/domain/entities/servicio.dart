@@ -2,6 +2,7 @@
 // Mirrors ServicioResponse del backend (app/schemas/servicio.py).
 
 import 'estado_servicio.dart';
+import 'tipo_inscripcion.dart';
 import 'tipo_servicio.dart';
 
 class Servicio {
@@ -27,6 +28,18 @@ class Servicio {
   /// (inscritos_count, no nullable, default 0) para que la UI pueda
   /// bloquear "Apuntarme" cuando se alcanza el aforo.
   final int inscritosCount;
+
+  /// A8: si el usuario autenticado está inscrito (propio o convocado) en
+  /// este servicio. Lo aporta el backend en GET /servicios/{id}
+  /// (`estoy_inscrito`, no nullable, default false) para que la ficha
+  /// muestre el chip "Inscrito" y alterne "Apuntarme" / "Darme de baja".
+  final bool estoyInscrito;
+
+  /// A8: tipo de inscripción propia (`mi_tipo_inscripcion`). Solo tiene
+  /// valor cuando [estoyInscrito] es true; es null en otro caso. Permite
+  /// distinguir si el usuario se apuntó por iniciativa propia o fue
+  /// convocado por un mando.
+  final TipoInscripcion? miTipoInscripcion;
   final String? notasMaterial;
   final String? notasVehiculos;
   final String? observacionesCierre;
@@ -43,6 +56,8 @@ class Servicio {
     required this.fechaInicio,
     required this.ubicacion,
     required this.inscritosCount,
+    this.estoyInscrito = false,
+    this.miTipoInscripcion,
     this.descripcion,
     this.fechaFin,
     this.ubicacionLat,

@@ -4,10 +4,12 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../infrastructure/error/failure.dart';
 import '../../../../infrastructure/error/result.dart';
 import '../../domain/entities/estado_inventario.dart';
 import '../../domain/entities/material_summary.dart';
 import '../../domain/entities/tipo_material.dart';
+import '../../domain/usecases/eliminar_material.dart';
 import '../../domain/usecases/list_materiales.dart';
 import 'inventario_di.dart';
 
@@ -55,6 +57,7 @@ class MaterialesListViewModel extends AsyncNotifier<MaterialesListState> {
   static const int pageSize = 50;
 
   ListMateriales get _list => ref.read(listMaterialesProvider);
+  EliminarMaterial get _eliminar => ref.read(eliminarMaterialProvider);
 
   @override
   Future<MaterialesListState> build() {
@@ -146,6 +149,20 @@ class MaterialesListViewModel extends AsyncNotifier<MaterialesListState> {
         )),
       Fail(:final failure) => AsyncError(failure, StackTrace.current),
     };
+  }
+
+  /// Borra un material y refresca la lista. Devuelve el [Failure] si falla
+  /// (p. ej. [InventarioFailure.enUso] ante el 409 de "tiene asignaciones")
+  /// para que la UI lo comunique, o null si tuvo éxito.
+  Future<Failure?> eliminar(String id) async {
+    final result = await _eliminar(id);
+    switch (result) {
+      case Success():
+        await refresh();
+        return null;
+      case Fail(:final failure):
+        return failure;
+    }
   }
 }
 

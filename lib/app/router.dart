@@ -196,6 +196,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                     ),
                     routes: [
                       GoRoute(
+                        path: 'editar',
+                        name: 'servicio-editar',
+                        builder: (_, state) => AltaServicioPage(
+                          servicioId: state.pathParameters['id']!,
+                        ),
+                      ),
+                      GoRoute(
                         path: 'fichaje',
                         name: 'servicio-fichaje',
                         builder: (_, state) => FichajeEnServicioPage(
@@ -227,6 +234,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) => MaterialFichaPage(
                       materialId: state.pathParameters['id']!,
                     ),
+                    routes: [
+                      GoRoute(
+                        path: 'editar',
+                        name: 'inventario-material-editar',
+                        builder: (_, state) => AltaMaterialPage(
+                          materialId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'vehiculos/alta',
@@ -239,6 +255,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) => VehiculoFichaPage(
                       vehiculoId: state.pathParameters['id']!,
                     ),
+                    routes: [
+                      GoRoute(
+                        path: 'editar',
+                        name: 'inventario-vehiculo-editar',
+                        builder: (_, state) => AltaVehiculoPage(
+                          vehiculoId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'ubicaciones/alta',
