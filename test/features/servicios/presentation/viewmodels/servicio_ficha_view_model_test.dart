@@ -90,24 +90,32 @@ void main() {
     expect(state.error, isA<ServiciosFailure>());
   });
 
-  test('apuntarse() updates state with the new servicio on Success',
-      () async {
+  test('apuntarse() updates state with the new servicio and returns null '
+      'on Success', () async {
     when(() => repo.getById('id-1')).thenAnswer(
       (_) async => Success(_servicio(estado: EstadoServicio.publicado)),
     );
     when(() => repo.inscribirse('id-1')).thenAnswer(
-      (_) async => Success(_servicio(estado: EstadoServicio.publicado)),
+      (_) async => Success(
+        _servicio(
+          estado: EstadoServicio.publicado,
+          inscritosCount: 1,
+        ),
+      ),
     );
     final container = _container(repo);
     await container.read(servicioFichaViewModelProvider('id-1').future);
 
-    await container
+    final failure = await container
         .read(servicioFichaViewModelProvider('id-1').notifier)
         .apuntarse();
 
     verify(() => repo.inscribirse('id-1')).called(1);
+    expect(failure, isNull);
     final state = container.read(servicioFichaViewModelProvider('id-1'));
     expect(state, isA<AsyncData<Servicio>>());
+    // El estado refleja el servicio que devolvió el backend (200).
+    expect(state.value!.inscritosCount, 1);
   });
 
   test('apuntarse() no aplica gate de aforo: llama al repo aun lleno',
@@ -128,7 +136,11 @@ void main() {
     verify(() => repo.inscribirse('id-1')).called(1);
   });
 
-  test('publicar() surfaces TransicionInvalida as AsyncError', () async {
+  test('publicar() returns the Failure WITHOUT tumbar el estado en fallo',
+      () async {
+    // BUG A: una acción fallida ya no debe pasar el estado a AsyncError (que
+    // tumbaría la ficha entera). El VM devuelve la Failure y conserva el
+    // AsyncData con el servicio cargado.
     when(() => repo.getById('id-1')).thenAnswer(
       (_) async => Success(_servicio(estado: EstadoServicio.borrador)),
     );
@@ -139,13 +151,15 @@ void main() {
     final container = _container(repo);
     await container.read(servicioFichaViewModelProvider('id-1').future);
 
-    await container
+    final failure = await container
         .read(servicioFichaViewModelProvider('id-1').notifier)
         .publicar();
 
+    expect(failure, isA<TransicionInvalida>());
     final state = container.read(servicioFichaViewModelProvider('id-1'));
-    expect(state, isA<AsyncError<Servicio>>());
-    expect(state.error, isA<TransicionInvalida>());
+    // La ficha sigue cargada: AsyncData, NO AsyncError.
+    expect(state, isA<AsyncData<Servicio>>());
+    expect(state.value!.estado, EstadoServicio.borrador);
   });
 
   test('convocarTodos() llama al repo con voluntarioIds = null',

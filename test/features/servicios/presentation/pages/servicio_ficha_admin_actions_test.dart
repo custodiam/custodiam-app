@@ -35,6 +35,7 @@ import 'package:custodiam/features/servicios/domain/usecases/publicar_servicio.d
 import 'package:custodiam/features/servicios/presentation/pages/servicio_ficha_page.dart';
 import 'package:custodiam/features/servicios/presentation/viewmodels/servicios_di.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
+import 'package:custodiam/infrastructure/error/failure.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -217,6 +218,37 @@ void main() {
       await tester.pumpAndSettle();
 
       verify(() => repo.publicar(_servicioId)).called(1);
+    });
+
+    testWidgets(
+        'BUG A: publicar fallido muestra el mensaje real y la ficha SIGUE '
+        'visible (no AppErrorState)', (tester) async {
+      when(() => repo.publicar(_servicioId)).thenAnswer(
+        (_) async => const Fail(
+          ServiciosFailure.transicionInvalida(
+            'Faltan datos para publicar el servicio.',
+          ),
+        ),
+      );
+
+      await pumpFicha(
+        tester,
+        servicio: _servicio(estado: EstadoServicio.borrador),
+        user: _jefeEquipo,
+      );
+
+      await tester.tap(find.byKey(K.servicioFichaPublicarBtn));
+      // Sin pumpAndSettle: el SnackBar tiene auto-dismiss y colgaría.
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      verify(() => repo.publicar(_servicioId)).called(1);
+      // El mensaje real del backend (TransicionInvalida lo expone como
+      // message por defecto 'Transición no permitida'; aquí comprobamos que
+      // la ficha no se tumbó y el botón sigue ahí).
+      expect(find.text('No se pudo cargar el servicio'), findsNothing);
+      expect(find.byKey(K.servicioFichaPublicarBtn), findsOneWidget);
     });
   });
 

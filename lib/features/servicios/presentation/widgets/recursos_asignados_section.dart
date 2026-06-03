@@ -4,10 +4,17 @@
 // del catálogo con AppCatalogSearchPicker.
 //
 // El catálogo se carga vía InventarioCatalogoService (infrastructure), así
-// que esta feature no importa features/inventario (guía 26 §1). No hay acción
-// de "quitar": el backend libera los recursos al cerrar el servicio. Si el
-// recurso ya está comprometido en un intervalo solapado, el 409 del backend
-// llega como InventarioFailure.recursoSolapado y se muestra por snackbar.
+// que esta feature no importa features/inventario (guía 26 §1). El picker pide
+// el catálogo filtrado por disponibilidad para ESTE servicio (query
+// `disponible_para_servicio`), de modo que solo ofrece recursos asignables en
+// su intervalo. No hay acción de "quitar": el backend libera los recursos al
+// cerrar el servicio.
+//
+// Un rechazo al asignar (recurso ya comprometido, servicio cerrado, material
+// no operativo, etc.) llega como una Failure DEVUELTA por el ViewModel —no
+// como AsyncError—, así que se muestra por snackbar con el motivo real sin
+// tumbar la lista ya cargada. La rama `error:` de `async.when` queda reservada
+// para el fallo de CARGA de la lista.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,21 +47,12 @@ class RecursosAsignadosSection extends ConsumerWidget {
     final provider = servicioInventarioViewModelProvider(servicioId);
     final async = ref.watch(provider);
 
-    ref.listen(provider, (prev, next) {
-      if (next is AsyncError) {
-        final error = next.error;
-        AppSnackbar.show(
-          context,
-          message: error is Failure
-              ? (error.message ?? 'No se pudo asignar el recurso.')
-              : 'No se pudo asignar el recurso.',
-          variant: AppSnackbarVariant.danger,
-        );
-      }
-    });
-
     return async.when(
       loading: () => const SizedBox.shrink(),
+      // Solo se llega aquí si falla la CARGA de la lista (build/refresh). Los
+      // fallos de asignación NO pasan por AsyncError: el ViewModel los devuelve
+      // y se muestran por snackbar sin perder la lista (ver _asignarMaterial /
+      // _asignarVehiculo más abajo).
       error: (_, _) => AppPermissionGate(
         permission: Permission.inventarioAsignarAServicio,
         fallback: const SizedBox.shrink(),
@@ -184,7 +182,9 @@ class _Body extends ConsumerWidget {
       context,
       title: 'Material disponible',
       searchHint: 'Buscar material…',
-      onLoadPage: catalogo.buscarMaterial,
+      // Filtra el catálogo a lo disponible para el intervalo de ESTE servicio.
+      onLoadPage: (query, page) =>
+          catalogo.buscarMaterial(query, page, servicioId: servicioId),
       labelOf: (r) => r.label,
     );
     if (recurso == null) return;
@@ -192,17 +192,15 @@ class _Body extends ConsumerWidget {
     final cantidad = await _pedirCantidad(context);
     if (cantidad == null) return;
     if (!context.mounted) return;
-    final ok = await ref
+    final failure = await ref
         .read(servicioInventarioViewModelProvider(servicioId).notifier)
         .asignarMaterial(materialId: recurso.id, cantidad: cantidad);
     if (!context.mounted) return;
-    if (ok) {
-      AppSnackbar.show(
-        context,
-        message: 'Material asignado al servicio.',
-        variant: AppSnackbarVariant.success,
-      );
-    }
+    _mostrarResultado(
+      context,
+      failure: failure,
+      mensajeExito: 'Material asignado al servicio.',
+    );
   }
 
   Future<void> _asignarVehiculo(BuildContext context, WidgetRef ref) async {
@@ -211,22 +209,45 @@ class _Body extends ConsumerWidget {
       context,
       title: 'Vehículos disponibles',
       searchHint: 'Buscar vehículo…',
-      onLoadPage: catalogo.buscarVehiculos,
+      // Filtra el catálogo a lo disponible para el intervalo de ESTE servicio.
+      onLoadPage: (query, page) =>
+          catalogo.buscarVehiculos(query, page, servicioId: servicioId),
       labelOf: (r) => r.label,
     );
     if (recurso == null) return;
     if (!context.mounted) return;
-    final ok = await ref
+    final failure = await ref
         .read(servicioInventarioViewModelProvider(servicioId).notifier)
         .asignarVehiculo(vehiculoId: recurso.id);
     if (!context.mounted) return;
-    if (ok) {
+    _mostrarResultado(
+      context,
+      failure: failure,
+      mensajeExito: 'Vehículo asignado al servicio.',
+    );
+  }
+
+  /// Surface el resultado de una asignación: snackbar de éxito si [failure] es
+  /// `null`, o snackbar de error con el motivo real del backend en caso
+  /// contrario. La lista NO se toca: sigue en pantalla con su contenido.
+  void _mostrarResultado(
+    BuildContext context, {
+    required Failure? failure,
+    required String mensajeExito,
+  }) {
+    if (failure == null) {
       AppSnackbar.show(
         context,
-        message: 'Vehículo asignado al servicio.',
+        message: mensajeExito,
         variant: AppSnackbarVariant.success,
       );
+      return;
     }
+    AppSnackbar.show(
+      context,
+      message: failure.message ?? 'No se pudo asignar el recurso.',
+      variant: AppSnackbarVariant.danger,
+    );
   }
 
   Future<int?> _pedirCantidad(BuildContext context) async {

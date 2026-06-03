@@ -18,6 +18,7 @@ import 'package:custodiam/features/servicios/domain/usecases/list_voluntarios_se
 import 'package:custodiam/features/servicios/presentation/pages/servicio_ficha_page.dart';
 import 'package:custodiam/features/servicios/presentation/viewmodels/servicios_di.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
+import 'package:custodiam/infrastructure/error/failure.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -261,6 +262,41 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Te has apuntado al servicio.'), findsOneWidget);
+  });
+
+  testWidgets(
+      'BUG A: una acción fallida muestra snackbar y la ficha SIGUE visible '
+      '(no AppErrorState)', (tester) async {
+    final servicio = _servicio(numeroVoluntarios: 5, inscritosCount: 2);
+    // El backend rechaza la inscripción; el repo conserva el detalle real.
+    when(() => repo.inscribirse(servicio.id)).thenAnswer(
+      (_) async => const Fail(
+        ServiciosFailure.tieneActividad('El servicio ya no admite plazas.'),
+      ),
+    );
+
+    await pumpFicha(
+      tester,
+      servicio,
+      extraOverrides: [
+        inscribirseServicioProvider
+            .overrideWithValue(InscribirseServicio(repo)),
+      ],
+    );
+
+    await tester.tap(find.byKey(K.servicioFichaApuntarseBtn));
+    // Sin pumpAndSettle: el SnackBar tiene auto-dismiss y colgaría.
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // El mensaje real del backend se muestra en el snackbar.
+    expect(find.text('El servicio ya no admite plazas.'), findsOneWidget);
+    // La ficha sigue cargada: NO aparece el AppErrorState de carga.
+    expect(find.text('No se pudo cargar el servicio'), findsNothing);
+    // Los elementos del detalle siguen presentes (la ficha no se tumbó).
+    expect(find.text('Plazas'), findsOneWidget);
+    expect(find.byKey(K.servicioFichaApuntarseBtn), findsOneWidget);
   });
 
   testWidgets('Sin Semantics Aforo completo cuando quedan plazas',

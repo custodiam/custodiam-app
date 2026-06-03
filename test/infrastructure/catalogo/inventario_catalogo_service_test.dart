@@ -86,4 +86,66 @@ void main() {
     expect(params.containsKey('q'), isFalse);
     expect(params['skip'], '0');
   });
+
+  // BUG D: con servicioId el catálogo se pide filtrado a lo disponible para
+  // el intervalo de ese servicio (query disponible_para_servicio).
+  test('buscarMaterial forwards disponible_para_servicio when servicioId given',
+      () async {
+    when(
+      () => client.getList(
+        '/inventario/material',
+        queryParams: any(named: 'queryParams'),
+      ),
+    ).thenAnswer((_) async => _resp(const []));
+
+    await service.buscarMaterial('cas', 0, servicioId: 's-1');
+
+    final params = verify(
+      () => client.getList(
+        '/inventario/material',
+        queryParams: captureAny(named: 'queryParams'),
+      ),
+    ).captured.single as Map<String, String>;
+    expect(params['disponible_para_servicio'], 's-1');
+    expect(params['q'], 'cas');
+  });
+
+  test('buscarVehiculos forwards disponible_para_servicio when servicioId given',
+      () async {
+    when(
+      () => client.getList(
+        '/inventario/vehiculos',
+        queryParams: any(named: 'queryParams'),
+      ),
+    ).thenAnswer((_) async => _resp(const []));
+
+    await service.buscarVehiculos('', 0, servicioId: 's-9');
+
+    final params = verify(
+      () => client.getList(
+        '/inventario/vehiculos',
+        queryParams: captureAny(named: 'queryParams'),
+      ),
+    ).captured.single as Map<String, String>;
+    expect(params['disponible_para_servicio'], 's-9');
+  });
+
+  test('omits disponible_para_servicio when no servicioId is given', () async {
+    when(
+      () => client.getList(
+        '/inventario/material',
+        queryParams: any(named: 'queryParams'),
+      ),
+    ).thenAnswer((_) async => _resp(const []));
+
+    await service.buscarMaterial('cas', 0);
+
+    final params = verify(
+      () => client.getList(
+        '/inventario/material',
+        queryParams: captureAny(named: 'queryParams'),
+      ),
+    ).captured.single as Map<String, String>;
+    expect(params.containsKey('disponible_para_servicio'), isFalse);
+  });
 }

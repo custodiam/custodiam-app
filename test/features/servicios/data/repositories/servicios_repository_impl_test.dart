@@ -507,7 +507,11 @@ void main() {
       expectFailure<Servicio>(result, YaInscrito);
     });
 
-    test('maps 409 "estado actual" to inscripcionNoPermitida', () async {
+    test('maps a non "ya inscrito" 409 preserving the backend detail',
+        () async {
+      // El backend puede rechazar la inscripción por otra causa (p. ej. el
+      // estado no la admite). En vez de un texto fijo, conservamos el mensaje
+      // real para mostrarlo al usuario.
       when(() => api.inscribirse('id-1')).thenThrow(
         ApiException(
           statusCode: 409,
@@ -518,7 +522,16 @@ void main() {
 
       final result = await repo.inscribirse('id-1');
 
-      expectFailure<Servicio>(result, InscripcionNoPermitida);
+      expectFailure<Servicio>(result, ServicioTieneActividad);
+      switch (result) {
+        case Fail(:final failure):
+          expect(
+            failure.message,
+            'El servicio no admite inscripciones en su estado actual',
+          );
+        case Success():
+          fail('Expected Fail');
+      }
     });
   });
 
@@ -533,14 +546,29 @@ void main() {
       expectFailure<Servicio>(result, NoInscrito);
     });
 
-    test('maps 409 to inscripcionNoPermitida', () async {
+    test('maps 409 preserving the backend detail', () async {
+      // El 409 al darse de baja ya no se colapsa a un texto fijo: conserva el
+      // mensaje real del backend para que el usuario sepa por qué se rechaza.
       when(() => api.desapuntarse('id-1')).thenThrow(
-        ApiException(statusCode: 409, message: 'convocado'),
+        ApiException(
+          statusCode: 409,
+          message:
+              '{"detail":"El servicio ya está cerrado; no admite cambios."}',
+        ),
       );
 
       final result = await repo.desapuntarse('id-1');
 
-      expectFailure<Servicio>(result, InscripcionNoPermitida);
+      expectFailure<Servicio>(result, ServicioTieneActividad);
+      switch (result) {
+        case Fail(:final failure):
+          expect(
+            failure.message,
+            'El servicio ya está cerrado; no admite cambios.',
+          );
+        case Success():
+          fail('Expected Fail');
+      }
     });
   });
 
