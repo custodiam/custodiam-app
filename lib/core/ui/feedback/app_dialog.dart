@@ -16,20 +16,40 @@ class AppDialog extends StatelessWidget {
     required this.actions,
   });
 
+  /// Muestra un diálogo modal estándar.
+  ///
+  /// Las acciones pueden pasarse de dos formas:
+  ///
+  /// - [actions]: lista de widgets ya construidos. Válido cuando los botones
+  ///   NO hacen `Navigator.pop` (o cuando el contenido es un widget propio que
+  ///   cierra el diálogo desde su propio `BuildContext`).
+  /// - [actionsBuilder]: builder que recibe el `dialogContext` del propio
+  ///   diálogo. **Es la forma obligatoria cuando las acciones hacen
+  ///   `Navigator.pop`.** `showDialog` monta el diálogo en el navigator raíz;
+  ///   si una acción capturase el `context` externo de la página (que en una
+  ///   app con `StatefulShellRoute` resuelve al navigator de la rama, no al
+  ///   raíz), el `pop` cerraría la ruta de la rama en lugar del diálogo,
+  ///   dejándolo huérfano e inerte. Usando `Navigator.of(dialogContext).pop`
+  ///   el cierre va siempre al navigator correcto.
   static Future<T?> show<T>(
     BuildContext context, {
     required String title,
     required Widget content,
-    required List<Widget> actions,
+    List<Widget>? actions,
+    List<Widget> Function(BuildContext dialogContext)? actionsBuilder,
     bool barrierDismissible = true,
   }) {
+    assert(
+      actions != null || actionsBuilder != null,
+      'AppDialog.show requiere actions o actionsBuilder.',
+    );
     return showDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
-      builder: (_) => AppDialog(
+      builder: (dialogContext) => AppDialog(
         title: title,
         content: content,
-        actions: actions,
+        actions: actionsBuilder?.call(dialogContext) ?? actions ?? const [],
       ),
     );
   }
