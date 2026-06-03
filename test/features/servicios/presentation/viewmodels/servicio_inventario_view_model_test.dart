@@ -47,7 +47,7 @@ void main() {
       expect(inv.isEmpty, isTrue);
     });
 
-    test('asignarMaterial success returns true and reloads', () async {
+    test('asignarMaterial success returns null and reloads', () async {
       final repo = _MockRepo();
       when(() => repo.getInventario('s-1'))
           .thenAnswer((_) async => const Success(_empty));
@@ -61,16 +61,17 @@ void main() {
       final container = _container(repo);
       await container.read(servicioInventarioViewModelProvider('s-1').future);
 
-      final ok = await container
+      final failure = await container
           .read(servicioInventarioViewModelProvider('s-1').notifier)
           .asignarMaterial(materialId: 'm-1');
 
-      expect(ok, isTrue);
+      expect(failure, isNull);
       verify(() => repo.getInventario('s-1')).called(2);
     });
 
-    test('asignarMaterial failure returns false and surfaces AsyncError',
-        () async {
+    test(
+        'asignarMaterial failure returns the Failure WITHOUT tumbar la lista a '
+        'AsyncError', () async {
       final repo = _MockRepo();
       when(() => repo.getInventario('s-1'))
           .thenAnswer((_) async => const Success(_empty));
@@ -86,14 +87,41 @@ void main() {
       final container = _container(repo);
       await container.read(servicioInventarioViewModelProvider('s-1').future);
 
-      final ok = await container
+      final failure = await container
           .read(servicioInventarioViewModelProvider('s-1').notifier)
           .asignarMaterial(materialId: 'm-1');
 
-      expect(ok, isFalse);
+      // El fallo se devuelve para que la UI lo surface por snackbar...
+      expect(failure, isA<RecursoSolapado>());
+      // ...pero el estado de la lista sigue cargado (AsyncData), no AsyncError:
+      // la sección no se cae a "Reintentar". (BUG C)
       expect(
         container.read(servicioInventarioViewModelProvider('s-1')),
-        isA<AsyncError<ServicioInventario>>(),
+        isA<AsyncData<ServicioInventario>>(),
+      );
+    });
+
+    test('asignarVehiculo failure returns the Failure and keeps AsyncData',
+        () async {
+      final repo = _MockRepo();
+      when(() => repo.getInventario('s-1'))
+          .thenAnswer((_) async => const Success(_empty));
+      when(
+        () => repo.asignarVehiculo('s-1', vehiculoId: any(named: 'vehiculoId')),
+      ).thenAnswer(
+        (_) async => const Fail(ServiciosFailure.cerrado()),
+      );
+      final container = _container(repo);
+      await container.read(servicioInventarioViewModelProvider('s-1').future);
+
+      final failure = await container
+          .read(servicioInventarioViewModelProvider('s-1').notifier)
+          .asignarVehiculo(vehiculoId: 'v-1');
+
+      expect(failure, isA<ServicioCerrado>());
+      expect(
+        container.read(servicioInventarioViewModelProvider('s-1')),
+        isA<AsyncData<ServicioInventario>>(),
       );
     });
   });

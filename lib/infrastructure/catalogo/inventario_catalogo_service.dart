@@ -20,16 +20,37 @@ class InventarioCatalogoService {
   /// Tamaño de página alineado con el `limit` por defecto del backend.
   static const int pageSize = 50;
 
-  Future<List<CatalogoRecurso>> buscarMaterial(String query, int page) {
-    return _buscar('/inventario/material', query, page, CatalogoRecurso.material);
+  /// Lista material del catálogo. Si se pasa [servicioId], el backend filtra
+  /// a lo disponible para el intervalo de ese servicio (query
+  /// `disponible_para_servicio`), de modo que el picker de asignación solo
+  /// ofrezca recursos asignables.
+  Future<List<CatalogoRecurso>> buscarMaterial(
+    String query,
+    int page, {
+    String? servicioId,
+  }) {
+    return _buscar(
+      '/inventario/material',
+      query,
+      page,
+      CatalogoRecurso.material,
+      servicioId: servicioId,
+    );
   }
 
-  Future<List<CatalogoRecurso>> buscarVehiculos(String query, int page) {
+  /// Lista vehículos del catálogo. Ver [buscarMaterial] para el filtro
+  /// [servicioId] / `disponible_para_servicio`.
+  Future<List<CatalogoRecurso>> buscarVehiculos(
+    String query,
+    int page, {
+    String? servicioId,
+  }) {
     return _buscar(
       '/inventario/vehiculos',
       query,
       page,
       CatalogoRecurso.vehiculo,
+      servicioId: servicioId,
     );
   }
 
@@ -37,14 +58,16 @@ class InventarioCatalogoService {
     String path,
     String query,
     int page,
-    CatalogoRecurso Function(Map<String, dynamic>) fromJson,
-  ) async {
+    CatalogoRecurso Function(Map<String, dynamic>) fromJson, {
+    String? servicioId,
+  }) async {
     final params = <String, String>{
       'skip': (page * pageSize).toString(),
       'limit': pageSize.toString(),
     };
     final q = query.trim();
     if (q.isNotEmpty) params['q'] = q;
+    if (servicioId != null) params['disponible_para_servicio'] = servicioId;
     final res = await _client.getList(path, queryParams: params);
     return res.body
         .cast<Map<String, dynamic>>()

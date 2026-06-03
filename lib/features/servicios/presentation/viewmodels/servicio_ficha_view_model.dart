@@ -1,9 +1,11 @@
 // FamilyAsyncNotifier por servicio. Estado base = el servicio
 // cargado. Las acciones (inscribirse, desapuntarse, publicar,
-// convocar, cerrar) usan el repo y emiten AsyncData con el nuevo
-// servicio o AsyncError con la Failure correspondiente. La page
-// consume el estado vía ref.listen para mostrar snackbars y vía
-// ref.watch para renderizar el detalle.
+// convocar, cerrar) usan el repo y, en éxito, emiten AsyncData con el
+// nuevo servicio que devuelve el backend; en fallo NO tumban el estado
+// (devuelven la Failure y dejan la ficha intacta). La page consume el
+// estado vía ref.watch para renderizar el detalle y recoge la Failure
+// devuelta por cada acción para mostrar el feedback puntual. El único
+// AsyncError posible es el de la carga inicial / refresh.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -48,18 +50,18 @@ class ServicioFichaViewModel extends FamilyAsyncNotifier<Servicio, String> {
     state = await AsyncValue.guard(_fetch);
   }
 
-  Future<bool> apuntarse() => _runAction(() => _inscribirse(arg));
+  Future<Failure?> apuntarse() => _runAction(() => _inscribirse(arg));
 
-  Future<bool> desapuntarse() => _runAction(() => _desapuntarse(arg));
+  Future<Failure?> desapuntarse() => _runAction(() => _desapuntarse(arg));
 
-  Future<bool> publicar() => _runAction(() => _publicar(arg));
+  Future<Failure?> publicar() => _runAction(() => _publicar(arg));
 
-  Future<bool> convocarTodos() => _runAction(() => _convocar(arg));
+  Future<Failure?> convocarTodos() => _runAction(() => _convocar(arg));
 
-  Future<bool> convocar(List<String> voluntarioIds) =>
+  Future<Failure?> convocar(List<String> voluntarioIds) =>
       _runAction(() => _convocar(arg, voluntarioIds: voluntarioIds));
 
-  Future<bool> cerrar({String? observaciones}) =>
+  Future<Failure?> cerrar({String? observaciones}) =>
       _runAction(() => _cerrar(arg, observaciones: observaciones));
 
   /// Borra el servicio (A7). Devuelve `null` en éxito (la page navega a la
@@ -75,23 +77,28 @@ class ServicioFichaViewModel extends FamilyAsyncNotifier<Servicio, String> {
     };
   }
 
-  /// Ejecuta una acción sobre el servicio y devuelve `true` si terminó con
-  /// éxito (estado final `AsyncData`) o `false` si falló (`AsyncError`, cuyo
-  /// snackbar de error pinta el `ref.listen` de la página). El valor de
-  /// retorno permite al handler mostrar el feedback de éxito sin re-escuchar
-  /// el estado ni adivinar qué acción se ejecutó.
-  Future<bool> _runAction(
+  /// Ejecuta una acción sobre el servicio y devuelve `null` si terminó con
+  /// éxito o la [Failure] si falló. En éxito actualiza el estado a `AsyncData`
+  /// con el [Servicio] que devuelve el backend (los 200 de las transiciones e
+  /// inscripciones traen el `ServicioResponse` actualizado). En fallo NO toca
+  /// el estado: la ficha sigue cargada y la página pinta un snackbar con el
+  /// mensaje de la Failure, en vez de tumbar la pantalla entera con un
+  /// `AppErrorState`. Así una acción puntual fallida no destruye el detalle.
+  Future<Failure?> _runAction(
     Future<Result<Servicio>> Function() action,
   ) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final result = await action();
-      return switch (result) {
-        Success(:final value) => value,
-        Fail(:final failure) => throw failure,
-      };
-    });
-    return state.hasValue;
+    final result = await action();
+    switch (result) {
+      case Success(:final value):
+        // El 200 trae el ServicioResponse actualizado: reemplazamos el
+        // AsyncData para que la ficha se repinte con el nuevo estado.
+        state = AsyncData(value);
+        return null;
+      case Fail(:final failure):
+        // No tocamos el estado: la ficha sigue cargada y la página muestra
+        // la Failure en un snackbar, sin tumbar la pantalla.
+        return failure;
+    }
   }
 }
 

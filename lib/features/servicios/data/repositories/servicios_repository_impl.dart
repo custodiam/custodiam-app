@@ -229,15 +229,15 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
     } on ApiException catch (e) {
       if (e.statusCode == 409) {
         // El backend devuelve dos mensajes distintos (ya inscrito vs
-        // estado no admite). Usamos el detalle para diferenciar; si no
-        // coincide, optamos por "ya inscrito" porque es el caso más
-        // frecuente desde la UI.
+        // estado no admite). Usamos el detalle para diferenciar; el caso
+        // "ya inscrito" tiene un texto propio claro, pero el resto de 409
+        // conserva el mensaje real del backend en vez de un texto fijo, para
+        // no descartar la causa concreta del rechazo.
         final detail = _extractDetail(e).toLowerCase();
-        if (detail.contains('estado actual') ||
-            detail.contains('no admite')) {
-          return const Fail(ServiciosFailure.inscripcionNoPermitida());
+        if (detail.contains('ya') && detail.contains('inscrit')) {
+          return const Fail(ServiciosFailure.yaInscrito());
         }
-        return const Fail(ServiciosFailure.yaInscrito());
+        return Fail(ServiciosFailure.tieneActividad(_detail(e)));
       }
       return Fail(_mapApiException(e));
     } catch (e, stack) {
@@ -261,7 +261,12 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
         return const Fail(ServiciosFailure.noInscrito());
       }
       if (e.statusCode == 409) {
-        return const Fail(ServiciosFailure.inscripcionNoPermitida());
+        // Cualquier 409 al darse de baja (p. ej. el servicio ya no admite la
+        // operación en su estado) conserva el mensaje real del backend en vez
+        // de colapsarlo a un texto fijo de "inscripción no permitida", que
+        // resultaba engañoso. (El backend ya permite la baja a un convocado;
+        // los 409 que queden son situaciones reales que el usuario debe leer.)
+        return Fail(ServiciosFailure.tieneActividad(_detail(e)));
       }
       return Fail(_mapApiException(e));
     } catch (e, stack) {
@@ -367,29 +372,81 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
     }
   }
 
-  /// Los POST de asignar a servicio agrupan varios 409. El de solape temporal
-  /// (Política A) llega como {"detail": {"mensaje": ..., "conflictos": [...]}},
-  /// el único con esa clave; el resto son detail planos.
+  /// Los POST de asignar a servicio agrupan varios 409 y los serializa de dos
+  /// formas distintas:
+  ///
+  /// - **Solape temporal** (Política A): `detail` es un objeto
+  ///   `{"mensaje": ..., "conflictos": [...]}`. Es el único 409 con esa forma.
+  ///   Usamos el `mensaje` del backend y, si hay conflictos, los anexamos para
+  ///   que el usuario sepa cuántos servicios están en colisión.
+  /// - **El resto** (ServicioCerrado, MaterialNoOperativo,
+  ///   TipoAsignacionNoCompatible, CantidadInsuficiente): `detail` es una
+  ///   cadena. La clasificamos por su contenido y la portamos en el [Failure]
+  ///   para no descartar el motivo concreto del rechazo.
+  ///
+  /// Si el cuerpo no es el JSON esperado, caemos a [ServerError] conservando
+  /// el código.
   Failure _mapAsignacion409(ApiException e, {required bool esVehiculo}) {
-    final detail = e.message.toLowerCase();
-    if (detail.contains('conflictos') ||
-        detail.contains('solapad') ||
-        detail.contains('ocupado')) {
-      return const InventarioFailure.recursoSolapado();
+    final detail = _decodeDetail(e);
+    if (detail is Map) {
+      // Forma de solape: {"mensaje": ..., "conflictos": [...]}.
+      final mensaje = detail['mensaje'];
+      final conflictos = detail['conflictos'];
+      final texto = mensaje is String ? mensaje : null;
+      if (conflictos is List && conflictos.isNotEmpty) {
+        final n = conflictos.length;
+        final sufijo = n == 1
+            ? ' (1 conflicto)'
+            : ' ($n conflictos)';
+        return InventarioFailure.recursoSolapado(
+          '${texto ?? 'El recurso ya está reservado en ese intervalo.'}'
+          '$sufijo',
+        );
+      }
+      return InventarioFailure.recursoSolapado(texto);
     }
-    if (detail.contains('no operativo') ||
-        detail.contains('no está operativo')) {
-      return esVehiculo
-          ? const InventarioFailure.vehiculoNoOperativo()
-          : const InventarioFailure.materialNoOperativo();
+
+    if (detail is String) {
+      final lower = detail.toLowerCase();
+      if (lower.contains('cerrad')) {
+        return ServiciosFailure.cerrado(detail);
+      }
+      if (lower.contains('solapad') ||
+          lower.contains('ocupad') ||
+          lower.contains('reservad')) {
+        return InventarioFailure.recursoSolapado(detail);
+      }
+      if (lower.contains('operativo')) {
+        return esVehiculo
+            ? InventarioFailure.vehiculoNoOperativo(detail)
+            : InventarioFailure.materialNoOperativo(detail);
+      }
+      if (lower.contains('cantidad')) {
+        return InventarioFailure.cantidadInsuficiente(detail);
+      }
+      if (lower.contains('tipo')) {
+        return InventarioFailure.tipoIncompatible(detail);
+      }
+      // Detail legible pero no clasificable: lo mostramos tal cual.
+      return InventarioFailure.conflicto(detail);
     }
-    if (detail.contains('cantidad')) {
-      return const InventarioFailure.cantidadInsuficiente();
-    }
-    if (detail.contains('tipo')) {
-      return const InventarioFailure.tipoIncompatible();
-    }
+
     return NetworkFailure.serverError(e.statusCode);
+  }
+
+  /// Decodifica el `detail` de un 409 de asignación. Devuelve el `Map` o la
+  /// `String` que cuelga de `detail`; `null` si el cuerpo no es JSON con esa
+  /// clave (para que el llamador caiga a [ServerError]).
+  Object? _decodeDetail(ApiException e) {
+    try {
+      final decoded = jsonDecode(e.message);
+      if (decoded is Map && decoded.containsKey('detail')) {
+        return decoded['detail'];
+      }
+    } on FormatException {
+      // Cuerpo no-JSON: el llamador decide el fallback.
+    }
+    return null;
   }
 
   Failure _mapApiException(ApiException e) {

@@ -9,6 +9,7 @@ import 'package:custodiam/infrastructure/auth/current_user.dart';
 import 'package:custodiam/infrastructure/catalogo/catalogo_recurso.dart';
 import 'package:custodiam/infrastructure/catalogo/inventario_catalogo_service.dart';
 import 'package:custodiam/infrastructure/di/providers.dart';
+import 'package:custodiam/infrastructure/error/failure.dart';
 import 'package:custodiam/infrastructure/error/result.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -135,7 +136,13 @@ void main() {
       'asignar material: picker → cantidad → confirmar llama al repo',
       (tester) async {
     final catalogo = _MockCatalogo();
-    when(() => catalogo.buscarMaterial(any(), any())).thenAnswer(
+    when(
+      () => catalogo.buscarMaterial(
+        any(),
+        any(),
+        servicioId: any(named: 'servicioId'),
+      ),
+    ).thenAnswer(
       (_) async =>
           [const CatalogoRecurso(id: 'm-1', label: 'Conos disponibles')],
     );
@@ -169,7 +176,13 @@ void main() {
   testWidgets('cancelar el diálogo de cantidad no asigna material',
       (tester) async {
     final catalogo = _MockCatalogo();
-    when(() => catalogo.buscarMaterial(any(), any())).thenAnswer(
+    when(
+      () => catalogo.buscarMaterial(
+        any(),
+        any(),
+        servicioId: any(named: 'servicioId'),
+      ),
+    ).thenAnswer(
       (_) async =>
           [const CatalogoRecurso(id: 'm-1', label: 'Conos disponibles')],
     );
@@ -203,7 +216,13 @@ void main() {
   testWidgets(
       'cantidad 0 (menor que 1) cae al clamp de 1 unidad', (tester) async {
     final catalogo = _MockCatalogo();
-    when(() => catalogo.buscarMaterial(any(), any())).thenAnswer(
+    when(
+      () => catalogo.buscarMaterial(
+        any(),
+        any(),
+        servicioId: any(named: 'servicioId'),
+      ),
+    ).thenAnswer(
       (_) async =>
           [const CatalogoRecurso(id: 'm-1', label: 'Conos disponibles')],
     );
@@ -232,5 +251,91 @@ void main() {
 
     verify(() => repo.asignarMaterial('s-1', materialId: 'm-1', cantidad: 1))
         .called(1);
+  });
+
+  // -- BUG C: una asignación rechazada (409) muestra el motivo por snackbar y
+  // NO tumba la sección a "Reintentar recursos" (la lista sigue en pantalla).
+  testWidgets(
+      'asignación fallida muestra snackbar con el motivo y la sección NO se cae',
+      (tester) async {
+    final catalogo = _MockCatalogo();
+    when(
+      () => catalogo.buscarMaterial(
+        any(),
+        any(),
+        servicioId: any(named: 'servicioId'),
+      ),
+    ).thenAnswer(
+      (_) async =>
+          [const CatalogoRecurso(id: 'm-1', label: 'Conos disponibles')],
+    );
+    when(
+      () => repo.asignarMaterial('s-1', materialId: 'm-1', cantidad: 1),
+    ).thenAnswer(
+      (_) async => const Fail(
+        InventarioFailure.recursoSolapado('Solape con otro servicio'),
+      ),
+    );
+
+    await pump(
+      tester,
+      _user(['jefe_equipo']),
+      extraOverrides: [
+        inventarioCatalogoServiceProvider.overrideWithValue(catalogo),
+        asignarMaterialServicioProvider
+            .overrideWithValue(AsignarMaterialServicio(repo)),
+      ],
+    );
+
+    await abrirDialogoCantidad(tester);
+    await tester.enterText(find.byKey(K.servicioRecursosCantidadField), '1');
+    await tester.tap(find.byKey(K.servicioRecursosCantidadConfirmBtn));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // El motivo real del backend se muestra por snackbar...
+    expect(find.text('Solape con otro servicio'), findsOneWidget);
+    // ...la sección sigue mostrando la lista (cabecera + recurso ya asignado),
+    // no degrada a "Reintentar recursos".
+    expect(find.text('Recursos asignados'), findsOneWidget);
+    expect(find.text('Conos'), findsOneWidget);
+    expect(find.text('Reintentar recursos'), findsNothing);
+  });
+
+  // -- BUG D: el picker pide el catálogo filtrado por disponibilidad para ESTE
+  // servicio (query disponible_para_servicio = servicioId).
+  testWidgets('el catálogo se pide filtrado por disponible_para_servicio',
+      (tester) async {
+    final catalogo = _MockCatalogo();
+    when(
+      () => catalogo.buscarMaterial(
+        any(),
+        any(),
+        servicioId: any(named: 'servicioId'),
+      ),
+    ).thenAnswer(
+      (_) async =>
+          [const CatalogoRecurso(id: 'm-1', label: 'Conos disponibles')],
+    );
+
+    await pump(
+      tester,
+      _user(['jefe_equipo']),
+      extraOverrides: [
+        inventarioCatalogoServiceProvider.overrideWithValue(catalogo),
+        asignarMaterialServicioProvider
+            .overrideWithValue(AsignarMaterialServicio(repo)),
+      ],
+    );
+
+    // Abrir el picker de material dispara la carga del catálogo.
+    await tester.tap(find.byKey(K.servicioRecursosAnadirBtn));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(K.servicioRecursosTipoMaterialBtn));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => catalogo.buscarMaterial(any(), any(), servicioId: 's-1'),
+    ).called(greaterThanOrEqualTo(1));
   });
 }
