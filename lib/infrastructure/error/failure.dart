@@ -151,6 +151,7 @@ sealed class ServiciosFailure extends Failure {
   const factory ServiciosFailure.noInscrito() = NoInscrito;
   const factory ServiciosFailure.tieneActividad([String? message]) =
       ServicioTieneActividad;
+  const factory ServiciosFailure.cerrado([String? message]) = ServicioCerrado;
 }
 
 final class ServicioNotFound extends ServiciosFailure {
@@ -183,6 +184,16 @@ final class ServicioTieneActividad extends ServiciosFailure {
       : super(message ??
             'El servicio tiene actividad registrada y no se puede borrar. '
                 'Ciérralo en lugar de borrarlo.');
+}
+
+/// 409 al asignar un recurso a un servicio que ya está cerrado: el backend
+/// no admite asignaciones en estado final. Conserva el mensaje del backend si
+/// llega; si no, un texto por defecto. (Sin este caso, el 409 caía en
+/// [ServerError] y se mostraba como "Error del servidor".)
+final class ServicioCerrado extends ServiciosFailure {
+  const ServicioCerrado([String? message])
+      : super(message ??
+            'El servicio está cerrado y no admite asignar recursos.');
 }
 
 // ── Fichaje ──────────────────────────────────────────────────────────
@@ -229,17 +240,21 @@ sealed class InventarioFailure extends Failure {
 
   const factory InventarioFailure.notFound() = InventarioNotFound;
   const factory InventarioFailure.estadoFinal() = EstadoFinal;
-  const factory InventarioFailure.materialNoOperativo() = MaterialNoOperativo;
-  const factory InventarioFailure.tipoIncompatible() = TipoIncompatible;
+  const factory InventarioFailure.materialNoOperativo([String? message]) =
+      MaterialNoOperativo;
+  const factory InventarioFailure.tipoIncompatible([String? message]) =
+      TipoIncompatible;
   const factory InventarioFailure.yaAsignado() = YaAsignado;
-  const factory InventarioFailure.cantidadInsuficiente() =
+  const factory InventarioFailure.cantidadInsuficiente([String? message]) =
       CantidadInsuficiente;
-  const factory InventarioFailure.vehiculoNoOperativo() = VehiculoNoOperativo;
+  const factory InventarioFailure.vehiculoNoOperativo([String? message]) =
+      VehiculoNoOperativo;
   const factory InventarioFailure.estadoIncidenciaInvalido() =
       EstadoIncidenciaInvalido;
   const factory InventarioFailure.asignacionNoEncontrada() =
       AsignacionNoEncontrada;
-  const factory InventarioFailure.recursoSolapado() = RecursoSolapado;
+  const factory InventarioFailure.recursoSolapado([String? message]) =
+      RecursoSolapado;
   const factory InventarioFailure.enUso([String? message]) = RecursoEnUso;
   const factory InventarioFailure.conflicto([String? message]) =
       InventarioConflicto;
@@ -255,13 +270,15 @@ final class EstadoFinal extends InventarioFailure {
 }
 
 final class MaterialNoOperativo extends InventarioFailure {
-  const MaterialNoOperativo()
-      : super('El material no está operativo: no se puede asignar.');
+  const MaterialNoOperativo([String? message])
+      : super(message ??
+            'El material no está operativo: no se puede asignar.');
 }
 
 final class TipoIncompatible extends InventarioFailure {
-  const TipoIncompatible()
-      : super('El tipo de asignación no es compatible con el material.');
+  const TipoIncompatible([String? message])
+      : super(message ??
+            'El tipo de asignación no es compatible con el material.');
 }
 
 final class YaAsignado extends InventarioFailure {
@@ -269,13 +286,15 @@ final class YaAsignado extends InventarioFailure {
 }
 
 final class CantidadInsuficiente extends InventarioFailure {
-  const CantidadInsuficiente()
-      : super('No hay cantidad suficiente disponible para esta operación.');
+  const CantidadInsuficiente([String? message])
+      : super(message ??
+            'No hay cantidad suficiente disponible para esta operación.');
 }
 
 final class VehiculoNoOperativo extends InventarioFailure {
-  const VehiculoNoOperativo()
-      : super('El vehículo no está operativo: no se puede asignar.');
+  const VehiculoNoOperativo([String? message])
+      : super(message ??
+            'El vehículo no está operativo: no se puede asignar.');
 }
 
 final class EstadoIncidenciaInvalido extends InventarioFailure {
@@ -289,9 +308,10 @@ final class AsignacionNoEncontrada extends InventarioFailure {
 }
 
 final class RecursoSolapado extends InventarioFailure {
-  const RecursoSolapado()
-      : super('El recurso ya está reservado por otro servicio en ese '
-            'intervalo de fechas.');
+  const RecursoSolapado([String? message])
+      : super(message ??
+            'El recurso ya está reservado por otro servicio en ese '
+                'intervalo de fechas.');
 }
 
 /// 409 al eliminar un material o vehículo que todavía tiene asignaciones

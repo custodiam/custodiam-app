@@ -68,22 +68,16 @@ class _ServicioFichaBody extends ConsumerWidget {
         ref.watch(servicioFichaViewModelProvider(servicioId));
 
     ref.listen(servicioFichaViewModelProvider(servicioId), (prev, next) {
-      next.whenOrNull(
-        error: (error, _) {
-          if (error is Failure) {
-            AppSnackbar.show(
-              context,
-              message: error.message ?? 'No se pudo completar la acción.',
-              variant: AppSnackbarVariant.danger,
-            );
-          }
-        },
-      );
-      // Cuando una acción se completa con éxito (estado AsyncData
-      // distinto al inicial), recargamos también la lista en caché —de
-      // forma silenciosa, sin spinner— para que al volver atrás vea el
-      // estado actualizado sin parpadeo durante la transición.
-      if (prev?.isLoading == true && next.hasValue) {
+      // Cuando una acción se completa con éxito, el view model reemplaza el
+      // AsyncData por uno nuevo (el servicio que devuelve el backend con el
+      // estado/inscripción ya actualizado). Recargamos también la lista en
+      // caché —de forma silenciosa, sin spinner— para que al volver atrás se
+      // vea el estado actualizado sin parpadeo. Las acciones ya no emiten
+      // AsyncError, así que el feedback de error lo pinta cada handler con la
+      // Failure devuelta; aquí no duplicamos snackbars.
+      if (prev?.hasValue == true &&
+          next.hasValue &&
+          !identical(prev!.value, next.value)) {
         ref.read(serviciosListViewModelProvider.notifier).reloadSilently();
       }
     });
@@ -261,15 +255,23 @@ class _LoadedFicha extends ConsumerWidget {
 /// Tras confirmar, si el borrado tiene éxito navega a la lista; si el backend
 /// devuelve 409 (servicio con actividad: "ciérralo en lugar de borrarlo")
 /// muestra el mensaje y NO navega.
-class _BorrarAction extends ConsumerWidget {
+class _BorrarAction extends ConsumerStatefulWidget {
   final Servicio servicio;
 
   const _BorrarAction({required this.servicio});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final loading =
-        ref.watch(servicioFichaViewModelProvider(servicio.id)).isLoading;
+  ConsumerState<_BorrarAction> createState() => _BorrarActionState();
+}
+
+class _BorrarActionState extends ConsumerState<_BorrarAction> {
+  // Flag local de "borrado en curso": deshabilita el botón mientras corre el
+  // DELETE, sin depender del AsyncLoading global (que ya no usan las acciones).
+  bool _enCurso = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final loading = _enCurso;
     return AppPermissionGate(
       permission: Permission.serviciosCrearPreventivo,
       child: Padding(
@@ -279,28 +281,36 @@ class _BorrarAction extends ConsumerWidget {
           label: 'Borrar servicio',
           icon: Symbols.delete,
           expanded: true,
-          onPressed: loading ? null : () => _borrar(context, ref),
+          onPressed: loading ? null : _borrar,
         ),
       ),
     );
   }
 
-  Future<void> _borrar(BuildContext context, WidgetRef ref) async {
+  Future<void> _borrar() async {
+    final servicio = widget.servicio;
     final ok = await AppConfirmDialog.show(
       context,
       title: 'Borrar servicio',
       message:
           '¿Seguro que quieres borrar "${servicio.titulo}"? Esta acción no se '
-          'puede deshacer. Si el servicio ya tiene actividad, ciérralo en lugar '
-          'de borrarlo.',
+          'puede deshacer y desconvocará al personal asignado, además de '
+          'liberar el material y los vehículos reservados para este servicio. '
+          'Si el servicio ya tiene actividad, ciérralo en lugar de borrarlo.',
       confirmLabel: 'Borrar',
       isDestructive: true,
     );
-    if (!ok || !context.mounted) return;
-    final failure = await ref
-        .read(servicioFichaViewModelProvider(servicio.id).notifier)
-        .eliminar();
-    if (!context.mounted) return;
+    if (!ok || !mounted) return;
+    setState(() => _enCurso = true);
+    final Failure? failure;
+    try {
+      failure = await ref
+          .read(servicioFichaViewModelProvider(servicio.id).notifier)
+          .eliminar();
+    } finally {
+      if (mounted) setState(() => _enCurso = false);
+    }
+    if (!mounted) return;
     if (failure == null) {
       // Éxito: refrescamos la lista en caché y volvemos a ella.
       ref.read(serviciosListViewModelProvider.notifier).reloadSilently();
@@ -364,16 +374,26 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-class _SelfServiceActions extends ConsumerWidget {
+class _SelfServiceActions extends ConsumerStatefulWidget {
   final Servicio servicio;
 
   const _SelfServiceActions({required this.servicio});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncState =
-        ref.watch(servicioFichaViewModelProvider(servicio.id));
-    final loading = asyncState.isLoading;
+  ConsumerState<_SelfServiceActions> createState() =>
+      _SelfServiceActionsState();
+}
+
+class _SelfServiceActionsState extends ConsumerState<_SelfServiceActions> {
+  // Flag local de "acción en curso": al ya no haber AsyncLoading global por
+  // acción (que tumbaría el detalle), gobernamos el spinner/disabled de los
+  // botones aquí, sin afectar al resto de la ficha.
+  bool _enCurso = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final servicio = widget.servicio;
+    final loading = _enCurso;
     // El backend admite inscripción mientras el servicio está
     // publicado o activo (CU-04 / EN-03-04). En cerrado/borrador no.
     final puedeApuntarse = servicio.estado == EstadoServicio.publicado ||
@@ -412,20 +432,13 @@ class _SelfServiceActions extends ConsumerWidget {
                   isLoading: loading,
                   onPressed: (loading || !canApuntarse)
                       ? null
-                      : () async {
-                          final ok = await ref
-                              .read(servicioFichaViewModelProvider(servicio.id)
-                                  .notifier)
-                              .apuntarse();
-                          if (!context.mounted) return;
-                          if (ok) {
-                            AppSnackbar.show(
-                              context,
-                              message: 'Te has apuntado al servicio.',
-                              variant: AppSnackbarVariant.success,
-                            );
-                          }
-                        },
+                      : () => _ejecutar(
+                            () => ref
+                                .read(servicioFichaViewModelProvider(servicio.id)
+                                    .notifier)
+                                .apuntarse(),
+                            'Te has apuntado al servicio.',
+                          ),
                 ),
               ),
             ),
@@ -452,19 +465,14 @@ class _SelfServiceActions extends ConsumerWidget {
                           confirmLabel: 'Darme de baja',
                           isDestructive: true,
                         );
-                        if (!ok) return;
-                        final bajaOk = await ref
-                            .read(servicioFichaViewModelProvider(servicio.id)
-                                .notifier)
-                            .desapuntarse();
-                        if (!context.mounted) return;
-                        if (bajaOk) {
-                          AppSnackbar.show(
-                            context,
-                            message: 'Te has dado de baja del servicio.',
-                            variant: AppSnackbarVariant.success,
-                          );
-                        }
+                        if (!ok || !mounted) return;
+                        await _ejecutar(
+                          () => ref
+                              .read(servicioFichaViewModelProvider(servicio.id)
+                                  .notifier)
+                              .desapuntarse(),
+                          'Te has dado de baja del servicio.',
+                        );
                       },
               ),
             ),
@@ -472,18 +480,56 @@ class _SelfServiceActions extends ConsumerWidget {
       ],
     );
   }
+
+  /// Lanza una acción self-service del view model gestionando el flag local de
+  /// progreso y el feedback: snackbar de éxito si la acción devuelve `null`, o
+  /// snackbar de error con el mensaje real de la [Failure] sin tumbar la ficha.
+  Future<void> _ejecutar(
+    Future<Failure?> Function() accion,
+    String mensajeExito,
+  ) async {
+    setState(() => _enCurso = true);
+    final Failure? failure;
+    try {
+      failure = await accion();
+    } finally {
+      if (mounted) setState(() => _enCurso = false);
+    }
+    if (!mounted) return;
+    if (failure == null) {
+      AppSnackbar.show(
+        context,
+        message: mensajeExito,
+        variant: AppSnackbarVariant.success,
+      );
+    } else {
+      AppSnackbar.show(
+        context,
+        message: failure.message ?? 'No se pudo completar la acción.',
+        variant: AppSnackbarVariant.danger,
+      );
+    }
+  }
 }
 
-class _AdminActions extends ConsumerWidget {
+class _AdminActions extends ConsumerStatefulWidget {
   final Servicio servicio;
 
   const _AdminActions({required this.servicio});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncState =
-        ref.watch(servicioFichaViewModelProvider(servicio.id));
-    final loading = asyncState.isLoading;
+  ConsumerState<_AdminActions> createState() => _AdminActionsState();
+}
+
+class _AdminActionsState extends ConsumerState<_AdminActions> {
+  // Flag local de "transición en curso": gobierna el spinner/disabled de las
+  // acciones de mando sin tocar el estado global de la ficha.
+  bool _enCurso = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final servicio = widget.servicio;
+    final loading = _enCurso;
 
     final items = <Widget>[];
 
@@ -513,10 +559,13 @@ class _AdminActions extends ConsumerWidget {
             isLoading: loading,
             onPressed: loading
                 ? null
-                : () => ref
-                    .read(servicioFichaViewModelProvider(servicio.id)
-                        .notifier)
-                    .publicar(),
+                : () => _ejecutar(
+                      () => ref
+                          .read(servicioFichaViewModelProvider(servicio.id)
+                              .notifier)
+                          .publicar(),
+                      'Servicio publicado.',
+                    ),
           ),
         ),
       ));
@@ -544,11 +593,14 @@ class _AdminActions extends ConsumerWidget {
                           '¿Continuar?',
                       confirmLabel: 'Convocar',
                     );
-                    if (!ok) return;
-                    await ref
-                        .read(servicioFichaViewModelProvider(servicio.id)
-                            .notifier)
-                        .convocarTodos();
+                    if (!ok || !mounted) return;
+                    await _ejecutar(
+                      () => ref
+                          .read(servicioFichaViewModelProvider(servicio.id)
+                              .notifier)
+                          .convocarTodos(),
+                      'Voluntarios convocados.',
+                    );
                   },
           ),
         ),
@@ -565,9 +617,7 @@ class _AdminActions extends ConsumerWidget {
             label: 'Cerrar servicio',
             icon: Symbols.lock,
             expanded: true,
-            onPressed: loading
-                ? null
-                : () => _abrirCerrarDialog(context, ref, servicio.id),
+            onPressed: loading ? null : () => _abrirCerrarDialog(servicio.id),
           ),
         ),
       ));
@@ -576,11 +626,7 @@ class _AdminActions extends ConsumerWidget {
     return Column(children: items);
   }
 
-  Future<void> _abrirCerrarDialog(
-    BuildContext context,
-    WidgetRef ref,
-    String servicioId,
-  ) async {
+  Future<void> _abrirCerrarDialog(String servicioId) async {
     // El diálogo es un StatefulWidget que posee y libera su controller en
     // State.dispose(); devuelve el texto de observaciones en el pop (null si
     // se cancela). Antes el controller era local y no se liberaba nunca (leak).
@@ -588,11 +634,44 @@ class _AdminActions extends ConsumerWidget {
       context,
       builder: (_) => const _CerrarServicioDialog(),
     );
-    if (observacionesRaw == null) return;
+    if (observacionesRaw == null || !mounted) return;
     final obs = observacionesRaw.trim();
-    await ref
-        .read(servicioFichaViewModelProvider(servicioId).notifier)
-        .cerrar(observaciones: obs.isEmpty ? null : obs);
+    await _ejecutar(
+      () => ref
+          .read(servicioFichaViewModelProvider(servicioId).notifier)
+          .cerrar(observaciones: obs.isEmpty ? null : obs),
+      'Servicio cerrado.',
+    );
+  }
+
+  /// Lanza una transición de mando del view model gestionando el flag local de
+  /// progreso y el feedback: snackbar de éxito si la acción devuelve `null`, o
+  /// snackbar de error con el mensaje real de la [Failure] sin tumbar la ficha.
+  Future<void> _ejecutar(
+    Future<Failure?> Function() accion,
+    String mensajeExito,
+  ) async {
+    setState(() => _enCurso = true);
+    final Failure? failure;
+    try {
+      failure = await accion();
+    } finally {
+      if (mounted) setState(() => _enCurso = false);
+    }
+    if (!mounted) return;
+    if (failure == null) {
+      AppSnackbar.show(
+        context,
+        message: mensajeExito,
+        variant: AppSnackbarVariant.success,
+      );
+    } else {
+      AppSnackbar.show(
+        context,
+        message: failure.message ?? 'No se pudo completar la acción.',
+        variant: AppSnackbarVariant.danger,
+      );
+    }
   }
 }
 

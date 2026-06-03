@@ -107,6 +107,72 @@ void main() {
 
       expectFailure<void>(result, MaterialNoOperativo);
     });
+
+    test('overlap 409 carries the backend "mensaje" and counts conflictos',
+        () async {
+      when(() => api.asignarMaterial('s-1', any())).thenThrow(
+        ApiException(
+          statusCode: 409,
+          message: '{"detail":{"mensaje":"Solape detectado",'
+              '"conflictos":[{"servicio_id":"x"},{"servicio_id":"y"}]}}',
+        ),
+      );
+
+      final result = await repo.asignarMaterial('s-1', materialId: 'm-1');
+
+      switch (result) {
+        case Success():
+          fail('Expected Fail');
+        case Fail(:final failure):
+          expect(failure, isA<RecursoSolapado>());
+          // Conserva el mensaje del backend, no un texto fijo, y anexa el
+          // número de conflictos. (BUG C: el detail no se descarta.)
+          expect(failure.message, contains('Solape detectado'));
+          expect(failure.message, contains('2 conflictos'));
+      }
+    });
+
+    test('maps the 409 "cerrado" (detail string) to ServicioCerrado carrying '
+        'the message', () async {
+      when(() => api.asignarMaterial('s-1', any())).thenThrow(
+        ApiException(
+          statusCode: 409,
+          message: '{"detail":"El servicio está cerrado"}',
+        ),
+      );
+
+      final result = await repo.asignarMaterial('s-1', materialId: 'm-1');
+
+      switch (result) {
+        case Success():
+          fail('Expected Fail');
+        case Fail(:final failure):
+          // Antes caía en NetworkFailure → "Error del servidor"; ahora es un
+          // Failure de servicio con el motivo real. (BUG C)
+          expect(failure, isA<ServicioCerrado>());
+          expect(failure.message, 'El servicio está cerrado');
+      }
+    });
+
+    test('material no operativo (detail string) carries the backend message',
+        () async {
+      when(() => api.asignarMaterial('s-1', any())).thenThrow(
+        ApiException(
+          statusCode: 409,
+          message: '{"detail":"El material PCR-9 no está operativo"}',
+        ),
+      );
+
+      final result = await repo.asignarMaterial('s-1', materialId: 'm-1');
+
+      switch (result) {
+        case Success():
+          fail('Expected Fail');
+        case Fail(:final failure):
+          expect(failure, isA<MaterialNoOperativo>());
+          expect(failure.message, 'El material PCR-9 no está operativo');
+      }
+    });
   });
 
   group('asignarVehiculo', () {
