@@ -6,8 +6,11 @@ import 'package:custodiam/features/servicios/domain/entities/servicio.dart';
 import 'package:custodiam/features/servicios/domain/entities/tipo_servicio.dart';
 import 'package:custodiam/features/servicios/domain/entities/servicio_inventario.dart';
 import 'package:custodiam/features/servicios/domain/repositories/servicios_repository.dart';
+import 'package:custodiam/features/servicios/domain/entities/servicios_page.dart';
 import 'package:custodiam/features/servicios/domain/usecases/get_inventario_servicio.dart';
 import 'package:custodiam/features/servicios/domain/usecases/get_servicio_by_id.dart';
+import 'package:custodiam/features/servicios/domain/usecases/inscribirse_servicio.dart';
+import 'package:custodiam/features/servicios/domain/usecases/list_servicios.dart';
 import 'package:custodiam/features/servicios/presentation/pages/servicio_ficha_page.dart';
 import 'package:custodiam/features/servicios/presentation/viewmodels/servicios_di.dart';
 import 'package:custodiam/infrastructure/auth/current_user.dart';
@@ -200,6 +203,40 @@ void main() {
     );
 
     expect(apuntarseButton(tester).onPressed, isNotNull);
+  });
+
+  testWidgets('al apuntarse con éxito muestra un snackbar de confirmación',
+      (tester) async {
+    final servicio = _servicio(numeroVoluntarios: 5, inscritosCount: 2);
+    when(() => repo.inscribirse(servicio.id))
+        .thenAnswer((_) async => Success(servicio));
+    // El ref.listen recarga la lista en silencio tras la acción.
+    when(() => repo.list(
+          skip: any(named: 'skip'),
+          limit: any(named: 'limit'),
+          query: any(named: 'query'),
+          estado: any(named: 'estado'),
+          tipo: any(named: 'tipo'),
+          desde: any(named: 'desde'),
+          hasta: any(named: 'hasta'),
+        )).thenAnswer(
+      (_) async => const Success(ServiciosPage(items: [], total: 0)),
+    );
+
+    await pumpFicha(
+      tester,
+      servicio,
+      extraOverrides: [
+        inscribirseServicioProvider
+            .overrideWithValue(InscribirseServicio(repo)),
+        listServiciosProvider.overrideWithValue(ListServicios(repo)),
+      ],
+    );
+
+    await tester.tap(find.byKey(K.servicioFichaApuntarseBtn));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Te has apuntado al servicio.'), findsOneWidget);
   });
 
   testWidgets('Sin Semantics Aforo completo cuando quedan plazas',

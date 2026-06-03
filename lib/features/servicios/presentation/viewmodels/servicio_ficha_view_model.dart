@@ -45,21 +45,26 @@ class ServicioFichaViewModel extends FamilyAsyncNotifier<Servicio, String> {
     state = await AsyncValue.guard(_fetch);
   }
 
-  Future<void> apuntarse() => _runAction(() => _inscribirse(arg));
+  Future<bool> apuntarse() => _runAction(() => _inscribirse(arg));
 
-  Future<void> desapuntarse() => _runAction(() => _desapuntarse(arg));
+  Future<bool> desapuntarse() => _runAction(() => _desapuntarse(arg));
 
-  Future<void> publicar() => _runAction(() => _publicar(arg));
+  Future<bool> publicar() => _runAction(() => _publicar(arg));
 
-  Future<void> convocarTodos() => _runAction(() => _convocar(arg));
+  Future<bool> convocarTodos() => _runAction(() => _convocar(arg));
 
-  Future<void> convocar(List<String> voluntarioIds) =>
+  Future<bool> convocar(List<String> voluntarioIds) =>
       _runAction(() => _convocar(arg, voluntarioIds: voluntarioIds));
 
-  Future<void> cerrar({String? observaciones}) =>
+  Future<bool> cerrar({String? observaciones}) =>
       _runAction(() => _cerrar(arg, observaciones: observaciones));
 
-  Future<void> _runAction(
+  /// Ejecuta una acción sobre el servicio y devuelve `true` si terminó con
+  /// éxito (estado final `AsyncData`) o `false` si falló (`AsyncError`, cuyo
+  /// snackbar de error pinta el `ref.listen` de la página). El valor de
+  /// retorno permite al handler mostrar el feedback de éxito sin re-escuchar
+  /// el estado ni adivinar qué acción se ejecutó.
+  Future<bool> _runAction(
     Future<Result<Servicio>> Function() action,
   ) async {
     state = const AsyncLoading();
@@ -70,6 +75,7 @@ class ServicioFichaViewModel extends FamilyAsyncNotifier<Servicio, String> {
         Fail(:final failure) => throw failure,
       };
     });
+    return state.hasValue;
   }
 }
 
