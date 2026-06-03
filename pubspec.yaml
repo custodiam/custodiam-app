@@ -1,7 +1,7 @@
 name: custodiam
 description: App de gestión para agrupaciones de Protección Civil.
 publish_to: 'none'
-version: 0.1.0+4
+version: 0.1.0+5
 
 environment:
   # Subido de ^3.6.0 a ^3.8.0 requerido por patrol 4.x (EN-08-35). El equipo
