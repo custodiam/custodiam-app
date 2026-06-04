@@ -37,6 +37,7 @@ import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_radius.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
+import '../../../../core/validators/app_validators.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/failure.dart';
@@ -433,18 +434,6 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
     return trimmed.isEmpty ? null : trimmed;
   }
 
-  String? _validateRequired(String? raw, String field) {
-    if (raw == null || raw.trim().isEmpty) return '$field obligatorio';
-    return null;
-  }
-
-  String? _validateEmail(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return null;
-    final value = raw.trim();
-    final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
-    return ok ? null : 'Email no válido';
-  }
-
   VoluntarioUpdateAdmin _buildPatch() {
     final initial = widget.initial;
     final nombre = _normalize(_nombreCtrl.text);
@@ -496,11 +485,26 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
     });
   }
 
+  Future<void> _onReenviarInvitacion() async {
+    final ok = await ref
+        .read(voluntarioFichaViewModelProvider(widget.voluntarioId).notifier)
+        .reenviarInvitacion();
+    if (!mounted) return;
+    AppSnackbar.show(
+      context,
+      message: ok
+          ? 'Invitación reenviada a ${widget.initial.email}.'
+          : 'No se pudo reenviar la invitación.',
+      variant: ok ? AppSnackbarVariant.success : AppSnackbarVariant.danger,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Form(
       key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -512,7 +516,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             controller: _nombreCtrl,
             enabled: widget.canEdit && !widget.isMutating,
             prefixIcon: Symbols.person,
-            validator: (v) => _validateRequired(v, 'Nombre'),
+            validator: AppValidators.requerido('Nombre'),
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -522,7 +526,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             enabled: widget.canEdit && !widget.isMutating,
             keyboardType: TextInputType.phone,
             prefixIcon: Symbols.phone,
-            validator: (v) => _validateRequired(v, 'Teléfono'),
+            validator: AppValidators.requerido('Teléfono'),
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -531,7 +535,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             controller: _municipioCtrl,
             enabled: widget.canEdit && !widget.isMutating,
             prefixIcon: Symbols.location_city,
-            validator: (v) => _validateRequired(v, 'Municipio'),
+            validator: AppValidators.requerido('Municipio'),
           ),
           const SizedBox(height: AppSpacing.md),
           // Guía 28 §WCAG 4.1.2: el GestureDetector envuelve un campo
@@ -572,7 +576,7 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
             enabled: widget.canEdit && !widget.isMutating,
             keyboardType: TextInputType.emailAddress,
             prefixIcon: Symbols.email,
-            validator: _validateEmail,
+            validator: AppValidators.email,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -638,6 +642,19 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
               isLoading: widget.isMutating,
               onPressed: widget.isMutating ? null : _onSave,
             ),
+          // Reenviar la invitación de onboarding (set-password). Solo si
+          // el voluntario tiene email; el backend valida también la
+          // cuenta de Keycloak.
+          if (widget.canEdit && widget.initial.email != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            AppSecondaryButton(
+              key: K.voluntarioFichaReenviarInvitacionButton,
+              label: 'Reenviar invitación',
+              icon: Symbols.forward_to_inbox,
+              expanded: true,
+              onPressed: widget.isMutating ? null : _onReenviarInvitacion,
+            ),
+          ],
         ],
       ),
     );

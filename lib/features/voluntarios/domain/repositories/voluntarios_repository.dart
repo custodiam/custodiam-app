@@ -76,4 +76,9 @@ abstract class VoluntariosRepository {
   /// and deletes the Keycloak account. Irreversible. 502 maps to
   /// VoluntariosFailure.keycloakSyncFailed.
   Future<Result<Voluntario>> anonimizar(String id);
+
+  /// POST /voluntarios/{id}/reenviar-invitacion — resends the Keycloak
+  /// set-password invitation email (onboarding). 502/503 map to
+  /// VoluntariosFailure.keycloakSyncFailed.
+  Future<Result<Voluntario>> reenviarInvitacion(String id);
 }

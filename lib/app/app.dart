@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:custodiam/app/router.dart';
+import 'package:custodiam/app/scaffold_messenger_provider.dart';
 import 'package:custodiam/app/widgets/auth_lifecycle_listener.dart';
 import 'package:custodiam/core/ui/theme/app_theme.dart';
 import 'package:custodiam/features/notificaciones/presentation/widgets/fcm_bootstrap.dart';
@@ -36,6 +37,10 @@ class CustodiamApp extends ConsumerWidget {
         child: MaterialApp.router(
           title: 'Custodiam',
           debugShowCheckedModeBanner: false,
+          // Key global del messenger para que FcmBootstrap (que vive por
+          // encima de este MaterialApp) pueda mostrar SnackBars en primer
+          // plano sin un ScaffoldMessenger ancestro.
+          scaffoldMessengerKey: ref.watch(scaffoldMessengerKeyProvider),
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
           themeMode: themeMode,

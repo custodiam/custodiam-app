@@ -12,6 +12,7 @@ import 'package:custodiam/features/voluntarios/domain/usecases/get_voluntario_by
 import 'package:custodiam/features/voluntarios/domain/usecases/list_roles_catalogo.dart';
 import 'package:custodiam/features/voluntarios/domain/usecases/list_roles_voluntario.dart';
 import 'package:custodiam/features/voluntarios/domain/usecases/quitar_rol.dart';
+import 'package:custodiam/features/voluntarios/domain/usecases/reenviar_invitacion.dart';
 import 'package:custodiam/features/voluntarios/domain/usecases/update_voluntario_admin.dart';
 import 'package:custodiam/features/voluntarios/presentation/pages/voluntario_ficha_page.dart';
 import 'package:custodiam/features/voluntarios/presentation/viewmodels/voluntarios_di.dart';
@@ -98,6 +99,8 @@ Future<void> pumpPage(
             .overrideWithValue(ListRolesVoluntario(vol)),
         asignarRolProvider.overrideWithValue(AsignarRol(vol)),
         quitarRolProvider.overrideWithValue(QuitarRol(vol)),
+        reenviarInvitacionProvider
+            .overrideWithValue(ReenviarInvitacion(vol)),
         listRolesCatalogoProvider
             .overrideWithValue(ListRolesCatalogo(rolesRepo)),
         authServiceProvider.overrideWithValue(_authWith(roles)),
@@ -307,5 +310,26 @@ void main() {
       findsNothing,
     );
     expect(find.byKey(K.voluntarioFichaRolAsignarButton), findsNothing);
+  });
+
+  testWidgets('reenviar invitación calls the repo and shows success snackbar',
+      (tester) async {
+    stubHappy(vol, rolesRepo);
+    when(() => vol.reenviarInvitacion('vol-1'))
+        .thenAnswer((_) async => Success(_voluntario()));
+
+    await pumpPage(tester, vol, rolesRepo);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(K.voluntarioFichaReenviarInvitacionButton),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(K.voluntarioFichaReenviarInvitacionButton));
+    await tester.pumpAndSettle();
+
+    verify(() => vol.reenviarInvitacion('vol-1')).called(1);
+    expect(find.textContaining('Invitación reenviada'), findsOneWidget);
   });
 }

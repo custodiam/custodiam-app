@@ -22,6 +22,7 @@ import '../../domain/usecases/list_roles_catalogo.dart';
 import '../../domain/usecases/list_roles_voluntario.dart';
 import '../../domain/usecases/list_voluntarios.dart';
 import '../../domain/usecases/quitar_rol.dart';
+import '../../domain/usecases/reenviar_invitacion.dart';
 import '../../domain/usecases/update_my_profile.dart';
 import '../../domain/usecases/update_voluntario_admin.dart';
 
@@ -87,4 +88,8 @@ final darDeBajaVoluntarioProvider = Provider<DarDeBajaVoluntario>((ref) {
 
 final anonimizarVoluntarioProvider = Provider<AnonimizarVoluntario>((ref) {
   return AnonimizarVoluntario(ref.watch(voluntariosRepositoryProvider));
+});
+
+final reenviarInvitacionProvider = Provider<ReenviarInvitacion>((ref) {
+  return ReenviarInvitacion(ref.watch(voluntariosRepositoryProvider));
 });

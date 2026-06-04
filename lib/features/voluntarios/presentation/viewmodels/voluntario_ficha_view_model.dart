@@ -21,6 +21,7 @@ import '../../domain/usecases/get_voluntario_by_id.dart';
 import '../../domain/usecases/list_roles_catalogo.dart';
 import '../../domain/usecases/list_roles_voluntario.dart';
 import '../../domain/usecases/quitar_rol.dart';
+import '../../domain/usecases/reenviar_invitacion.dart';
 import '../../domain/usecases/update_voluntario_admin.dart';
 import 'voluntarios_di.dart';
 
@@ -65,6 +66,8 @@ class VoluntarioFichaViewModel
       ref.read(darDeBajaVoluntarioProvider);
   AnonimizarVoluntario get _anonimizar =>
       ref.read(anonimizarVoluntarioProvider);
+  ReenviarInvitacion get _reenviarInvitacion =>
+      ref.read(reenviarInvitacionProvider);
 
   @override
   Future<VoluntarioFichaState> build(String voluntarioId) async {
@@ -211,6 +214,18 @@ class VoluntarioFichaViewModel
           return false;
         }(),
     };
+  }
+
+  /// Reenvía la invitación de onboarding (set-password). No cambia el
+  /// voluntario y NO tumba la ficha si falla (vuelve a AsyncData): el
+  /// page muestra un snackbar según el `bool` devuelto.
+  Future<bool> reenviarInvitacion() async {
+    final current = state.valueOrNull;
+    if (current == null) return false;
+    state = AsyncData(current.copyWith(isMutating: true));
+    final result = await _reenviarInvitacion(arg);
+    state = AsyncData(current.copyWith(isMutating: false));
+    return result is Success;
   }
 }
 
