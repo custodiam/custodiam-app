@@ -49,10 +49,7 @@ abstract class ServiciosRepository {
   /// POST /servicios/{id}/convocar (US-03-04 / US-03-05 / US-03-06).
   /// If `voluntarioIds` is empty/null the backend convoca a todos los
   /// activos disponibles. 409 → ServiciosFailure.transicionInvalida.
-  Future<Result<Servicio>> convocar(
-    String id, {
-    List<String>? voluntarioIds,
-  });
+  Future<Result<Servicio>> convocar(String id, {List<String>? voluntarioIds});
 
   /// POST /servicios/{id}/cerrar (US-03-10). 409 → transicionInvalida.
   Future<Result<Servicio>> cerrar(String id, {String? observaciones});
@@ -81,4 +78,20 @@ abstract class ServiciosRepository {
   /// POST /servicios/{id}/inventario/vehiculo (CU-22 / US-05-07). El 409 de
   /// solape temporal → InventarioFailure.recursoSolapado.
   Future<Result<void>> asignarVehiculo(String id, {required String vehiculoId});
+
+  /// DELETE /servicios/{id}/inventario/material/{asignacionId} (CU-22).
+  /// Quita un material del servicio (inversa de asignar): borra la fila para
+  /// que el recurso quede libre. 404 si la asignación no pertenece al servicio.
+  Future<Result<void>> quitarMaterial(
+    String id, {
+    required String asignacionId,
+  });
+
+  /// DELETE /servicios/{id}/inventario/vehiculo/{asignacionId} (CU-22).
+  /// Quita un vehículo del servicio y lo libera a OPERATIVO si no le queda
+  /// otra asignación activa.
+  Future<Result<void>> quitarVehiculo(
+    String id, {
+    required String asignacionId,
+  });
 }
