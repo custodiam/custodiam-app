@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/app_version_provider.dart';
 import '../../../../core/ui/containers/app_page_scaffold.dart';
 import '../../../../core/ui/feedback/app_loading_indicator.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
@@ -58,27 +59,62 @@ class SettingsPage extends ConsumerWidget {
       body: prefsAsync.when(
         loading: () => const AppLoadingIndicator.fullScreen(),
         error: (_, _) => const Center(child: Text('Error cargando ajustes')),
-        data: (prefs) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Tema de la aplicación',
-                style: Theme.of(context).textTheme.titleMedium,
+        data: (prefs) => Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'Tema de la aplicación',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    ThemeModeSelector(
+                      selected: _toFlutter(prefs.themeMode),
+                      onChanged: (mode) {
+                        ref
+                            .read(userPreferencesViewModelProvider.notifier)
+                            .setThemeMode(_fromFlutter(mode));
+                      },
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              ThemeModeSelector(
-                selected: _toFlutter(prefs.themeMode),
-                onChanged: (mode) {
-                  ref
-                      .read(userPreferencesViewModelProvider.notifier)
-                      .setThemeMode(_fromFlutter(mode));
-                },
-              ),
-            ],
-          ),
+            ),
+            const _VersionFooter(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Versión del build, mostrada de forma discreta al pie de Ajustes. Lee la
+/// versión real del pubspec vía [appVersionProvider]; si aún no está
+/// disponible (o el plugin no responde en este target) no muestra nada.
+class _VersionFooter extends ConsumerWidget {
+  const _VersionFooter();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final version = ref.watch(appVersionProvider).valueOrNull;
+    if (version == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: AppSpacing.sm,
+        bottom: AppSpacing.md,
+      ),
+      child: Text(
+        'v$version',
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );

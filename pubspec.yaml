@@ -82,6 +82,9 @@ dependencies:
   # (usa java.time y el minSdk del proyecto es 24).
   flutter_local_notifications: ^21.0.0
 
+  # Versión del build mostrada de forma discreta en Ajustes.
+  package_info_plus: ^10.1.0
+
   # Offline (Sprint 9 - se añadirá cuando toque)
   # sqflite: ^2.4.0
   # connectivity_plus: ^6.1.0
