@@ -100,4 +100,10 @@ class VoluntariosApi {
   Future<Map<String, dynamic>> anonimizar(String id) {
     return _client.post('/voluntarios/$id/anonimizar', const {});
   }
+
+  /// POST /voluntarios/{id}/reenviar-invitacion — reenvía el email de
+  /// Keycloak para que el voluntario fije su contraseña (onboarding).
+  Future<Map<String, dynamic>> reenviarInvitacion(String id) {
+    return _client.post('/voluntarios/$id/reenviar-invitacion', const {});
+  }
 }

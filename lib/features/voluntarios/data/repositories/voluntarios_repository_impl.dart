@@ -292,6 +292,29 @@ class VoluntariosRepositoryImpl implements VoluntariosRepository {
     }
   }
 
+  @override
+  Future<Result<Voluntario>> reenviarInvitacion(String id) async {
+    try {
+      final json = await _api.reenviarInvitacion(id);
+      return Success(VoluntarioModel.fromJson(json));
+    } on ApiException catch (e) {
+      // 502 (Keycloak falló) y 503 (Admin API sin configurar) son
+      // ambos "el correo no se pudo enviar por el lado de Keycloak".
+      if (e.statusCode == 502 || e.statusCode == 503) {
+        return const Fail(VoluntariosFailure.keycloakSyncFailed());
+      }
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'voluntarios.reenviarInvitacion failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
   Failure _mapApiException(ApiException e) {
     if (e.statusCode == 401) {
       return const AuthFailure.sessionExpired();

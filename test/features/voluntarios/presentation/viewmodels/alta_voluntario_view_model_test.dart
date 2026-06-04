@@ -20,6 +20,7 @@ VoluntarioCreate _data() => VoluntarioCreate(
       telefono: '600',
       municipio: 'Villanueva',
       fechaNacimiento: DateTime(1995, 6, 20),
+      email: 'carlos@example.com',
     );
 
 Voluntario _profile() => Voluntario(

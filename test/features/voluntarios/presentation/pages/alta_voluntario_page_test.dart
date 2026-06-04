@@ -142,6 +142,27 @@ void main() {
     verifyNever(() => repo.create(any()));
   });
 
+  testWidgets('blocks submission when email is empty (now required)',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(600, 2000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await pumpPage(tester, repo);
+    await tester.pumpAndSettle();
+
+    // Fill everything except the email.
+    await tester.enterText(find.byKey(K.altaVoluntarioNombreField), 'Carlos');
+    await tester.enterText(find.byKey(K.altaVoluntarioTelefonoField), '600');
+    await tester.enterText(
+        find.byKey(K.altaVoluntarioMunicipioField), 'Villanueva');
+
+    await tester.tap(find.byKey(K.altaVoluntarioSubmitButton));
+    await tester.pump();
+
+    expect(find.text('Email obligatorio'), findsOneWidget);
+    verifyNever(() => repo.create(any()));
+  });
+
   testWidgets('shows a danger snackbar on DniOrEmailDuplicado',
       (tester) async {
     when(() => repo.create(any())).thenAnswer(
@@ -164,6 +185,7 @@ void main() {
           telefono: '600',
           municipio: 'Villanueva',
           fechaNacimiento: DateTime(1995, 6, 20),
+          email: 'carlos@example.com',
         ));
     await tester.pump();
 
@@ -191,6 +213,7 @@ void main() {
           telefono: '600111222',
           municipio: 'Villanueva',
           fechaNacimiento: DateTime(1995, 6, 20),
+          email: 'carlos@example.com',
         ));
     await tester.pumpAndSettle();
 
