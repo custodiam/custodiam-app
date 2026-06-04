@@ -23,6 +23,7 @@ import '../../../../core/ui/inputs/app_text_field.dart';
 import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
+import '../../../../core/validators/app_validators.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/voluntario_create.dart';
@@ -103,18 +104,6 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
     });
   }
 
-  String? _validateRequired(String? raw, String field) {
-    if (raw == null || raw.trim().isEmpty) return '$field obligatorio';
-    return null;
-  }
-
-  String? _validateEmail(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return null;
-    final value = raw.trim();
-    final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
-    return ok ? null : 'Email no válido';
-  }
-
   void _onSubmit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_fechaNacimiento == null) {
@@ -130,8 +119,8 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
       telefono: _telefonoCtrl.text.trim(),
       municipio: _municipioCtrl.text.trim(),
       fechaNacimiento: _fechaNacimiento!,
+      email: _emailCtrl.text.trim(),
       dni: _normalize(_dniCtrl.text),
-      email: _normalize(_emailCtrl.text),
       direccion: _normalize(_direccionCtrl.text),
       fotoUrl: _normalize(_fotoCtrl.text),
       conductorHabilitado: _conductorHabilitado,
@@ -175,6 +164,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
       title: 'Alta de voluntario',
       body: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
@@ -189,7 +179,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               controller: _nombreCtrl,
               autofocus: true,
               prefixIcon: Symbols.person,
-              validator: (v) => _validateRequired(v, 'Nombre'),
+              validator: AppValidators.requerido('Nombre'),
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
@@ -198,7 +188,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               controller: _telefonoCtrl,
               keyboardType: TextInputType.phone,
               prefixIcon: Symbols.phone,
-              validator: (v) => _validateRequired(v, 'Teléfono'),
+              validator: AppValidators.requerido('Teléfono'),
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
@@ -206,7 +196,7 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               label: 'Municipio',
               controller: _municipioCtrl,
               prefixIcon: Symbols.location_city,
-              validator: (v) => _validateRequired(v, 'Municipio'),
+              validator: AppValidators.requerido('Municipio'),
             ),
             const SizedBox(height: AppSpacing.md),
             // Guía 28 §WCAG 4.1.2: rol real = botón que abre date
@@ -230,6 +220,17 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
                 ),
               ),
             ),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(
+              key: K.altaVoluntarioEmailField,
+              label: 'Email',
+              controller: _emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              prefixIcon: Symbols.email,
+              // Obligatorio: es la llave del onboarding (el backend envía
+              // ahí la invitación de Keycloak para fijar la contraseña).
+              validator: AppValidators.emailRequerido,
+            ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               'Datos opcionales',
@@ -241,15 +242,6 @@ class _AltaVoluntarioFormState extends ConsumerState<_AltaVoluntarioForm> {
               label: 'DNI',
               controller: _dniCtrl,
               prefixIcon: Symbols.badge,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              key: K.altaVoluntarioEmailField,
-              label: 'Email',
-              controller: _emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              prefixIcon: Symbols.email,
-              validator: _validateEmail,
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(

@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/router.dart';
+import '../../../../app/scaffold_messenger_provider.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../infrastructure/di/providers.dart';
 import '../../../../infrastructure/error/result.dart';
@@ -60,6 +61,7 @@ class _FcmBootstrapState extends ConsumerState<FcmBootstrap> {
       if (!mounted) return;
       _bindAuthListener();
       _bindMessageStreams();
+      _initLocalNotifications();
       _checkInitialMessage();
     });
   }
@@ -115,6 +117,15 @@ class _FcmBootstrapState extends ConsumerState<FcmBootstrap> {
         repo.onForegroundMessage.listen(_handleForegroundMessage);
   }
 
+  /// Arranca el plugin de notificaciones locales y le pasa el callback de
+  /// tap, que converge en la misma navegación que el resto de estados.
+  /// No-op en web / VM (la impl real se autoprotege con try/catch).
+  void _initLocalNotifications() {
+    ref
+        .read(localNotificationsServiceProvider)
+        .init(onTapServicio: _navigateForServicioId);
+  }
+
   Future<void> _checkInitialMessage() async {
     if (_initialChecked) return;
     _initialChecked = true;
@@ -132,21 +143,43 @@ class _FcmBootstrapState extends ConsumerState<FcmBootstrap> {
 
   void _handleForegroundMessage(NotificacionPayload payload) {
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    if (messenger == null) return;
     final titulo = payload.titulo ?? 'Notificación';
-    final cuerpo = payload.cuerpo;
-    AppSnackbar.show(
-      context,
-      message: cuerpo == null || cuerpo.isEmpty ? titulo : '$titulo · $cuerpo',
-      variant: payload.tipo == 'emergencia'
-          ? AppSnackbarVariant.danger
-          : AppSnackbarVariant.info,
-    );
+    final cuerpo = payload.cuerpo ?? '';
+    final esEmergencia = payload.tipo == 'emergencia';
+
+    // Emergencia: notificación del sistema heads-up con sonido (la pinta
+    // el plugin en Android; en iOS la muestra el sistema vía las
+    // presentation options). Garantiza que el usuario la perciba aunque
+    // esté en otra pantalla de la app.
+    if (esEmergencia) {
+      ref.read(localNotificationsServiceProvider).mostrarEmergencia(
+            titulo: titulo,
+            cuerpo: cuerpo,
+            servicioId: payload.servicioId,
+          );
+    }
+
+    // Refuerzo in-app: SnackBar mediante el messenger global. FcmBootstrap
+    // vive por encima del MaterialApp, así que `ScaffoldMessenger.of` no
+    // encontraría ningún messenger (este era el bug que dejaba el foreground
+    // sin feedback alguno).
+    final messenger = ref.read(scaffoldMessengerKeyProvider).currentState;
+    if (messenger != null) {
+      AppSnackbar.showWithMessenger(
+        messenger,
+        message: cuerpo.isEmpty ? titulo : '$titulo · $cuerpo',
+        variant:
+            esEmergencia ? AppSnackbarVariant.danger : AppSnackbarVariant.info,
+      );
+    }
   }
 
   void _navigateForPayload(NotificacionPayload payload) {
-    final servicioId = payload.servicioId;
+    _navigateForServicioId(payload.servicioId);
+  }
+
+  void _navigateForServicioId(String? servicioId) {
+    if (!mounted) return;
     if (servicioId == null || servicioId.isEmpty) return;
     final router = ref.read(routerProvider);
     router.go('/servicios/$servicioId');

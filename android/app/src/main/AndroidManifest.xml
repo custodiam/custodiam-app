@@ -9,6 +9,10 @@
     <!-- Ubicación del usuario para centrar el mapa y "cómo llegar"
          (geolocator). Solo en uso, nunca en background (RGPD). -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Notificaciones push (FCM). El SDK de FCM ya lo fusiona desde su
+         manifest, pero declararlo explícito documenta la intención y es
+         el permiso runtime obligatorio en Android 13+ (API 33). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:label="custodiam"
@@ -77,6 +81,19 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
+
+        <!-- FCM: canal e icono por defecto para las notificaciones que pinta
+             el SISTEMA con la app en background/cerrada. El canal por defecto
+             es el de avisos (conservador); las emergencias viajan con su
+             channel_id explícito desde el backend. El icono debe ser el
+             drawable monocromo, no el launcher a color. Los ids coinciden con
+             los canales que crea LocalNotificationsService al arrancar. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="custodiam_avisos" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
 
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

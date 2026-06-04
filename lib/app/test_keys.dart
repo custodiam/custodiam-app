@@ -353,12 +353,12 @@ abstract final class K {
   static const Key voluntarioFichaConductorSwitch = ValueKey('ficha_conductor');
   static const Key voluntarioFichaEstadoDropdown = ValueKey('ficha_estado');
   static const Key voluntarioFichaSaveButton = ValueKey('ficha_save');
-  static const Key voluntarioFichaRolSelectorDropdown = ValueKey(
-    'ficha_rol_selector',
-  );
-  static const Key voluntarioFichaRolAsignarButton = ValueKey(
-    'ficha_rol_asignar',
-  );
+  static const Key voluntarioFichaReenviarInvitacionButton =
+      ValueKey('ficha_reenviar_invitacion');
+  static const Key voluntarioFichaRolSelectorDropdown =
+      ValueKey('ficha_rol_selector');
+  static const Key voluntarioFichaRolAsignarButton =
+      ValueKey('ficha_rol_asignar');
   static Key voluntarioFichaRolChip(String rolId) =>
       ValueKey('ficha_rol_chip_$rolId');
 
