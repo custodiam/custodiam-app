@@ -485,6 +485,20 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
     });
   }
 
+  Future<void> _onReenviarInvitacion() async {
+    final ok = await ref
+        .read(voluntarioFichaViewModelProvider(widget.voluntarioId).notifier)
+        .reenviarInvitacion();
+    if (!mounted) return;
+    AppSnackbar.show(
+      context,
+      message: ok
+          ? 'Invitación reenviada a ${widget.initial.email}.'
+          : 'No se pudo reenviar la invitación.',
+      variant: ok ? AppSnackbarVariant.success : AppSnackbarVariant.danger,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -628,6 +642,19 @@ class _AdminFormState extends ConsumerState<_AdminForm> {
               isLoading: widget.isMutating,
               onPressed: widget.isMutating ? null : _onSave,
             ),
+          // Reenviar la invitación de onboarding (set-password). Solo si
+          // el voluntario tiene email; el backend valida también la
+          // cuenta de Keycloak.
+          if (widget.canEdit && widget.initial.email != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            AppSecondaryButton(
+              key: K.voluntarioFichaReenviarInvitacionButton,
+              label: 'Reenviar invitación',
+              icon: Symbols.forward_to_inbox,
+              expanded: true,
+              onPressed: widget.isMutating ? null : _onReenviarInvitacion,
+            ),
+          ],
         ],
       ),
     );

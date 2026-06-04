@@ -290,6 +290,8 @@ abstract final class K {
       ValueKey('ficha_conductor');
   static const Key voluntarioFichaEstadoDropdown = ValueKey('ficha_estado');
   static const Key voluntarioFichaSaveButton = ValueKey('ficha_save');
+  static const Key voluntarioFichaReenviarInvitacionButton =
+      ValueKey('ficha_reenviar_invitacion');
   static const Key voluntarioFichaRolSelectorDropdown =
       ValueKey('ficha_rol_selector');
   static const Key voluntarioFichaRolAsignarButton =
