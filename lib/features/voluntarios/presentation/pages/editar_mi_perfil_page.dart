@@ -25,6 +25,7 @@ import '../../../../core/ui/states/app_empty_state.dart';
 import '../../../../core/ui/states/app_error_state.dart';
 import '../../../../core/ui/tokens/app_breakpoints.dart';
 import '../../../../core/ui/tokens/app_spacing.dart';
+import '../../../../core/validators/app_validators.dart';
 import '../../../../infrastructure/auth/permissions.dart';
 import '../../../../infrastructure/error/failure.dart';
 import '../../domain/entities/mi_perfil_update.dart';
@@ -127,23 +128,6 @@ class _FormState extends ConsumerState<_Form> {
     );
   }
 
-  String? _validateEmail(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return null;
-    final value = raw.trim();
-    final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
-    return ok ? null : 'Email no válido';
-  }
-
-  String? _validateTelefono(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return 'Teléfono obligatorio';
-    return null;
-  }
-
-  String? _validateMunicipio(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return 'Municipio obligatorio';
-    return null;
-  }
-
   void _onSubmit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final patch = _buildPatch();
@@ -195,6 +179,7 @@ class _FormState extends ConsumerState<_Form> {
 
     return Form(
       key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
@@ -204,7 +189,7 @@ class _FormState extends ConsumerState<_Form> {
             controller: _telefonoCtrl,
             keyboardType: TextInputType.phone,
             prefixIcon: Symbols.phone,
-            validator: _validateTelefono,
+            validator: AppValidators.requerido('Teléfono'),
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -213,7 +198,7 @@ class _FormState extends ConsumerState<_Form> {
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
             prefixIcon: Symbols.email,
-            validator: _validateEmail,
+            validator: AppValidators.email,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -221,7 +206,7 @@ class _FormState extends ConsumerState<_Form> {
             label: 'Municipio',
             controller: _municipioCtrl,
             prefixIcon: Symbols.location_city,
-            validator: _validateMunicipio,
+            validator: AppValidators.requerido('Municipio'),
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(

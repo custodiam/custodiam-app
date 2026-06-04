@@ -21,6 +21,8 @@ import '../../domain/usecases/inscribirse_servicio.dart';
 import '../../domain/usecases/list_servicios.dart';
 import '../../domain/usecases/list_voluntarios_servicio.dart';
 import '../../domain/usecases/publicar_servicio.dart';
+import '../../domain/usecases/quitar_material_servicio.dart';
+import '../../domain/usecases/quitar_vehiculo_servicio.dart';
 
 final serviciosApiProvider = Provider<ServiciosApi>((ref) {
   return ServiciosApi(ref.watch(apiClientProvider));
@@ -70,8 +72,9 @@ final desapuntarseServicioProvider = Provider<DesapuntarseServicio>((ref) {
   return DesapuntarseServicio(ref.watch(serviciosRepositoryProvider));
 });
 
-final listVoluntariosServicioProvider =
-    Provider<ListVoluntariosServicio>((ref) {
+final listVoluntariosServicioProvider = Provider<ListVoluntariosServicio>((
+  ref,
+) {
   return ListVoluntariosServicio(ref.watch(serviciosRepositoryProvider));
 });
 
@@ -79,12 +82,22 @@ final getInventarioServicioProvider = Provider<GetInventarioServicio>((ref) {
   return GetInventarioServicio(ref.watch(serviciosRepositoryProvider));
 });
 
-final asignarMaterialServicioProvider =
-    Provider<AsignarMaterialServicio>((ref) {
+final asignarMaterialServicioProvider = Provider<AsignarMaterialServicio>((
+  ref,
+) {
   return AsignarMaterialServicio(ref.watch(serviciosRepositoryProvider));
 });
 
-final asignarVehiculoServicioProvider =
-    Provider<AsignarVehiculoServicio>((ref) {
+final asignarVehiculoServicioProvider = Provider<AsignarVehiculoServicio>((
+  ref,
+) {
   return AsignarVehiculoServicio(ref.watch(serviciosRepositoryProvider));
+});
+
+final quitarMaterialServicioProvider = Provider<QuitarMaterialServicio>((ref) {
+  return QuitarMaterialServicio(ref.watch(serviciosRepositoryProvider));
+});
+
+final quitarVehiculoServicioProvider = Provider<QuitarVehiculoServicio>((ref) {
+  return QuitarVehiculoServicio(ref.watch(serviciosRepositoryProvider));
 });

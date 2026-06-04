@@ -37,6 +37,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // flutter_local_notifications usa java.time; con minSdk < 26 (aquí 24)
+        // exige core library desugaring o el build de Android falla.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -100,6 +103,9 @@ android {
 
 dependencies {
     androidTestUtil("androidx.test:orchestrator:1.5.1")
+    // Backport de java.time para minSdk < 26 (requisito de
+    // flutter_local_notifications). Empareja con isCoreLibraryDesugaringEnabled.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {

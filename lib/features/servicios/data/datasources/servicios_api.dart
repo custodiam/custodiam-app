@@ -100,10 +100,7 @@ class ServiciosApi {
     return _client.post('/servicios/$id/convocar', body);
   }
 
-  Future<Map<String, dynamic>> cerrar(
-    String id, {
-    String? observaciones,
-  }) {
+  Future<Map<String, dynamic>> cerrar(String id, {String? observaciones}) {
     final body = <String, dynamic>{};
     if (observaciones != null && observaciones.isNotEmpty) {
       body['observaciones_cierre'] = observaciones;
@@ -141,5 +138,26 @@ class ServiciosApi {
     Map<String, dynamic> body,
   ) {
     return _client.post('/servicios/$id/inventario/vehiculo', body);
+  }
+
+  /// DELETE /servicios/{id}/inventario/material/{asignacionId} (204, cuerpo
+  /// vacío → absorbemos la FormatException igual que en [delete]). Un fallo
+  /// real (p. ej. 404 si la asignación no pertenece al servicio) llega como
+  /// ApiException y se propaga.
+  Future<void> quitarMaterial(String id, String asignacionId) async {
+    try {
+      await _client.delete('/servicios/$id/inventario/material/$asignacionId');
+    } on FormatException {
+      return;
+    }
+  }
+
+  /// DELETE /servicios/{id}/inventario/vehiculo/{asignacionId} (204).
+  Future<void> quitarVehiculo(String id, String asignacionId) async {
+    try {
+      await _client.delete('/servicios/$id/inventario/vehiculo/$asignacionId');
+    } on FormatException {
+      return;
+    }
   }
 }

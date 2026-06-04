@@ -15,6 +15,8 @@ import '../../domain/entities/servicio_inventario.dart';
 import '../../domain/usecases/asignar_material_servicio.dart';
 import '../../domain/usecases/asignar_vehiculo_servicio.dart';
 import '../../domain/usecases/get_inventario_servicio.dart';
+import '../../domain/usecases/quitar_material_servicio.dart';
+import '../../domain/usecases/quitar_vehiculo_servicio.dart';
 import 'servicios_di.dart';
 
 class ServicioInventarioViewModel
@@ -24,6 +26,10 @@ class ServicioInventarioViewModel
       ref.read(asignarMaterialServicioProvider);
   AsignarVehiculoServicio get _asignarVehiculo =>
       ref.read(asignarVehiculoServicioProvider);
+  QuitarMaterialServicio get _quitarMaterial =>
+      ref.read(quitarMaterialServicioProvider);
+  QuitarVehiculoServicio get _quitarVehiculo =>
+      ref.read(quitarVehiculoServicioProvider);
 
   @override
   Future<ServicioInventario> build(String arg) async => _fetch();
@@ -74,9 +80,37 @@ class ServicioInventarioViewModel
         return failure;
     }
   }
+
+  /// Quita un material del servicio. Misma semántica que las asignaciones:
+  /// `null` en éxito (recarga la lista), la [Failure] en fallo sin tumbar la
+  /// sección.
+  Future<Failure?> quitarMaterial({required String asignacionId}) async {
+    final result = await _quitarMaterial(arg, asignacionId: asignacionId);
+    switch (result) {
+      case Success():
+        await refresh();
+        return null;
+      case Fail(:final failure):
+        return failure;
+    }
+  }
+
+  /// Quita un vehículo del servicio. Misma semántica que [quitarMaterial].
+  Future<Failure?> quitarVehiculo({required String asignacionId}) async {
+    final result = await _quitarVehiculo(arg, asignacionId: asignacionId);
+    switch (result) {
+      case Success():
+        await refresh();
+        return null;
+      case Fail(:final failure):
+        return failure;
+    }
+  }
 }
 
-final servicioInventarioViewModelProvider = AsyncNotifierProvider.family<
-    ServicioInventarioViewModel, ServicioInventario, String>(
-  ServicioInventarioViewModel.new,
-);
+final servicioInventarioViewModelProvider =
+    AsyncNotifierProvider.family<
+      ServicioInventarioViewModel,
+      ServicioInventario,
+      String
+    >(ServicioInventarioViewModel.new);

@@ -8,6 +8,7 @@ import 'package:custodiam/features/settings/presentation/viewmodels/settings_di.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../test_utils/test_app.dart';
 
@@ -20,6 +21,15 @@ void main() {
     dataSource = _MockDataSource();
     when(() => dataSource.readThemeMode()).thenAnswer((_) async => null);
     when(() => dataSource.writeThemeMode(any())).thenAnswer((_) async {});
+    // Mockea package_info_plus para que el footer de versión tenga datos
+    // (sin esto el plugin lanzaría MissingPluginException en la VM).
+    PackageInfo.setMockInitialValues(
+      appName: 'custodiam',
+      packageName: 'es.custodiam.app',
+      version: '0.1.0',
+      buildNumber: '7',
+      buildSignature: '',
+    );
   });
 
   group('SettingsPage', () {
@@ -106,5 +116,20 @@ void main() {
         );
       },
     );
+
+    testWidgets('shows the build version footer from the pubspec',
+        (tester) async {
+      await pumpRiverpod(
+        tester,
+        const SettingsPage(),
+        wrapInScaffold: false,
+        overrides: [
+          preferencesLocalDataSourceProvider.overrideWithValue(dataSource),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('v0.1.0+7'), findsOneWidget);
+    });
   });
 }
