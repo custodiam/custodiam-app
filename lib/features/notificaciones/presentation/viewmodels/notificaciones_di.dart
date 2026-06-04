@@ -5,6 +5,7 @@
 // la instancia real falla (Firebase no inicializado), se cae al
 // fallback sin error.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,6 +14,8 @@ import '../../data/datasources/dispositivos_api.dart';
 import '../../data/datasources/fcm_service.dart';
 import '../../data/datasources/fcm_service_firebase.dart';
 import '../../data/datasources/fcm_service_unavailable.dart';
+import '../../data/datasources/local_notifications_service.dart';
+import '../../data/datasources/local_notifications_service_flutter.dart';
 import '../../data/datasources/preferencias_local_data_source.dart';
 import '../../data/repositories/notificaciones_repository_impl.dart';
 import '../../domain/repositories/notificaciones_repository.dart';
@@ -26,6 +29,16 @@ final dispositivosApiProvider = Provider<DispositivosApi>((ref) {
 
 final fcmServiceProvider = Provider<FcmService>((ref) {
   return FcmServiceFirebase.tryInstance() ?? const FcmServiceUnavailable();
+});
+
+final localNotificationsServiceProvider =
+    Provider<LocalNotificationsService>((ref) {
+  // Web no soporta flutter_local_notifications; en móvil la impl real
+  // arranca el plugin y crea los canales. La impl real envuelve sus
+  // llamadas en try/catch, así que en una VM sin platform channels (tests
+  // sin override) queda en no-op silencioso.
+  if (kIsWeb) return const LocalNotificationsServiceNoop();
+  return LocalNotificationsServiceFlutter();
 });
 
 final preferenciasLocalDataSourceProvider =
