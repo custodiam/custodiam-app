@@ -74,6 +74,13 @@ dependencies:
   latlong2: ^0.9.1
   geolocator: ^14.0.2
   geocoding: ^4.0.0
+  # Notificaciones locales: pinta el heads-up con sonido cuando llega un
+  # push con la app en PRIMER PLANO (FCM no lo hace solo en foreground en
+  # Android). Solo se usa en Android; en iOS el banner foreground lo
+  # muestra el sistema vía setForegroundNotificationPresentationOptions.
+  # Requiere core library desugaring en android/app/build.gradle.kts
+  # (usa java.time y el minSdk del proyecto es 24).
+  flutter_local_notifications: ^21.0.0
 
   # Offline (Sprint 9 - se añadirá cuando toque)
   # sqflite: ^2.4.0
