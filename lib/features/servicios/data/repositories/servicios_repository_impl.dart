@@ -51,7 +51,8 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
           .cast<Map<String, dynamic>>()
           .map(ServicioSummaryModel.fromJson)
           .toList(growable: false);
-      final totalRaw = response.headers['x-total-count'] ??
+      final totalRaw =
+          response.headers['x-total-count'] ??
           response.headers['X-Total-Count'];
       final total = int.tryParse(totalRaw ?? '') ?? items.length;
       return Success(ServiciosPage(items: items, total: total));
@@ -198,10 +199,7 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
   }
 
   @override
-  Future<Result<Servicio>> cerrar(
-    String id, {
-    String? observaciones,
-  }) async {
+  Future<Result<Servicio>> cerrar(String id, {String? observaciones}) async {
     try {
       final json = await _api.cerrar(id, observaciones: observaciones);
       return Success(ServicioModel.fromJson(json));
@@ -372,6 +370,48 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
     }
   }
 
+  @override
+  Future<Result<void>> quitarMaterial(
+    String id, {
+    required String asignacionId,
+  }) async {
+    try {
+      await _api.quitarMaterial(id, asignacionId);
+      return const Success(null);
+    } on ApiException catch (e) {
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'servicios.quitarMaterial failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Result<void>> quitarVehiculo(
+    String id, {
+    required String asignacionId,
+  }) async {
+    try {
+      await _api.quitarVehiculo(id, asignacionId);
+      return const Success(null);
+    } on ApiException catch (e) {
+      return Fail(_mapApiException(e));
+    } catch (e, stack) {
+      dev.log(
+        'servicios.quitarVehiculo failed: $e',
+        name: 'API',
+        error: e,
+        stackTrace: stack,
+      );
+      return const Fail(NetworkFailure.unknown());
+    }
+  }
+
   /// Los POST de asignar a servicio agrupan varios 409 y los serializa de dos
   /// formas distintas:
   ///
@@ -395,9 +435,7 @@ class ServiciosRepositoryImpl implements ServiciosRepository {
       final texto = mensaje is String ? mensaje : null;
       if (conflictos is List && conflictos.isNotEmpty) {
         final n = conflictos.length;
-        final sufijo = n == 1
-            ? ' (1 conflicto)'
-            : ' ($n conflictos)';
+        final sufijo = n == 1 ? ' (1 conflicto)' : ' ($n conflictos)';
         return InventarioFailure.recursoSolapado(
           '${texto ?? 'El recurso ya está reservado en ese intervalo.'}'
           '$sufijo',

@@ -25,6 +25,7 @@ import '../../../../core/ui/auth/app_permission_gate.dart';
 import '../../../../core/ui/buttons/app_icon_button.dart';
 import '../../../../core/ui/buttons/app_primary_button.dart';
 import '../../../../core/ui/buttons/app_text_button.dart';
+import '../../../../core/ui/feedback/app_confirm_dialog.dart';
 import '../../../../core/ui/feedback/app_dialog.dart';
 import '../../../../core/ui/feedback/app_snackbar.dart';
 import '../../../../core/ui/inputs/app_catalog_search_picker.dart';
@@ -122,12 +123,32 @@ class _Body extends ConsumerWidget {
               icon: Symbols.inventory_2,
               titulo: m.materialNombre,
               detalle: _detalleMaterial(m),
+              trailing: AppPermissionGate(
+                permission: Permission.inventarioAsignarAServicio,
+                fallback: const SizedBox.shrink(),
+                child: AppIconButton(
+                  key: K.servicioRecursoQuitarBtn(m.id),
+                  icon: Symbols.close,
+                  tooltip: 'Quitar del servicio',
+                  onPressed: () => _quitarMaterial(context, ref, m),
+                ),
+              ),
             ),
           for (final v in inv.vehiculos)
             _RecursoTile(
               icon: Symbols.directions_car,
               titulo: '${v.codigoInterno} · ${v.matricula}',
               detalle: 'Vehículo · desde ${_fecha(v.fechaAsignacion)}',
+              trailing: AppPermissionGate(
+                permission: Permission.inventarioAsignarAServicio,
+                fallback: const SizedBox.shrink(),
+                child: AppIconButton(
+                  key: K.servicioRecursoQuitarBtn(v.id),
+                  icon: Symbols.close,
+                  tooltip: 'Quitar del servicio',
+                  onPressed: () => _quitarVehiculo(context, ref, v),
+                ),
+              ),
             ),
         ],
       ],
@@ -250,6 +271,58 @@ class _Body extends ConsumerWidget {
     );
   }
 
+  Future<void> _quitarMaterial(
+    BuildContext context,
+    WidgetRef ref,
+    MaterialAsignadoServicio m,
+  ) async {
+    final confirmar = await AppConfirmDialog.show(
+      context,
+      title: 'Quitar material',
+      message:
+          '¿Quitar "${m.materialNombre}" de este servicio? El material '
+          'quedará libre.',
+      confirmLabel: 'Quitar',
+      isDestructive: true,
+    );
+    if (!confirmar || !context.mounted) return;
+    final failure = await ref
+        .read(servicioInventarioViewModelProvider(servicioId).notifier)
+        .quitarMaterial(asignacionId: m.id);
+    if (!context.mounted) return;
+    _mostrarResultado(
+      context,
+      failure: failure,
+      mensajeExito: 'Material quitado del servicio.',
+    );
+  }
+
+  Future<void> _quitarVehiculo(
+    BuildContext context,
+    WidgetRef ref,
+    VehiculoAsignadoServicio v,
+  ) async {
+    final confirmar = await AppConfirmDialog.show(
+      context,
+      title: 'Quitar vehículo',
+      message:
+          '¿Quitar "${v.codigoInterno} · ${v.matricula}" de este servicio? '
+          'El vehículo quedará libre.',
+      confirmLabel: 'Quitar',
+      isDestructive: true,
+    );
+    if (!confirmar || !context.mounted) return;
+    final failure = await ref
+        .read(servicioInventarioViewModelProvider(servicioId).notifier)
+        .quitarVehiculo(asignacionId: v.id);
+    if (!context.mounted) return;
+    _mostrarResultado(
+      context,
+      failure: failure,
+      mensajeExito: 'Vehículo quitado del servicio.',
+    );
+  }
+
   Future<int?> _pedirCantidad(BuildContext context) async {
     // El diálogo es un StatefulWidget que posee y libera su controller en
     // State.dispose(), atado al ciclo de vida del subárbol del diálogo;
@@ -316,10 +389,15 @@ class _RecursoTile extends StatelessWidget {
   final String titulo;
   final String detalle;
 
+  /// Acción al final de la fila (p. ej. el botón de quitar para los mandos).
+  /// `null` para quien solo puede ver los recursos.
+  final Widget? trailing;
+
   const _RecursoTile({
     required this.icon,
     required this.titulo,
     required this.detalle,
+    this.trailing,
   });
 
   @override
@@ -328,7 +406,7 @@ class _RecursoTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(icon, size: 20, color: theme.colorScheme.onSurfaceVariant),
           const SizedBox(width: AppSpacing.md),
@@ -347,6 +425,7 @@ class _RecursoTile extends StatelessWidget {
               ],
             ),
           ),
+          trailing ?? const SizedBox.shrink(),
         ],
       ),
     );
